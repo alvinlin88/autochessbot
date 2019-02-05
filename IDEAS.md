@@ -1,0 +1,11 @@
+- A Verified User starts game command
+- Bot starts up state for joining game
+- Users can sign up
+- All users must have steam id enabled, or else booted
+- Once full, host locks in game and bot create lobby and invites everyone
+- When game ends, bot sends out link to everyone to vote for results on dyanmic webpage
+  - When one person votes, it will update the link in the same order so when others go in to vote they just need to confirm or revise
+  - if two people submit different results, match will require a screenshot and manual input from admin
+  - Once x/8 users confirm results
+  - Game data stored in DB
+  - disputes are up to admins, data is outputted to excel or something manual
