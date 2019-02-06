@@ -392,7 +392,7 @@ discordClient.on('message', message => {
             userPromise.then(user => {
                 if (user !== null && user.steam !== null) {
                     switch (parsedCommand.command) {
-                        case "adminend":
+                        case "admincancel":
                             let botAdminRoleEnd = message.guild.roles.find(r => r.name === adminRoleName);
                             if (message.member.roles.has(botAdminRoleEnd.id)) {
                                 if (parsedCommand.args.length > 0) {
@@ -407,7 +407,7 @@ discordClient.on('message', message => {
 
                                     reply(message, "Lobby ended, sir.");
                                 } else {
-                                    reply(message, "Sir, the command is `!cb adminend [region]`.");
+                                    reply(message, "Sir, the command is `!cb admincancel [region]`.");
                                 }
                             } else {
                                 // no permissions
@@ -426,7 +426,7 @@ discordClient.on('message', message => {
                                                 reply(message, "Sir, that user is not in the database.");
                                             } else {
                                                 if (lobbies[leagueRole][region].host === kickedPlayerUser.steam) {
-                                                    reply(message, "Sir, you can't kick the host from their own lobby. Use `!cb adminend " + region.toLowerCase() + "` instead.");
+                                                    reply(message, "Sir, you can not kick the host from their own lobby. Use `!cb adminend " + region.toLowerCase() + "` instead.");
                                                 } else {
                                                     if (lobbies[leagueRole][region].players.includes(kickedPlayerUser.steam)) {
                                                         let index = lobbies[leagueRole][region].players.indexOf(kickedPlayerUser.steam);
@@ -590,7 +590,7 @@ discordClient.on('message', message => {
                                                             reply(message, leagueChannels[leagueRole] + " Lobby password for " + region + " region: `" + lobbies[leagueRole][region]["password"] + "`", true);
                                                             if (lobbies[leagueRole][region].players.length === 8) {
                                                                 User.findOne({where: {steam: lobbies[leagueRole][region].host}}).then(hostUser => {
-                                                                    reply(message, "@" + region + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!cb start`.", false, false);
+                                                                    reply(message, "@" + region + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!cb start`. (Only start the game if you have verified everyone in the game lobby)", false, false);
                                                                 });
                                                             }
                                                             // message.delete("Processed").catch(console.error);
@@ -618,7 +618,7 @@ discordClient.on('message', message => {
 
                             if (playerLobbyLeave !== null) {
                                 if (playerLobbyLeave.host === user.steam) {
-                                    reply(message, "Hosts should use `!cb end` instead of `!cb leave`");
+                                    reply(message, "Hosts should use `!cb cancel` instead of `!cb leave`");
                                 } else {
                                     let index = lobbies[leagueRole][playerLobbyLeave.region].players.indexOf(user.steam);
                                     if (index > -1) {
@@ -658,10 +658,10 @@ discordClient.on('message', message => {
                                                             reply(message, "User not in lobby.");
                                                         }
                                                     } else {
-                                                        reply(message, "You can't kick yourself.");
+                                                        reply(message, "You can not kick yourself.");
                                                     }
                                                 } else {
-                                                    reply(message, "You can't kick the last player.");
+                                                    reply(message, "You can not kick the last player.");
                                                 }
                                             }
                                         }, function (error) {
@@ -822,14 +822,14 @@ discordClient.on('message', message => {
                             validated: true,
                         }).then(test => {
                             console.log(test.toJSON());
-                            reply(message, "You've successfully linked your steam id `" + steamIdLink + "`! If I didn't promote you right away then you probably used the wrong steam id.");
+                            reply(message, "You have successfully linked your steam id `" + steamIdLink + "`! If I did not promote you right away then you probably used the wrong steam id.");
                             updateRoles(message, test, true, false, true);
                         }).catch(Sequelize.ValidationError, function (msg) {
                             console.log("error " + msg);
                         });
                     } else {
                         user.update({steam: steamIdLink, validated: true});
-                        reply(message, "You've successfully linked your steam id `" + steamIdLink + "`! If I didn't promote you right away then you probably used the wrong steam id.");
+                        reply(message, "You have successfully linked your steam id `" + steamIdLink + "`! If I did not promote you right away then you probably used the wrong steam id.");
                         updateRoles(message, user, true, false, true);
                     }
 
@@ -987,7 +987,7 @@ discordClient.on('message', message => {
                     } else {
                         if (user !== null && user.steam !== null && user.steamLinkToken === null) {
                             getRankFromSteamId(user.steam).then(rank => {
-                                reply(message, "Your current rank is: " + getRankString(rank));
+                                reply(message, "Your current rank is: " + getRankString(rank) + ". Use `!cb updateroles` to get promoted if you think you qualify for higher leagues.");
                                 user.update({rank: rank});
                             });
                         } else {
@@ -1019,11 +1019,15 @@ function updateRoles(message, user, notify=true, priv=false, mention=true) {
             let ranks = [];
 
             leagueRoles.forEach(leagueRole => {
-                ranks.push({
-                    name: leagueRole,
-                    rank: leagueRequirements[leagueRole],
-                    role: message.guild.roles.find(r => r.name === leagueRole),
-                })
+                let roleObj = message.guild.roles.find(r => r.name === leagueRole);
+
+                if (roleObj !== null) {
+                    ranks.push({
+                        name: leagueRole,
+                        rank: leagueRequirements[leagueRole],
+                        role: message.guild.roles.find(r => r.name === leagueRole),
+                    })
+                }
             });
 
             let added = [];
@@ -1045,10 +1049,10 @@ function updateRoles(message, user, notify=true, priv=false, mention=true) {
 
             if (notify) {
                 if (added.length > 0) {
-                    reply(message, "Your rank is " + getRankString(rank) + ". You've been promoted to: `" + added.join("`, `") + "`", priv, mention);
+                    reply(message, "Your rank is " + getRankString(rank) + ". You have been promoted to: `" + added.join("`, `") + "`", priv, mention);
                 }
                 if (removed.length > 0) {
-                    reply(message, "Your rank is " + getRankString(rank) + ". You've been demoted from: `" + removed.join("`, `") + "` (sorry!)", priv, mention);
+                    reply(message, "Your rank is " + getRankString(rank) + ". You have been demoted from: `" + removed.join("`, `") + "` (sorry!)", priv, mention);
                 }
                 if (added.length === 0 && removed.length === 0) {
                     reply(message, "Your rank is " + getRankString(rank) + ". No role changes based on your rank.", priv, mention);
