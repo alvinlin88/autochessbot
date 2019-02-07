@@ -546,7 +546,7 @@ discordClient.on('message', message => {
                             let currentLobby = getLobbyForPlayer(leagueChannel, user.steam);
 
                             reply(message, leagueChannels[leagueChannel] + " " + regionTags[region] + " Lobby started by <@" + user.discord + "> `" + getRankString(rank.mmr_level) + "`. Type \"!cb join <@" + user.discord + ">\" to join! **[**`" + getRankString(lobbies[leagueChannel][user.steam]["rankRequirement"]) + "` **required to join]** The bot will whisper you the password on Discord. Please do not post it here.`(" + currentLobby.players.length + "/8)`", false, false);
-                            reply(message, leagueChannels[leagueChannel] + " Please host a private Dota Auto Chess lobby in " + region + " region with the following password: `" + lobbies[leagueChannel][user.steam]["password"] + "`. Please remember to double check people's ranks and make sure the right ones joined the game before starting. Wait until the game has started in the Dota 2 client before typing `!cb start`. If you need to kick a player from the Discord lobby that has not joined your Dota 2 lobby or if their rank changed, use `!cb kick @player` in the channel.", true);
+                            reply(message, leagueChannels[leagueChannel] + " Please host a private Dota Auto Chess lobby in " + region + " region with the following password: `" + lobbies[leagueChannel][user.steam]["password"] + "`. Please remember to double check people's ranks and make sure the right ones joined the game before starting. You can see the all players in the lobby by using `!cb lobby` in the channel. Wait until the game has started in the Dota 2 client before typing `!cb start`. If you need to kick a player from the Discord lobby that has not joined your Dota 2 lobby or if their rank changed, use `!cb kick @player` in the channel.", true);
                         });
                         break;
                     case "start": // done
@@ -650,7 +650,8 @@ discordClient.on('message', message => {
 
                         getRankFromSteamId(user.steam).then(rank => {
                             if(rank === null) {
-                                reply(message, "I am having problems verifying your rank.");
+                                reply(message, "I am having problems verifying your rank.", true);
+                                message.delete("Processed").catch(logger.error);
                                 return 0;
                             }
                             let resultLobbyHostId = null;
@@ -725,10 +726,12 @@ discordClient.on('message', message => {
                                 user.update({rank: rank.mmr_level, score: rank.score});
                                 if (rank.mmr_level < leagueRequirements[leagueRole]) {
                                     reply(message, "You are not high enough rank to join lobbies in this league. (Your rank: `" + getRankString(rank.mmr_level) + "`, required league rank: `" + getRankString(leagueRequirements[leagueRole]) + "`)");
+                                    message.delete("Processed").catch(logger.error);
                                     return 0;
                                 }
                                 if (rank.mmr_level < lobbies[leagueChannel][hostUser.steam]["rankRequirement"]) {
                                     reply(message, "You are not high enough rank to join this lobby. (Your rank: `" + getRankString(rank.mmr_level) + "`, required lobby rank: `" + getRankString(lobbies[leagueChannel][hostUser.steam]["rankRequirement"]) + "`)");
+                                    message.delete("Processed").catch(logger.error);
                                     return 0;
                                 }
 
@@ -742,6 +745,7 @@ discordClient.on('message', message => {
                                     if (lobbies[leagueChannel][hostUser.steam].players.length === 8) {
                                         reply(message, "@" + lobbies[leagueChannel][hostUser.steam]["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!cb start`. (Only start the game if you have verified everyone in the game lobby)", false, false);
                                     }
+                                    message.delete("Processed").catch(logger.error);
                                 });
                             });
                         });
