@@ -15,11 +15,11 @@ config.lobbies_file = "lobbies";
 
 config.adminRoleName = "Staff";
 config.leagueRoles = ["Beginner", "Intermediate", "Advanced", "Expert", "Master"];
+config.exemptLeagueRolePruning = [];
 config.leagueToLobbiesPrefix = {"Beginner": "beginner-lobbies", "Intermediate": "intermediate-lobbies", "Advanced": "advanced-lobbies", "Expert": "expert-lobbies", "Master": "master-lobbies"};
 config.lobbiesToLeague = {"beginner-lobbies": "Beginner", "intermediate-lobbies": "Intermediate", "advanced-lobbies": "Advanced", "expert-lobbies": "Expert", "master-lobbies": "Master"}; // TODO: refactor.. being lazy
 config.leagueRequirements = {"Beginner": 1, "Intermediate": 19, "Advanced": 24, "Expert": 28, "Master": 31};
 config.leagueChannels = {"beginner-lobbies": "<#542420779493490692>", "beginner-lobbies-na": "", "intermediate-lobbies": "<#539360159554863114>", "advanced-lobbies": "<#539572170251173898>", "expert-lobbies": "<#542533721773965312>", "master-lobbies": "<#542927566479163420>"};
-config.validRegions = ["NA", "EU", "SEA", "OCE", "SA"];
-config.regionTags = {"NA": "<@&539339934327111680>", "EU": "<@&539339927931060225>", "SEA": "<@&539339931357544448>", "OCE": "<@&540223287742169089>", "SA": "<@&539339925229928450>"};
+config.validRegions = ["NA", "EUW", "EUE", "RU", "SEA", "OCE", "SA"];
 
 module.exports = config;
