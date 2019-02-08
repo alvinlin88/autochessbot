@@ -21,5 +21,6 @@ config.lobbiesToLeague = {"beginner-lobbies": "Beginner", "intermediate-lobbies"
 config.leagueRequirements = {"Beginner": 1, "Intermediate": 19, "Advanced": 24, "Expert": 28, "Master": 31};
 config.leagueChannels = {"beginner-lobbies": "<#542420779493490692>", "beginner-lobbies-na": "", "intermediate-lobbies": "<#539360159554863114>", "advanced-lobbies": "<#539572170251173898>", "expert-lobbies": "<#542533721773965312>", "master-lobbies": "<#542927566479163420>"};
 config.validRegions = ["NA", "EUW", "EUE", "RU", "SEA", "OCE", "SA"];
+config.botChannels = ["development", "chessbot-commands"];
 
 module.exports = config;
