@@ -1,4 +1,4 @@
-winston = require("winston");
+const winston = require("winston");
 
 const Discord = require('discord.js'),
     discordClient = new Discord.Client();
@@ -142,7 +142,13 @@ function sendChannel(channelDiscordId, text) {
 
 function sendDM(userDiscordId, text) {
     let user = discordClient.users.get(userDiscordId);
-    user.send(text).then(logger.info).catch(logger.error);
+    user.send(text).then(logger.info).catch(function(error) {
+        if (error.code === 50007) {
+            // TODO: figure out how to send this in the channel the user sent it from... we don't have message.channel.id
+            sendChannelandMention(discordClient.channels.find(r => r.name === "chessbot-commands").id, userDiscordId, "It looks like you might have turned off direct messages from servers member in your Discord Settings under 'Privacy & Safety'. Please turn this setting on to receive bot messages.");
+        }
+        logger.log(error);
+    });
     logger.info("Sent direct message to user " + user.username + ": " + text);
 }
 
@@ -448,6 +454,10 @@ discordClient.on('message', message => {
 
     let parsedCommand = parseCommand(message);
     let userPromise = User.findOne({where: {discord: message.author.id}});
+
+    if (message.member === null) {
+        logger.error("message.member was null");
+    }
 
     if (message.channel.type !== "dm" && message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) {
         // if we can see user roles (not a DM) and user is staff, continue
@@ -824,7 +834,7 @@ discordClient.on('message', message => {
                                     sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" `" + getRankString(rank.mmr_level) + "` **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
                                     sendDM(message.author.id, "<#" + message.channel.id + "> Lobby password for <@" + hostUser.discord + "> " + lobby["region"] + " region: `" + lobby["password"] + "`. Please join this lobby in Dota 2 Custom Games. If you cannot find the lobby, try refreshing in your Dota 2 client or whisper the host on Discord to create it <@" + hostUser.discord + ">.");
                                     if (lobby.players.length === 8) {
-                                        sendChannel(message.channel.id, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**", false, false);
+                                        sendChannel(message.channel.id, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**", false);
                                         sendDM(hostUser.discord, "**@" + lobby["region"] + " Lobby is full! You can start the game with `!start` in <#" + message.channel.id + ">.** \n(Only start the game if you have verified everyone in the game lobby. Use `!lobby` to see players.)");
                                     }
                                     message.delete("Processed").catch(logger.error);
@@ -1756,16 +1766,16 @@ discordClient.on('message', message => {
                 })();
         }
 
-        if (isBotCommand === false) {
+        if (isBotCommand === false && message.channel.type !== "dm") {
             // This means the command was a lobby command.
             if (isLobbyCommand === null && !leagueLobbies.includes(message.channel.name)) {
-                sendDM(user.discord, "<#" + message.channel.id + "> \"" + message.content + "\": You can not use lobby commands in this channel.");
+                sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You can not use lobby commands in this channel.");
                 message.delete("Processed").catch(logger.error);
                 return 0;
             }
             if (isLobbyCommand === false) {
                 logger.info("Unhandled bot message: " + message.content);
-                sendDM(user.discord, "<#" + message.channel.id + "> \"" + message.content + "\": I was not able to process this command. Please read <#542454956825903104> for command list. Join <#542494966220587038> for help from staff.");
+                sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": I was not able to process this command. Please read <#542454956825903104> for command list. Join <#542494966220587038> for help from staff.");
                 message.delete("Processed").catch(logger.error);
                 return 0;
             }
