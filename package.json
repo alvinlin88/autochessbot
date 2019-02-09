@@ -1,0 +1,44 @@
+{
+  "name": "autochessbot",
+  "version": "0.1.0",
+  "description": "How to run locally ==================",
+  "main": "app.js",
+  "dependencies": {
+    "connect-sqlite3": "^0.9.11",
+    "connect-firebase": "^0.0.9",
+    "cookie-parser": "^1.4.3",
+    "crypto": "^1.0.1",
+    "debug": "^4.1.1",
+    "discord.js": "^11.4.2",
+    "dota2": "^6.2.0",
+    "express-handlebars": "^3.0.0",
+    "express-session": "^1.15.6",
+    "express": "^4.16.4",
+    "long": "^4.0.0",
+    "openid-client": "^2.4.5",
+    "passport-openid": "^0.4.0",
+    "passport": "^0.4.0",
+    "passport-steam": "^1.0.10",
+    "pg": "^7.8.0",
+    "rand-token": "^0.4.0",
+    "request": "^2.88.0",
+    "sequelize": "^4.42.0",
+    "sqlite": "^3.0.1",
+    "steam": "^1.4.0",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/autochessbot/autochessbot.git"
+  },
+  "author": "vinthian@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/autochessbot/autochessbot/issues"
+  },
+  "homepage": "https://gitlab.com/autochessbot/autochessbot#readme"
+}
