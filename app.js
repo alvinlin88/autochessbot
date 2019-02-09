@@ -1,4 +1,4 @@
-winston = require("winston");
+const winston = require("winston");
 
 const Discord = require('discord.js'),
     discordClient = new Discord.Client();
@@ -503,6 +503,10 @@ discordClient.on('message', message => {
 
     let parsedCommand = parseCommand(message);
     let userPromise = User.findOne({where: {discord: message.author.id}});
+
+    if (message.member === null) {
+        sendChannelandMention(message.channel.id, message.author.id, "It looks like you might be off direct messages from servers member in your Discord Settings under 'Privacy & Safety'. Please turn this setting on to receive bot messages.");
+    }
 
     if (message.channel.type !== "dm" && message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) {
         // if we can see user roles (not a DM) and user is staff, continue
@@ -1862,16 +1866,16 @@ discordClient.on('message', message => {
                 })();
         }
 
-        if (isBotCommand === false) {
+        if (isBotCommand === false && message.channel.type !== "dm") {
             // This means the command was a lobby command.
             if (isLobbyCommand === null && !leagueLobbies.includes(message.channel.name)) {
-                sendDM(user.discord, "<#" + message.channel.id + "> \"" + message.content + "\": You can not use lobby commands in this channel.");
+                sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You can not use lobby commands in this channel.");
                 message.delete("Processed").catch(logger.error);
                 return 0;
             }
             if (isLobbyCommand === false) {
                 logger.info("Unhandled bot message: " + message.content);
-                sendDM(user.discord, "<#" + message.channel.id + "> \"" + message.content + "\": I was not able to process this command. Please read <#542454956825903104> for command list. Join <#542494966220587038> for help from staff.");
+                sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": I was not able to process this command. Please read <#542454956825903104> for command list. Join <#542494966220587038> for help from staff.");
                 message.delete("Processed").catch(logger.error);
                 return 0;
             }
