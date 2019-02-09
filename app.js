@@ -150,7 +150,13 @@ function sendChannel(channelDiscordId, text) {
 
 function sendDM(userDiscordId, text) {
     let user = discordClient.users.get(userDiscordId);
-    user.send(text).then(logger.info).catch(logger.error);
+    user.send(text).then(logger.info).catch(function(error) {
+        if (error.code === 50007) {
+            // TODO: figure out how to send this in the channel the user sent it from... we don't have message.channel.id
+            sendChannelandMention(discordClient.channels.find(r => r.name === "chessbot-commands").id, userDiscordId, "It looks like you might have turned off direct messages from servers member in your Discord Settings under 'Privacy & Safety'. Please turn this setting on to receive bot messages.");
+        }
+        logger.log(error);
+    });
     logger.info("Sent direct message to user " + user.username + ": " + text);
 }
 
@@ -505,7 +511,7 @@ discordClient.on('message', message => {
     let userPromise = User.findOne({where: {discord: message.author.id}});
 
     if (message.member === null) {
-        sendChannelandMention(message.channel.id, message.author.id, "It looks like you might be off direct messages from servers member in your Discord Settings under 'Privacy & Safety'. Please turn this setting on to receive bot messages.");
+        logger.error("message.member was null");
     }
 
     if (message.channel.type !== "dm" && message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) {
