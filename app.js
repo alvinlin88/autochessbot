@@ -1,4 +1,5 @@
-winston = require("winston");
+import Lobbies from "./lobbies";
+const winston = require("winston");
 
 const Discord = require('discord.js'),
     discordClient = new Discord.Client();
@@ -79,11 +80,9 @@ const User = sequelize.define('user', {
 
 User.sync();
 
-const Lobbies = require("./lobbies"),
-lobbies = new Lobbies();
+const lobbies = new Lobbies();
 
-
-PREFIX = "!cb ";
+const PREFIX = "!cb ";
 
 let botDownMessage = "Bot is restarting. Lobby commands are currently disabled. Be back in a second!";
 
