@@ -79,7 +79,7 @@ const User = sequelize.define('user', {
 
 User.sync();
 
-const lobbies = require("./lobbies");
+const lobbies = require("./lobbies.js");
 
 PREFIX = "!cb ";
 
