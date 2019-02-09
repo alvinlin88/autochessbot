@@ -509,7 +509,7 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
                 }
                 if (notifyNoChange) {
                     if (added.length === 0 && removed.length === 0) {
-                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + "No role changes based this your rank.");
+                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + " No role changes based this your rank.");
 
                     }
                 }
@@ -1393,13 +1393,18 @@ discordClient.on('message', message => {
                     // this version does not do linking and assumes validated by default
                     const steamIdLink = parsedCommand.args[0];
 
-                    if (!parseInt(steamIdLink)) {
-                        sendChannelandMention(message.channel.id, message.author.id, 'Invalid steam id. See <#542494966220587038> for help.');
+                    if (steamIdLink === undefined) {
+                        sendChannelandMention(message.channel.id, message.author.id, 'Invalid arguments. The commands is `!link [Steam64 ID]`. See <#542494966220587038> for help.');
                         return 0;
                     }
 
-                    if (steamIdLink.length < 12 || steamIdLink.includes("[")) {
+                    if (steamIdLink.includes("[") || steamIdLink.includes("STEAM") || steamIdLink.length < 12) {
                         sendChannelandMention(message.channel.id, message.author.id, "**WARNING** That looks like an invalid steam id. Make sure you are using the \"Steam64 ID\". See <#542494966220587038> for help.");
+                    }
+
+                    if (!parseInt(steamIdLink)) {
+                        sendChannelandMention(message.channel.id, message.author.id, 'Invalid steam id. See <#542494966220587038> for help.');
+                        return 0;
                     }
 
                     // const token = randtoken.generate(6);
@@ -1425,14 +1430,14 @@ discordClient.on('message', message => {
                             }).then(test => {
                                 // logger.info(test.toJSON());
                                 sendChannelandMention(message.channel.id, message.author.id, "I have linked your steam id `" + steamIdLink + "`. If I do not promote you right away then you probably used the wrong steam id or you are set to Invisible on Discord.");
-                                updateRoles(message, test);
-                            }).catch(Sequelize.ValidationError, function (msg) {
-                                logger.error("error " + msg);
+                                updateRoles(message, test, true, false);
+                            }).catch(function (error) {
+                                logger.error("error " + error);
                             });
                         } else {
                             user.update({steam: steamIdLink, validated: true}).then(test => {
                                 sendChannelandMention(message.channel.id, message.author.id, "I have linked your steam id `" + steamIdLink + "`. If I do not promote you right away then you probably used the wrong steam id or you are set to Invisible on Discord.");
-                                updateRoles(message, test);
+                                updateRoles(message, test, true, false);
                             });
                         }
                     });
@@ -1782,7 +1787,7 @@ discordClient.on('message', message => {
                     let infoPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
 
                     if (infoPlayerDiscordId === null) {
-                        sendChannelandMention(message.channel.id, message.author.id, "Sir, that is an invalid Discord ID.");
+                        sendChannelandMention(message.channel.id, message.author.id, "Sir, that is an invalid Discord ID. Make sure it is a mention (blue text).");
                         return 0;
                     }
 
@@ -1968,6 +1973,54 @@ discordClient.on('message', message => {
             case "help":
                 (function () {
                     sendChannelandMention(message.channel.id, message.author.id, "See <#542454956825903104> for more information.");
+                })();
+                break;
+            case "staffhelp":
+            case "shelp":
+            case "sh":
+                (function () {
+                    if (parsedCommand.args.length === 0) {
+                        sendDM(message.author.id, "Sir, the command is !staffhelp [@discord] [topic] [[language]].");
+                        deleteMessage(message);
+                        return 0;
+                    }
+                    let staffHelpUserDiscordId = parseDiscordId(parsedCommand.args[0]);
+                    if (staffHelpUserDiscordId === null) {
+                        sendDM(message.author.id, "Sir, that is an invalid Discord ID.  Make sure it is a mention (blue text).");
+                        deleteMessage(message);
+                        return 0;
+                    }
+
+                    if (staffHelpUserDiscordId !== null) {
+                        if (!message.guild.member(staffHelpUserDiscordId)) {
+                            sendDM(message.author.id, "Sir, I could not find that user on this server.");
+                            deleteMessage(message);
+                            return 0;
+                        }
+                    }
+
+                    let lang = parsedCommand.args[2];
+                    if (lang === null) {
+                        lang = "en";
+                    }
+
+                    let topic = parsedCommand.args[1];
+                    let helptext = "";
+
+                    switch(topic) {
+                        case "tony":
+                            helptext = {
+                                "en": "Tony is a pepega, don't complain about losing if you go him.",
+                                "ru": "Russian here",
+                            }[lang];
+                            break;
+                        default:
+                            sendDM(message.author.id, "Could not find that help topic.");
+                            deleteMessage(message);
+                            return 0;
+                    }
+
+                    sendChannelandMention(message.channel.id, staffHelpUserDiscordId, helptext);
                 })();
                 break;
             default:
