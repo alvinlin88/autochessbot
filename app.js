@@ -790,7 +790,7 @@ discordClient.on('message', message => {
                                     message.delete("Processed").catch(logger.error);
                                     return 0;
                                 }
-                                if (!lobbies.hasHostedLobbyInChannel(hostUser.steam)) {
+                                if (!lobbies.hasHostedLobbyInChannel(leagueChannel, hostUser.steam)) {
                                     sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Host not found. Use `!list` to see lobbies or `!host [region]` to start one!");
                                     message.delete("Processed").catch(logger.error);
                                     return 0;
