@@ -510,7 +510,7 @@ discordClient.on('message', message => {
     }
 
     userPromise.then(user => {
-        let isLobbyCommand = true;
+        let isLobbyCommand = null;
 
         if (leagueLobbies.includes(message.channel.name)) {
             let leagueRole = lobbiesToLeague[message.channel.name];
@@ -1237,6 +1237,8 @@ discordClient.on('message', message => {
             }
         }
 
+        let isBotCommand = true;
+
         switch (parsedCommand.command) {
             case "unlink":
                 (function() {
@@ -1852,13 +1854,22 @@ discordClient.on('message', message => {
                 break;
             default:
                 (function() {
-                    if (isLobbyCommand === false) {
-                        logger.info("Unhandled bot message: " + message.content);
-                        reply(message, "<#" + message.channel.id + "> \"" + message.content + "\": I was not able to process this command.\n Please read <#542454956825903104> for command list. Join <#542494966220587038> for help from staff.", true);
-                        message.delete("Processed").catch(logger.error);
-                        return 0;
-                    }
+                    isBotCommand = false;
                 })();
+        }
+
+        if (isBotCommand === false) {
+            // This means the command was a lobby command.
+            if (isLobbyCommand === null && !leagueLobbies.includes(message.channel.name)) {
+                message.guild.members.get(user.discord).send("<#" + message.channel.id + "> \"" + message.content + "\": You can not use lobby commands in this channel.");
+                message.delete("Processed").catch(logger.error);
+                return 0;
+            } if (isLobbyCommand === false)
+                logger.info("Unhandled bot message: " + message.content);
+                reply(message, "<#" + message.channel.id + "> \"" + message.content + "\": I was not able to process this command. Please read <#542454956825903104> for command list. Join <#542494966220587038> for help from staff.", true);
+                message.delete("Processed").catch(logger.error);
+                return 0;
+            }
         }
     });
 });
