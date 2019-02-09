@@ -153,7 +153,8 @@ function sendDM(userDiscordId, text) {
     user.send(text).then(logger.info).catch(function(error) {
         if (error.code === 50007) {
             // TODO: figure out how to send this in the channel the user sent it from... we don't have message.channel.id
-            sendChannelandMention(discordClient.channels.find(r => r.name === "chessbot-commands").id, userDiscordId, "It looks like you might have turned off direct messages from servers member in your Discord Settings under 'Privacy & Safety'. Please turn this setting on to receive bot messages.");
+            sendChannelandMention(discordClient.channels.find(r => r.name === "chessbot-commands").id, userDiscordId, "It looks like you might have turned off direct messages from server members in your Discord Settings under 'Privacy & Safety'. Please turn this setting on to receive bot messages.");
+            sendChannelandMention(discordClient.channels.find(r => r.name === "chessbot-warnings").id, userDiscordId, "I could not send a direct message to this user. They might have turned direct messages from server members off in their Discord Settings under 'Privacy & Safety'.");
         }
         logger.log(error);
     });
@@ -204,6 +205,9 @@ function parseRank(rankInput) {
 }
 
 let DACSwitch = 2;
+// TODO: Circuit breaker
+let lastDACASuccess = Date.now();
+let lastDACBSuccess = Date.now();
 
 function getRankFromSteamId(steamId) {
     return new Promise(function(resolve, reject) {
@@ -211,10 +215,14 @@ function getRankFromSteamId(steamId) {
             getRankFromSteamIdA(steamId).then(result => {
                 resolve(result);
             });
-        } else {
+        } else if (DACSwitch === 2) {
             getRankFromSteamIdB(steamId).then(result => {
                 resolve(result);
             });
+        } else {
+            logger.error("Error getting any results from DAC Servers! :(");
+            sendChannelandMention(discordClient.channels.find(r => r.name === "chessbot-warnings").id, "Error getting any results from DAC Servers! :(");
+            resolve(null);
         }
     });
 }
@@ -231,6 +239,7 @@ function getRankFromSteamIdB(steamId) {
                     try {
                         // logger.info("Got result from server: " + JSON.stringify(body.user_info));
                         if (body.user_info.hasOwnProperty(steamId)) {
+                            lastDACBSuccess = Date.now();
                             resolve({
                                 "mmr_level": body.user_info[steamId]["mmr_level"],
                                 "score": null,
@@ -262,6 +271,7 @@ function getRankFromSteamIdA(steamId) {
                 if (res.statusCode === 200 && body.err === 0) {
                     try {
                         // logger.info("Got result from server: " + JSON.stringify(body.user_info));
+                        lastDACASuccess = Date.now();
                         if (body.ranking_info.length === 1) {
                             resolve({
                                 "mmr_level": body.ranking_info[0]["mmr_level"],
@@ -580,7 +590,8 @@ discordClient.on('message', message => {
 
     if (message.member === null || message.guild === null) {
         sendDM(message.author.id, "Error! Are you set to invisible mode?");
-        logger.error("message.member or message.guild was null " + message.author.id + ": " + message.author.username + "#" + message.author.discriminator);
+        logger.error("message.member: " + message.member + " or message.guild " + message.guild + " was null " + message.author.id + ": " + message.author.username + "#" + message.author.discriminator);
+
         return 0;
     }
 
@@ -1074,9 +1085,6 @@ discordClient.on('message', message => {
                                 sendChannelandMention(message.channel.id, message.author.id, "kicked " + kickUserName + " from <@" + user.discord + "> @" + hostLobby.region + " region lobby. `(" + lobbies[leagueChannel][hostLobby.host].players.length + "/8)`");
                                 sendDM(kickedPlayerDiscordId, "<@" + user.discord + "> kicked you from their lobby in <#" + message.channel.id + ">.");
                             }
-                        }, function (error) {
-                            sendChannelandMention(message.channel.id, message.author.id, "DB Error");
-                            logger.error(error);
                         });
                     })();
                     break;
@@ -1484,6 +1492,11 @@ discordClient.on('message', message => {
                         // "All right, then, I’ll say it: Dante makes me sick.",
                         "I'll be back!",
                         "Yes, master.",
+                        "Sentences are the building blocks of paragraphs.",
+                        "Beep boop, I am a robot. Haha just kidding!",
+                        "Sometimes it's better to remain silent and be thought a fool, rather than open your mouth and remove all doubt.",
+                        "Mitochondria is the powerhouse of the cell",
+                        "Beep boop, I am a :pepega: Haha not kidding :pepega:",
                     ];
                     sendChannelandMention(message.channel.id, message.author.id, famousLastWords[Math.floor(Math.random() * famousLastWords.length)]);
                     setTimeout(function () {
