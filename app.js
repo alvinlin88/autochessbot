@@ -533,7 +533,7 @@ discordClient.on('message', message => {
     let parsedCommand = parseCommand(message);
     let userPromise = User.findOne({where: {discord: message.author.id}});
 
-    if (message.member === null || message.guild === null) {
+    if (message.channel.type !== "dm" && (message.member === null || message.guild === null)) {
         sendDM(message.author.id, "Error! Are you set to invisible mode?");
         logger.error("message.member: " + message.member + " or message.guild " + message.guild + " was null " + message.author.id + ": " + message.author.username + "#" + message.author.discriminator);
 
@@ -542,7 +542,7 @@ discordClient.on('message', message => {
 
     if (message.channel.type !== "dm" && message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) {
         // if we can see user roles (not a DM) and user is staff, continue
-    } else if (!leagueLobbies.includes(message.channel.name) && !botChannels.includes(message.channel.name)) {
+    } else if (message.channel.type !== "dm" && !leagueLobbies.includes(message.channel.name) && !botChannels.includes(message.channel.name)) {
         // otherwise if command was not typed in a whitelisted channel
         sendDM(message.author.id, "<#" + message.channel.id + "> You cannot use bot commands in this channel. Try <#542465986859761676>.");
         deleteMessage(message);
