@@ -3,7 +3,7 @@
 const fs = require("fs");
 const config = require("./config");
 
-module.exports = class Lobbies {
+class Lobbies {
     constructor() {
         this.lobbies = {};
     }
@@ -138,5 +138,6 @@ module.exports = class Lobbies {
     removeLobbies(leagueChannel) {
         delete this.lobbies[leagueChannel];
     }
+}
 
-};
+module.exports = new Lobbies();
