@@ -1210,7 +1210,7 @@ discordClient.on('message', message => {
 
                         if (lobbies.isHostOfHostedLobby(leagueChannel, user.steam)) {
                             lobbies.deleteLobby(leagueChannel, user.steam);
-                            sendChannel(message.channel.id, message.author.id, "<@" + user.discord + "> @" + regionEnd + " region **lobby cancelled**.");
+                            sendChannel(message.channel.id, "<@" + user.discord + "> @" + regionEnd + " region **lobby cancelled**.");
                             return 0;
                         }
                     }());
@@ -1308,7 +1308,7 @@ discordClient.on('message', message => {
                             sendChannelandMention(message.channel.id, message.author.id, "I have removed the following roles from you: `" + removed.join("`, `") + "`");
                         }
 
-                        sendChannelandMention(message.channel.id, message.author.id, "You have successfully unlinked your account.");
+                        sendChannelandMention(message.channel.id, message.author.id, "You have successfully unlinked your account. Use `!link [Steam64 ID]` to link steam id. See <#542454956825903104> for more information.");
                     } else {
                         sendChannelandMention(message.channel.id, message.author.id, "You have not linked a steam id. See <#542454956825903104> for more information.");
                     }
