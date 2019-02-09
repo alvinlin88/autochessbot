@@ -4,7 +4,6 @@ const Discord = require('discord.js'),
     discordClient = new Discord.Client();
 
 const randtoken = require("rand-token");
-const fs = require("fs");
 
 global.config = require("./config");
 
@@ -80,6 +79,9 @@ const User = sequelize.define('user', {
 
 User.sync();
 
+const Lobbies = require("./lobbies"),
+lobbies = new Lobbies();
+
 
 PREFIX = "!cb ";
 
@@ -93,19 +95,11 @@ let leagueRequirements = global.config.leagueRequirements;
 let validRegions = global.config.validRegions;
 let exemptLeagueRolePruning = global.config.exemptLeagueRolePruning;
 let botChannels = global.config.botChannels;
-let lobbies = {}; // we keep lobbies in memory
 let listratelimit = {};
 let disableLobbyCommands = false;
 let init = false;
 let disableLobbyHost = false;
 let lastBackup = Date.now();
-
-leagueRoles.forEach(leagueRole => {
-    lobbies[leagueToLobbiesPrefix[leagueRole]] = {};
-    validRegions.forEach(leagueRegion => {
-        lobbies[leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase()] = {};
-    });
-});
 
 let leagueLobbies = [];
 let leagueChannelToRegion = {};
@@ -247,33 +241,11 @@ function parseDiscordId(discordStr) {
 }
 
 function getLobbyForHost(leagueChannel, host) {
-    let result = null;
-    for (let hostId in lobbies[leagueChannel]) {
-        if (lobbies[leagueChannel].hasOwnProperty(hostId)) {
-            let lobby = lobbies[leagueChannel][hostId];
-
-            if (lobby["host"] === host) {
-                result = lobby;
-            }
-        }
-    }
-    return result;
+    return lobbies.getLobbyForHostSafe(leagueChannel, host);
 }
 
 function getLobbyForPlayer(leagueChannel, player) {
-    let result = null;
-    for (let hostId in lobbies[leagueChannel]) {
-        if (lobbies[leagueChannel].hasOwnProperty(hostId)) {
-            let lobby = lobbies[leagueChannel][hostId];
-
-            lobby["players"].forEach(p => {
-                if (p === player) {
-                    result = lobby;
-                }
-            });
-        }
-    }
-    return result;
+    return lobbies.getLobbyForPlayer(leagueChannel, player);
 }
 
 function getSteamPersonaNames(steamIds) {
@@ -436,13 +408,7 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, d
 }
 
 function backUpLobbies() {
-    if (Date.now() - lastBackup > 5000) {
-        fs.writeFileSync(config.lobbies_file, JSON.stringify(lobbies), (err) => {
-            if (err) {
-                logger.error(err)
-            }
-        });
-    }
+    lobbies.backUpLobbiesCron(lastBackup, logger);
 }
 
 discordClient.on('ready', () => {
@@ -458,26 +424,7 @@ discordClient.on('error', logger.error);
 
 discordClient.on('message', message => {
     if (init === false) {
-        let lobbiesData = "";
-        try {
-            lobbiesData = fs.readFileSync(config.lobbies_file, 'utf8');
-        } catch (e) {
-            fs.writeFileSync(config.lobbies_file, "", (err) => {
-                if (err) {
-                    logger.error(err)
-                }
-            });
-        }
-        if (lobbiesData === "") {
-            leagueRoles.forEach(leagueRole => {
-                lobbies[leagueToLobbiesPrefix[leagueRole]] = {};
-                validRegions.forEach(leagueRegion => {
-                    lobbies[leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase()] = {};
-                });
-            });
-        } else {
-            lobbies = JSON.parse(lobbiesData);
-        }
+        lobbies.restoreLobbies(logger);
         init = true;
     }
 
@@ -539,7 +486,7 @@ discordClient.on('message', message => {
                             let hostLobbyEnd = getLobbyForHost(leagueChannel, hostUser.steam);
                             let regionEnd = hostLobbyEnd["region"];
 
-                            delete lobbies[leagueChannel][hostUser.steam];
+                            lobbies.deleteLobby(leagueChannel, hostUser.steam);
                             reply(message, "Sir, I cancelled <@" + hostUser.discord + ">'s lobby for @" + regionEnd + ".");
                             message.guild.members.get(hostUser.discord).send("**Your lobby in <#" + message.channel.id + " was cancelled by an admin.**");
                         });
@@ -574,16 +521,12 @@ discordClient.on('message', message => {
                                     reply(message, "Sir, you can not kick the host from their own lobby. Use `!admincancel [@host]` instead.");
                                     return 0;
                                 }
+                                
+                                lobbies.removePlayerFromLobby(leagueChannel, hostUser.steam, playerUser.steam);
+                                let kickUserName = message.client.users.find("id", playerUser.discord);
+                                reply(message, "kicked " + kickUserName + " from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby. `(" + getLobbyForHost(leagueChannel, hostUser.steam).players.length + "/8)`");
+                                message.guild.members.get(playerUser.discord).send("<#" + message.channel.id + "> An admin kicked you from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby.");
 
-                                let index = lobbies[leagueChannel][hostUser.steam].players.indexOf(playerUser.steam);
-
-                                if (index > -1) {
-                                    lobbies[leagueChannel][hostUser.steam].players.splice(index, 1);
-                                    let kickUserName = message.client.users.find("id", playerUser.discord);
-                                    lobbies[leagueChannel][hostUser.steam].lastactivity = Date.now();
-                                    reply(message, "kicked " + kickUserName + " from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby. `(" + lobbies[leagueChannel][hostUser.steam].players.length + "/8)`");
-                                    message.guild.members.get(playerUser.discord).send("<#" + message.channel.id + "> An admin kicked you from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby.");
-                                }
                             });
                         });
                     })();
@@ -659,21 +602,12 @@ discordClient.on('message', message => {
                             }
                             // good to start
                             let token = randtoken.generate(5);
-
-                            lobbies[leagueChannel][user.steam] = {
-                                "host": user.steam,
-                                "password": region.toLowerCase() + "_" + token.toLowerCase(),
-                                "players": [user.steam],
-                                "region": region,
-                                "rankRequirement": rankRequirement,
-                                "starttime": Date.now(),
-                                "lastactivity": Date.now(),
-                            };
+                            let newLobby = lobbies.createLobby(leagueChannel, user.steam, region, rankRequirement, token);
 
                             // let currentLobby = getLobbyForPlayer(leagueChannel, user.steam);
 
-                            reply(message, "**=== <@&" + message.guild.roles.find(r => r.name === region).id + "> Lobby started by <@" + user.discord + "> `" + getRankString(rank.mmr_level) + "`. Type \"!join <@" + user.discord + ">\" to join! [`" + getRankString(lobbies[leagueChannel][user.steam]["rankRequirement"]) + "` required to join]** \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords here.", false, false);
-                            reply(message, "<#" + message.channel.id + "> **Please host a private Dota Auto Chess lobby in @" + region + " region with the following password:** `" + lobbies[leagueChannel][user.steam]["password"] + "`. \nPlease remember to double check people's ranks and make sure the right ones joined the game before starting. \nYou can see the all players in the lobby by using `!lobby` in the channel. \nWait until the game has started in the Dota 2 client before typing `!start`. \nIf you need to kick a player from the Discord lobby that has not joined your Dota 2 lobby or if their rank changed, use `!kick @player` in the channel.", true);
+                            reply(message, "**=== <@&" + message.guild.roles.find(r => r.name === region).id + "> Lobby started by <@" + user.discord + "> `" + getRankString(rank.mmr_level) + "`. Type \"!join <@" + user.discord + ">\" to join! [`" + getRankString(newLobby["rankRequirement"]) + "` required to join]** \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords here.", false, false);
+                            reply(message, "<#" + message.channel.id + "> **Please host a private Dota Auto Chess lobby in @" + region + " region with the following password:** `" + newLobby["password"] + "`. \nPlease remember to double check people's ranks and make sure the right ones joined the game before starting. \nYou can see the all players in the lobby by using `!lobby` in the channel. \nWait until the game has started in the Dota 2 client before typing `!start`. \nIf you need to kick a player from the Discord lobby that has not joined your Dota 2 lobby or if their rank changed, use `!kick @player` in the channel.", true);
                         });
                     })();
                     break;
@@ -685,15 +619,13 @@ discordClient.on('message', message => {
                         }
 
                         // check 8/8 then check all ranks, then send passwords
-                        let hostLobbyStart = lobbies[leagueChannel][user.steam];
+                        let lobby = lobbies.getLobbyForHost(leagueChannel, user.steam);
 
-                        if (hostLobbyStart === undefined || hostLobbyStart === null) {
+                        if (lobby === undefined || lobby === null) {
                             reply(message, "You are not hosting any lobbies in <#" + message.channel.id + ">", true);
                             message.delete("Processed").catch(logger.error);
                             return 0;
                         }
-
-                        let lobby = lobbies[leagueChannel][user.steam];
 
                         if (parsedCommand.args.length > 0) { // TODO: DRY
                             let force = parsedCommand.args[0];
@@ -708,7 +640,7 @@ discordClient.on('message', message => {
                             }
 
                             let wheres = [];
-                            lobbies[leagueChannel][user.steam].players.forEach(steamId => {
+                            lobby.players.forEach(steamId => {
                                 wheres.push({steam: steamId});
                             });
                             User.findAll({where: {[Op.or]: wheres}}).then(players => {
@@ -725,7 +657,7 @@ discordClient.on('message', message => {
                                         }
                                     });
 
-                                    delete lobbies[leagueChannel][user.steam];
+                                    lobbies.deleteLobby(leagueChannel, user.steam);
 
                                     reply(message, "**@" + hostLobbyStart.region + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
                                 });
@@ -733,7 +665,7 @@ discordClient.on('message', message => {
                         } else {
                             if (lobby.players.length === 8) {
                                 let wheres = [];
-                                lobbies[leagueChannel][user.steam].players.forEach(steamId => {
+                                lobby.players.forEach(steamId => {
                                     wheres.push({steam: steamId});
                                 });
                                 User.findAll({where: {[Op.or]: wheres}}).then(players => {
@@ -750,8 +682,8 @@ discordClient.on('message', message => {
                                             }
                                         });
 
-                                        reply(message, "**@" + lobbies[leagueChannel][user.steam]["region"] + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
-                                        delete lobbies[leagueChannel][user.steam];
+                                        reply(message, "**@" + lobby["region"] + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
+                                        lobbies.deleteLobby(leagueChannel, user.steam);
                                     });
                                 });
                             } else {
@@ -796,37 +728,40 @@ discordClient.on('message', message => {
                                 let region = parsedCommand.args[0].toUpperCase();
                                 // find host with most users not over 8 and join.
 
-                                if (Object.keys(lobbies[leagueChannel]).length === 0) {
+                                let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
+
+                                if (Object.keys(lobbiesInLeagueChannel).length === 0) {
                                     if (leagueChannelRegion !== null) {
                                         reply(message, "There are no lobbies currently. Use `!host` or `!host " + leagueChannelRegion.toLowerCase() + "` to host one!");
                                         return 0;
                                     } else {
                                         reply(message, "There are no lobbies for that region currently. Use `!host " + region.toLowerCase() + "` to host one!");
-                                        return 0
+                                        return 0;
                                     }
                                 }
 
                                 let lobbiesFull = 0;
 
-                                for (let currentHostId in lobbies[leagueChannel]) {
-                                    if (lobbies[leagueChannel].hasOwnProperty(currentHostId)) {
-                                        if (lobbies[leagueChannel][currentHostId].players.length < 8) {
-                                            if (rank.mmr_level >= lobbies[leagueChannel][currentHostId]["rankRequirement"] && lobbies[leagueChannel][currentHostId]["region"] === region) {
+                                for (let currentHostId in lobbiesInLeagueChannel) {
+                                    if (lobbiesInLeagueChannel.hasOwnProperty(currentHostId)) {
+                                        let hostedLobby = lobbiesInLeagueChannel[currentHostId];
+                                        if (hostedLobby.players.length < 8) {
+                                            if (rank.mmr_level >= hostedLobby["rankRequirement"] && hostedLobby["region"] === region) {
                                                 if (resultLobbyHostId === null) {
-                                                    resultLobbyHostId = lobbies[leagueChannel][currentHostId].host;
+                                                    resultLobbyHostId = hostedLobby.host;
                                                 } else {
-                                                    if (lobbies[leagueChannel][currentHostId].players.length > lobbies[leagueChannel][resultLobbyHostId].players.length) {
-                                                        resultLobbyHostId = lobbies[leagueChannel][currentHostId].host;
+                                                    if (hostedLobby.players.length > lobbiesInLeagueChannel[resultLobbyHostId].players.length) {
+                                                        resultLobbyHostId = hostedLobby.host;
                                                     }
                                                 }
                                             }
-                                        } else if (lobbies[leagueChannel][currentHostId].players.length === 8) {
+                                        } else if (hostedLobby.players.length === 8) {
                                             lobbiesFull++;
                                         }
                                     }
                                 }
 
-                                if (lobbiesFull === Object.keys(lobbies[leagueChannel]).length) {
+                                if (lobbiesFull === Object.keys(lobbiesInLeagueChannel).length) {
                                     reply(message, "<#" + message.channel.id + "> \"" + message.content + "\": All lobbies full. Use `!host [region]` another lobby.", true);
                                     message.delete("Processed").catch(logger.error);
                                     return 0;
@@ -853,12 +788,15 @@ discordClient.on('message', message => {
                                     message.delete("Processed").catch(logger.error);
                                     return 0;
                                 }
-                                if (!lobbies[leagueChannel].hasOwnProperty(hostUser.steam)) {
+                                if (!lobbies.hasHostedLobbyInChannel(hostUser.steam)) {
                                     reply(message, "<#" + message.channel.id + "> \"" + message.content + "\": Host not found. Use `!list` to see lobbies or `!host [region]` to start one!", true);
                                     message.delete("Processed").catch(logger.error);
                                     return 0;
                                 }
-                                if (lobbies[leagueChannel][hostUser.steam].players.length === 8) {
+
+                                let lobby = getLobbyForHost(leagueChannel, hostUser.steam);
+
+                                if (lobby.players.length === 8) {
                                     reply(message, "<#" + message.channel.id + "> \"" + message.content + "\": That Lobby is full. Use `!host [region]` to start another one.", true);
                                     message.delete("Processed").catch(logger.error);
                                     return 0;
@@ -870,24 +808,24 @@ discordClient.on('message', message => {
                                     message.delete("Processed").catch(logger.error);
                                     return 0;
                                 }
-                                if (rank.mmr_level < lobbies[leagueChannel][hostUser.steam]["rankRequirement"]) {
-                                    reply(message, "<#" + message.channel.id + "> \"" + message.content + "\": You are not high enough rank to join this lobby. (Your rank: `" + getRankString(rank.mmr_level) + "`, required lobby rank: `" + getRankString(lobbies[leagueChannel][hostUser.steam]["rankRequirement"]) + "`)", true);
+                                if (rank.mmr_level < lobby["rankRequirement"]) {
+                                    reply(message, "<#" + message.channel.id + "> \"" + message.content + "\": You are not high enough rank to join this lobby. (Your rank: `" + getRankString(rank.mmr_level) + "`, required lobby rank: `" + getRankString(lobby["rankRequirement"]) + "`)", true);
                                     message.delete("Processed").catch(logger.error);
                                     return 0;
                                 }
 
-                                lobbies[leagueChannel][hostUser.steam].players.push(user.steam);
-                                lobbies[leagueChannel][hostUser.steam].lastactivity = Date.now();
+                                lobby.players.push(user.steam);
+                                lobby.lastactivity = Date.now();
 
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
                                     // reply(message, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" `" + getRankString(rank.mmr_level) + "` joined <@" + hostUser.discord + "> @" + lobbies[leagueChannel][hostUser.steam]["region"] + " region lobby. <@" + message.author.id + "> I just whispered you the lobby password, make sure you are not ignoring whispers on Discord!`(" + lobbies[leagueChannel][hostUser.steam].players.length + "/8)`", false, false);
-                                    reply(message, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" `" + getRankString(rank.mmr_level) + "` **joined** <@" + hostUser.discord + "> @" + lobbies[leagueChannel][hostUser.steam]["region"] + " region lobby. `(" + lobbies[leagueChannel][hostUser.steam].players.length + "/8)`", false, false);
-                                    message.guild.members.get(hostUser.discord).send("<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" `" + getRankString(rank.mmr_level) + "` **joined** your @" + lobbies[leagueChannel][hostUser.steam]["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobbies[leagueChannel][hostUser.steam].players.length + "/8)`");
-                                    reply(message, "<#" + message.channel.id + "> Lobby password for <@" + hostUser.discord + "> " + lobbies[leagueChannel][hostUser.steam]["region"] + " region: `" + lobbies[leagueChannel][hostUser.steam]["password"] + "`. Please join this lobby in Dota 2 Custom Games. If you cannot find the lobby, try refreshing in your Dota 2 client or whisper the host on Discord to create it <@" + hostUser.discord + ">.", true);
-                                    if (lobbies[leagueChannel][hostUser.steam].players.length === 8) {
-                                        reply(message, "**@" + lobbies[leagueChannel][hostUser.steam]["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**", false, false);
+                                    reply(message, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" `" + getRankString(rank.mmr_level) + "` **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`", false, false);
+                                    message.guild.members.get(hostUser.discord).send("<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" `" + getRankString(rank.mmr_level) + "` **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
+                                    reply(message, "<#" + message.channel.id + "> Lobby password for <@" + hostUser.discord + "> " + lobby["region"] + " region: `" + lobby["password"] + "`. Please join this lobby in Dota 2 Custom Games. If you cannot find the lobby, try refreshing in your Dota 2 client or whisper the host on Discord to create it <@" + hostUser.discord + ">.", true);
+                                    if (lobby.players.length === 8) {
+                                        reply(message, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**", false, false);
 
-                                        message.guild.members.get(hostUser.discord).send("**@" + lobbies[leagueChannel][hostUser.steam]["region"] + " Lobby is full! You can start the game with `!start` in <#" + message.channel.id + ">.** \n(Only start the game if you have verified everyone in the game lobby. Use `!lobby` to see players.)");
+                                        message.guild.members.get(hostUser.discord).send("**@" + lobby["region"] + " Lobby is full! You can start the game with `!start` in <#" + message.channel.id + ">.** \n(Only start the game if you have verified everyone in the game lobby. Use `!lobby` to see players.)");
                                     }
                                     message.delete("Processed").catch(logger.error);
                                 });
@@ -918,13 +856,11 @@ discordClient.on('message', message => {
 
                         let hostDiscordQuitId = playerLobbyLeave["host"];
                         User.findOne({where: {steam: hostDiscordQuitId}}).then(function (hostUser) {
-                            let index = lobbies[leagueChannel][hostUser.steam].players.indexOf(user.steam);
-                            if (index > -1) {
-                                lobbies[leagueChannel][hostUser.steam].players.splice(index, 1);
+                            if (lobbies.removePlayerFromLobby(leagueChannel, hostUser.steam, user.steam)) {
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
-                                    reply(message, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ <@" + hostUser.discord + "> @" + playerLobbyLeave.region + " region lobby. `(" + lobbies[leagueChannel][hostUser.steam].players.length + "/8)`", false, false);
-                                    message.guild.members.get(hostUser.discord).send("<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ your @" + playerLobbyLeave.region + " region lobby in <#" + message.channel.id + ">. `(" + lobbies[leagueChannel][hostUser.steam].players.length + "/8)`");
-                                    lobbies[leagueChannel][hostUser.steam].lastactivity = Date.now();
+                                    let numPlayersLeft = lobbies.getLobbyForHost(leagueChannel, hostUser.steam).players.length;
+                                    reply(message, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ <@" + hostUser.discord + "> @" + playerLobbyLeave.region + " region lobby. `(" + numPlayersLeft + "/8)`", false, false);
+                                    message.guild.members.get(hostUser.discord).send("<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ your @" + playerLobbyLeave.region + " region lobby in <#" + message.channel.id + ">. `(" + numPlayersLeft + "/8)`");
                                     message.delete("Processed").catch(logger.error);
                                 });
                             }
@@ -977,13 +913,9 @@ discordClient.on('message', message => {
                                 return 0;
                             }
 
-                            let index = lobbies[leagueChannel][hostLobby.host].players.indexOf(kickedPlayerUser.steam);
-
-                            if (index > -1) {
-                                lobbies[leagueChannel][hostLobby.host].players.splice(index, 1);
+                            if (lobbies.removePlayerFromLobby(leagueChannel, user.steam, kickedPlayerUser.steam)) {
                                 let kickUserName = message.client.users.find("id", kickedPlayerDiscordId);
-                                lobbies[leagueChannel][user.steam].lastactivity = Date.now();
-                                reply(message, "kicked " + kickUserName + " from <@" + user.discord + "> @" + hostLobby.region + " region lobby. `(" + lobbies[leagueChannel][hostLobby.host].players.length + "/8)`");
+                                reply(message, "kicked " + kickUserName + " from <@" + user.discord + "> @" + hostLobby.region + " region lobby. `(" + lobbies.getLobbyForHost(leagueChannel, user.steam).players.length + "/8)`");
                                 message.guild.members.get(kickedPlayerDiscordId).send("<@" + user.discord + "> kicked you from their lobby in <#" + message.channel.id + ">.");
                             }
                         }, function (error) {
@@ -1020,9 +952,10 @@ discordClient.on('message', message => {
 
                         listratelimit[leagueChannel] = Date.now();
 
-                        for (let hostId in lobbies[leagueChannel]) {
-                            if (lobbies[leagueChannel].hasOwnProperty(hostId)) {
-                                let lobby = lobbies[leagueChannel][hostId];
+                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
+                        for (let hostId in lobbiesInLeagueChannel) {
+                            if (lobbiesInLeagueChannel.hasOwnProperty(hostId)) {
+                                let lobby = lobbiesInLeagueChannel[hostId];
                                 if (lobby.host !== null && lobby.password !== null) {
                                     let wheres = [];
 
@@ -1052,13 +985,13 @@ discordClient.on('message', message => {
                                                     lastActivityStr = " (" + lastActivity + "m last activity)";
                                                 }
                                                 if (!dontPrint && lastActivity > 15 && !exemptLeagueRolePruning.includes(leagueRole)) {
-                                                    delete lobbies[leagueChannel][lobby.host];
+                                                    lobbies.deleteLobby(leagueChannel, lobby.host);
                                                     dontPrint = true;
                                                     reply(message, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because of no activity (joins/leaves) for more than 15 minutes._", false, false);
                                                     message.guild.members.get(hostDiscordId).send("**Your lobby in <#" + message.channel.id + "> was cancelled because of no activity (joins/leaves) for more than 15 minutes.**");
                                                 }
                                                 if (!dontPrint && lastActivity > 5 && lobby.players.length === 8 && !exemptLeagueRolePruning.includes(leagueRole)) {
-                                                    delete lobbies[leagueChannel][lobby.host];
+                                                    lobbies.deleteLobby(leagueChannel, lobby.host);
                                                     dontPrint = true;
                                                     reply(message, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because it is full and has had no activity (joins/leaves) for more than 5 minutes._", false, false);
                                                     message.guild.members.get(hostDiscordId).send("**Your lobby in <#" + message.channel.id + "> was cancelled because it was full and had no activity (joins/leaves) for more than 5 minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**");
@@ -1066,7 +999,7 @@ discordClient.on('message', message => {
                                             }
                                             let lobbyTime = Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60);
                                             if (!dontPrint && lobbyTime > 60 && !exemptLeagueRolePruning.includes(leagueRole)) {
-                                                delete lobbies[leagueChannel][lobby.host];
+                                                lobbies.deleteLobby(leagueChannel, lobby.host);
                                                 dontPrint = true;
                                                 reply(message, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because it has not started after 60 minutes._", false, false);
                                                 message.guild.members.get(hostDiscordId).send("**Your lobby in <#" + message.channel.id + "> was cancelled because it was not started after 60 minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**");
@@ -1183,8 +1116,8 @@ discordClient.on('message', message => {
                         }
                         let regionEnd = hostLobbyEnd["region"];
 
-                        if (user.steam === lobbies[leagueChannel][user.steam]["host"]) {
-                            delete lobbies[leagueChannel][user.steam];
+                        if (lobbies.isHostOfHostedLobby(leagueChannel, user.steam)) {
+                            lobbies.deleteLobby(leagueChannel, user.steam);
                             reply(message, "<@" + user.discord + "> @" + regionEnd + " region **lobby cancelled**.");
                             return 0;
                         }
@@ -1216,13 +1149,14 @@ discordClient.on('message', message => {
                                 message.delete("Processed").catch(logger.error);
                                 return 0;
                             }
-                            if (!lobbies[leagueChannel].hasOwnProperty(hostUser.steam)) {
+                            if (!lobbies.hasHostedLobbyInChannel(leagueChannel, hostUser.steam)) {
                                 reply(message, "<#" + message.channel.id + "> \"" + message.content + "\": Host not found. Use `!list` to see lobbies or `!host [region]` to start one!", true);
                                 message.delete("Processed").catch(logger.error);
                                 return 0;
                             }
 
-                            reply(message, "<#" + message.channel.id + "> \"" + message.content + "\": Lobby password for <@" + hostUser.discord + "> " + lobbies[leagueChannel][hostUser.steam]["region"] + " region: `" + lobbies[leagueChannel][hostUser.steam]["password"] + "`. Please join this lobby in Dota 2 Custom Games. If you cannot find the lobby, whisper the host on Discord to create it <@" + hostUser.discord + ">.", true);
+                            let lobby = lobbies.getLobbyForHost(leagueChannel, hostUser.steam);
+                            reply(message, "<#" + message.channel.id + "> \"" + message.content + "\": Lobby password for <@" + hostUser.discord + "> " + lobby["region"] + " region: `" + lobby["password"] + "`. Please join this lobby in Dota 2 Custom Games. If you cannot find the lobby, whisper the host on Discord to create it <@" + hostUser.discord + ">.", true);
                             message.delete("Processed").catch(logger.error);
 
                         });
@@ -1353,11 +1287,8 @@ discordClient.on('message', message => {
                     if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
                     disableLobbyCommands = true;
 
-                    fs.writeFileSync(config.lobbies_file, JSON.stringify(lobbies), (err) => {
-                        if (err) {
-                            logger.error(err)
-                        }
-                    });
+                    lobbies.backupLobbies(logger);
+
                     let famousLastWords = [
                         "Hey fellas! How about this for a headline for tomorrow’s paper? ‘French fries.'",
                         "What the devil do you mean to sing to me, priest? You are out of tune.",
@@ -1411,11 +1342,7 @@ discordClient.on('message', message => {
                     if (disableLobbyCommands === false) {
                         disableLobbyCommands = true;
 
-                        fs.writeFileSync(config.lobbies_file, JSON.stringify(lobbies), (err) => {
-                            if (err) {
-                                logger.error(err)
-                            }
-                        });
+                        lobbies.backupLobbies(logger);
                         reply(message, "Sir, lobby commands disabled. Lobby data saved.");
                         // reply(message, "```\n" + JSON.stringify(lobbies) + "\n```");
                         return 0;
@@ -1433,8 +1360,7 @@ discordClient.on('message', message => {
                     if (disableLobbyCommands === true) {
                         disableLobbyCommands = false;
 
-                        let lobbiesData = fs.readFileSync(config.lobbies_file, 'utf8');
-                        lobbies = JSON.parse(lobbiesData);
+                        lobbies.restoreLobbiesSafe();
                         reply(message, "Sir, Lobby data loaded. Lobby commands enabled.");
                         // reply(message, "```\n" + lobbiesData + "\n```");
                         return 0;
@@ -1463,11 +1389,7 @@ discordClient.on('message', message => {
                     if (message.author.id !== "204094307689431043") {
                         return 0; // no permissions
                     }
-                    fs.writeFileSync(config.lobbies_file, JSON.stringify(lobbies), (err) => {
-                        if (err) {
-                            logger.error(err)
-                        }
-                    });
+                    lobbies.backupLobbies(logger);
                     reply(message, "Sir, lobby data saved.");
                 })();
                 break;
@@ -1495,14 +1417,10 @@ discordClient.on('message', message => {
                         reply(message, "Sir, invalid League, try:" + leagueRoles.join(", "));
                     }
 
-                    lobbies[role] = {};
+                    lobbies.resetLobbies(role);
                     reply(message, "Sir, I cleared " + role + " lobbies.");
 
-                    fs.writeFileSync(config.lobbies_file, JSON.stringify(lobbies), (err) => {
-                        if (err) {
-                            logger.error(err)
-                        }
-                    });
+                    lobbies.backupLobbies(logger);
                 })();
                 break;
             // case "adminclearalllobbies":
@@ -1528,7 +1446,7 @@ discordClient.on('message', message => {
                 (function() {
                     if (message.author.id !== "204094307689431043") return 0; // no permissions
 
-                    lobbies[parsedCommand.args[0]] = {};
+                    lobbies.resetLobbies(parsedCommand.args[0]);
                     reply(message, "OK.");
                 })();
                 break;
@@ -1538,7 +1456,7 @@ discordClient.on('message', message => {
                         return 0; // no permissions
                     }
 
-                    delete lobbies[parsedCommand.args[0]];
+                    lobbies.removeLobbies(parsedCommand.args[0]);
                     reply(message, "OK.");
                 })();
                 break;
@@ -1687,6 +1605,7 @@ discordClient.on('message', message => {
 
                     User.findOne({where: {discord: infoPlayerDiscordId}}).then(function (infoPlayerUser) {
                         if (infoPlayerUser === null) {
+                            // todo infoPlayerUser is null here
                             reply(message, "Sir, I did not find any matches in database for <@" + infoPlayerUser.discord + ">");
                             return 0;
                         }
@@ -1870,7 +1789,6 @@ discordClient.on('message', message => {
                 message.delete("Processed").catch(logger.error);
                 return 0;
             }
-        }
     });
 });
 
