@@ -4,7 +4,7 @@ const fs = require("fs");
 const config = require("./config");
 const CronJob = require('cron').CronJob;
 
-module.exports = class Lobbies {
+module.exports.Lobbies = class Lobbies {
     constructor(logger) {
         this.lobbies = {};
         this.logger = logger;
