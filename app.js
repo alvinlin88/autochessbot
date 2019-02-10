@@ -72,6 +72,9 @@ const User = sequelize.define('user', {
         type: Sequelize.BOOLEAN,
         allowNull: true,
     },
+    // last_played: {
+    //
+    // }
     // preferredregions: {
     //
     // }
@@ -463,7 +466,7 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
                     MMRStr =  " MMR is: `" + rank.score + "`. ";
                 }
 
-                // always show and whisper about demotions in case they can't see the channel anymore
+                // always show and whisper about demotions in case they cannot see the channel anymore
                 if (removed.length > 0) {
                     sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
                     sendDM(message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
@@ -476,7 +479,7 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
                 }
                 if (notifyNoChange) {
                     if (added.length === 0 && removed.length === 0) {
-                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + " No role changes based this your rank.");
+                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + " No role changes based on your rank.");
 
                     }
                 }
@@ -611,7 +614,7 @@ discordClient.on('message', message => {
                         });
                     })();
                     break;
-                case "host": // done
+                case "host":
                     (function () {
                         if (disableLobbyCommands === true) {
                             sendChannelandMention(message.channel.id, message.author.id, botDownMessage);
@@ -693,7 +696,7 @@ discordClient.on('message', message => {
                         });
                     })();
                     break;
-                case "start": // done
+                case "start":
                     (function () {
                         if (disableLobbyCommands === true) {
                             sendChannelandMention(message.channel.id, message.author.id, botDownMessage);
@@ -774,7 +777,7 @@ discordClient.on('message', message => {
                         }
                     })();
                     break;
-                case "join": // done
+                case "join":
                     (function () {
                         if (disableLobbyCommands === true) {
                             sendChannelandMention(message.channel.id, message.author.id, botDownMessage);
@@ -844,7 +847,7 @@ discordClient.on('message', message => {
                                 }
 
                                 if (lobbiesFull === Object.keys(lobbiesInLeagueChannel).length) {
-                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": All lobbies full. Use `!host [region]` another lobby.");
+                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": All lobbies full. Use `!host [region]` to host another lobby.");
                                     deleteMessage(message);
                                     return 0;
                                 }
@@ -1180,6 +1183,7 @@ discordClient.on('message', message => {
                 case "close":
                 case "end":
                 case "unhost":
+                    // TODO: DM all players if a lobby they were in was cancelled?
                     (function () {
                         if (disableLobbyCommands === true) {
                             sendChannelandMention(message.channel.id, message.author.id, botDownMessage);
@@ -1624,8 +1628,9 @@ discordClient.on('message', message => {
                     let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
 
                     User.findOne({where: {discord: unlinkPlayerDiscordId}}).then(function (unlinkPlayerUser) {
+                        let oldSteamID = unlinkPlayerUser.steam;
                         unlinkPlayerUser.update({steam: null, validated: false}).then(function (result) {
-                            sendChannelandMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id.");
+                            sendChannelandMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id. `" + oldSteamID + "`");
                         }, function (error) {
                             logger.error(error);
                         });

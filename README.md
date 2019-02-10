@@ -9,3 +9,5 @@ How to run locally
 - Grab bot token `https://discordapp.com/developers/applications/<client_id>/bots`
 - Put bot token in `config.js` `config.discord_token`
 - Start server: nodejs app.js (Node v10.15.1)
+- Make sure you have region roles and lobbies created on your discord according to your config.js file
+
