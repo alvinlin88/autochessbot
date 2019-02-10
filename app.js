@@ -720,7 +720,7 @@ discordClient.on('message', message => {
                                 return 0;
                             }
                             if (lobby.players.length < 2) {
-                                sendChannelandMention(message.channel.id, message.author.id, "You need at least 2 players to force start a lobby. `(" + hostLobbyStart.players.length + "/8)`");
+                                sendChannelandMention(message.channel.id, message.author.id, "You need at least 2 players to force start a lobby. `(" + lobby.players.length + "/8)`");
                                 return 0;
                             }
 

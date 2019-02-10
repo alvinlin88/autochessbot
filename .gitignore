@@ -147,7 +147,10 @@ typings/
 # DynamoDB Local files
 .dynamodb/
 
+*~
+
 db.sqlite
 
 # The lobbies backup file
 lobbies
+config.js
