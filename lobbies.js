@@ -9,8 +9,8 @@ module.exports = class Lobbies {
         this.lobbies = {};
         this.logger = logger;
         this.backupJob = new CronJob(config.lobbies_backup_cron, function() {
-            this.lobbies.backupLobbies();
-        }, null, /* don't start right after init */ false, 'America/Los_Angeles');
+            this.backupLobbies();
+        }.bind(this), null, /* don't start right after init */ false, 'America/Los_Angeles');
     }
 
     initialize() {

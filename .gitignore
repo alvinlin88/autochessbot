@@ -148,3 +148,6 @@ typings/
 .dynamodb/
 
 db.sqlite
+
+# The lobbies backup file
+lobbies

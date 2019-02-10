@@ -81,6 +81,7 @@ User.sync();
 
 const Lobbies = require("./lobbies.js"),
     lobbies = new Lobbies(logger);
+lobbies.restoreLobbies();
 lobbies.startBackupJob();
 
 PREFIX = "!cb ";
@@ -97,7 +98,6 @@ let exemptLeagueRolePruning = config.exemptLeagueRolePruning;
 let botChannels = config.botChannels;
 let listratelimit = {};
 let disableLobbyCommands = false;
-let init = false;
 let disableLobbyHost = false;
 
 let leagueLobbies = [];
@@ -502,10 +502,6 @@ discordClient.on('ready', () => {
 discordClient.on('error', logger.error);
 
 discordClient.on('message', message => {
-    if (init === false) {
-        lobbies.restoreLobbies();
-        init = true;
-    }
 
     if (message.author.bot === true) {
         return 0; // ignore bot messages
