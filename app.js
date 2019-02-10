@@ -5,7 +5,7 @@ const Discord = require('discord.js'),
 
 const randtoken = require("rand-token");
 
-global.config = require("./config");
+const config = require("./config");
 
 const logger = winston.createLogger({
     level: 'error',
@@ -37,7 +37,7 @@ const sequelize = new Sequelize('autochess', 'postgres', 'postgres', {
     operatorsAliases: false,
 
     // SQLite only
-    storage: global.config.sqlitedb
+    storage: config.sqlitedb
 });
 
 const User = sequelize.define('user', {
@@ -82,25 +82,26 @@ const User = sequelize.define('user', {
 
 User.sync();
 
-const lobbies = require("./lobbies.js");
+const Lobbies = require("./lobbies.js"),
+    lobbies = new Lobbies(logger);
+lobbies.restoreLobbies();
+lobbies.startBackupJob();
 
 PREFIX = "!cb ";
 
 let botDownMessage = "Bot is restarting. Lobby commands are currently disabled. Be back in a second!";
 
-let adminRoleName = global.config.adminRoleName;
-let leagueRoles = global.config.leagueRoles;
-let leagueToLobbiesPrefix = global.config.leagueToLobbiesPrefix;
-let lobbiesToLeague = global.config.lobbiesToLeague;
-let leagueRequirements = global.config.leagueRequirements;
-let validRegions = global.config.validRegions;
-let exemptLeagueRolePruning = global.config.exemptLeagueRolePruning;
-let botChannels = global.config.botChannels;
+let adminRoleName = config.adminRoleName;
+let leagueRoles = config.leagueRoles;
+let leagueToLobbiesPrefix = config.leagueToLobbiesPrefix;
+let lobbiesToLeague = config.lobbiesToLeague;
+let leagueRequirements = config.leagueRequirements;
+let validRegions = config.validRegions;
+let exemptLeagueRolePruning = config.exemptLeagueRolePruning;
+let botChannels = config.botChannels;
 let listratelimit = {};
 let disableLobbyCommands = false;
-let init = false;
 let disableLobbyHost = false;
-let lastBackup = Date.now();
 
 let leagueLobbies = [];
 let leagueChannelToRegion = {};
@@ -328,10 +329,6 @@ function getLobbyForHost(leagueChannel, host) {
     return lobbies.getLobbyForHostSafe(leagueChannel, host);
 }
 
-function getLobbyForPlayer(leagueChannel, player) {
-    return lobbies.getLobbyForPlayer(leagueChannel, player);
-}
-
 function getSteamPersonaNames(steamIds) {
     return new Promise(function(resolve, reject) {
         request("http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=" + config.steam_token + "&steamids=" + steamIds.join(","), { json: true}, (err, res, body) => {
@@ -496,10 +493,6 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
     }
 }
 
-function backUpLobbies() {
-    lobbies.backUpLobbiesCron(lastBackup, logger);
-}
-
 discordClient.on('ready', () => {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
@@ -512,12 +505,6 @@ discordClient.on('ready', () => {
 discordClient.on('error', logger.error);
 
 discordClient.on('message', message => {
-    if (init === false) {
-        lobbies.restoreLobbies(logger);
-        init = true;
-    }
-
-    backUpLobbies();
 
     if (message.author.bot === true) {
         return 0; // ignore bot messages
@@ -757,7 +744,7 @@ discordClient.on('message', message => {
 
                                     lobbies.deleteLobby(leagueChannel, user.steam);
 
-                                    sendChannelandMention(message.channel.id, message.author.id, "**@" + hostLobbyStart.region + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
+                                    sendChannelandMention(message.channel.id, message.author.id, "**@" + lobby.region + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
                                 });
                             });
                         } else {
@@ -797,7 +784,7 @@ discordClient.on('message', message => {
                             return 0;
                         }
 
-                        let playerLobbyJoin = getLobbyForPlayer(leagueChannel, user.steam);
+                        let playerLobbyJoin = lobbies.getLobbyForPlayer(leagueChannel, user.steam);
 
                         if (playerLobbyJoin !== null) {
                             sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are already in a lobby! Use `!leave` to leave.");
@@ -939,7 +926,7 @@ discordClient.on('message', message => {
                             return 0;
                         }
 
-                        let playerLobbyLeave = getLobbyForPlayer(leagueChannel, user.steam);
+                        let playerLobbyLeave = lobbies.getLobbyForPlayer(leagueChannel, user.steam);
 
                         if (playerLobbyLeave === null) {
                             sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not in any lobbies.");
@@ -1147,7 +1134,7 @@ discordClient.on('message', message => {
                         //     return 0;
                         // }
                         User.findOne({where: {discord: lobbyHostDiscordId}}).then(hostUser => {
-                            let lobby = getLobbyForPlayer(leagueChannel, hostUser.steam);
+                            let lobby = lobbies.getLobbyForPlayer(leagueChannel, hostUser.steam);
 
                             if (lobby === null) {
                                 sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": That user/you are is not hosting any lobbies.");
@@ -1230,7 +1217,7 @@ discordClient.on('message', message => {
                             return 0;
                         }
 
-                        let playerSendPassLobby = getLobbyForPlayer(leagueChannel, user.steam);
+                        let playerSendPassLobby = lobbies.getLobbyForPlayer(leagueChannel, user.steam);
 
                         if (playerSendPassLobby === null) {
                             sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not in any lobbies.");
