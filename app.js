@@ -744,7 +744,7 @@ discordClient.on('message', message => {
 
                                     lobbies.deleteLobby(leagueChannel, user.steam);
 
-                                    sendChannelandMention(message.channel.id, message.author.id, "**@" + hostLobbyStart.region + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
+                                    sendChannelandMention(message.channel.id, message.author.id, "**@" + lobby.region + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
                                 });
                             });
                         } else {
