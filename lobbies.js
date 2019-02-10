@@ -2,10 +2,15 @@
 
 const fs = require("fs");
 const config = require("./config");
+const CronJob = require('cron').CronJob;
 
-class Lobbies {
-    constructor() {
+module.exports = class Lobbies {
+    constructor(logger) {
         this.lobbies = {};
+        this.logger = logger;
+        this.backupJob = new CronJob(config.lobbies_backup_cron, function() {
+            this.lobbies.backupLobbies();
+        }, null, /* don't start right after init */ false, 'America/Los_Angeles');
     }
 
     initialize() {
@@ -65,23 +70,16 @@ class Lobbies {
         return result;
     }
 
-    // todo: better name
-    backUpLobbiesCron(lastBackup, logger) {
-        if (Date.now() - lastBackup > 5000) {
-            this.overwriteBackupFile(JSON.stringify(this.lobbies), logger);
-        }
+    backupLobbies() {
+        this.overwriteBackupFile(JSON.stringify(this.lobbies));
     }
 
-    backupLobbies(logger) {
-        this.overwriteBackupFile(JSON.stringify(this.lobbies), logger);
-    }
-
-    restoreLobbies(logger) {
+    restoreLobbies() {
         try {
             let lobbiesData = fs.readFileSync(config.lobbies_file, 'utf8');
             this.lobbies = JSON.parse(lobbiesData);
         } catch (e) {
-            this.overwriteBackupFile("", logger);
+            this.overwriteBackupFile("");
             this.initialize();
         }
     }
@@ -92,10 +90,10 @@ class Lobbies {
         this.lobbies = JSON.parse(lobbiesData);
     }
 
-    overwriteBackupFile(content, logger) {
+    overwriteBackupFile(content) {
         fs.writeFileSync(config.lobbies_file, content, (err) => {
             if (err) {
-                logger.error(err)
+                this.logger.error(err)
             }
         });
     }
@@ -138,6 +136,8 @@ class Lobbies {
     removeLobbies(leagueChannel) {
         delete this.lobbies[leagueChannel];
     }
-}
 
-module.exports = new Lobbies();
+    startBackupJob() {
+        this.backupJob.start();
+    }
+};
