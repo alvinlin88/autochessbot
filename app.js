@@ -860,7 +860,7 @@ discordClient.on('message', message => {
                                 }
 
                                 if (lobbiesFull === Object.keys(lobbiesInLeagueChannel).length) {
-                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": All lobbies full. Use `!host [region]` another lobby.");
+                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": All lobbies full. Use `!host [region]` to host another lobby.");
                                     deleteMessage(message);
                                     return 0;
                                 }
