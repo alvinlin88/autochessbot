@@ -16,6 +16,9 @@ const logger = winston.createLogger({
     ]
 });
 
+const express = require("express");
+const app = express();
+
 const request = require('request');
 
 const Sequelize = require('sequelize');
@@ -81,6 +84,27 @@ const User = sequelize.define('user', {
 });
 
 User.sync();
+
+app.post("/private/linksteam", (req, res, err) => {
+    if (req.header("Authorization") !== "Bearer SUPERSECRET1") {
+        logger.error("Unauthorized access on /private/linksteam!!!"); // port is leaking
+        res.status(401).send();
+    }
+
+    try {
+        discordClient.channels.get("542754359860264981").send("Got validation: " + res.body).then(logger.info).catch(logger.error);
+    } catch(err) {
+        logger.error(err);
+    }
+});
+
+app.listen("8080", (err) => {
+    if (err) {
+        return console.log("err!", err)
+    }
+
+    console.log("private validation server started");
+});
 
 const Lobbies = require("./lobbies.js").Lobbies,
     lobbies = new Lobbies(logger);
@@ -1347,7 +1371,7 @@ discordClient.on('message', message => {
                             User.create({
                                 discord: message.author.id,
                                 steam: steamIdLink,
-                                validated: true,
+                                validated: false,
                             }).then(test => {
                                 // logger.info(test.toJSON());
                                 sendChannelandMention(message.channel.id, message.author.id, "I have linked your steam id `" + steamIdLink + "`. If I do not promote you right away then you probably used the wrong steam id or you are set to Invisible on Discord.");
@@ -1356,7 +1380,7 @@ discordClient.on('message', message => {
                                 logger.error("error " + error);
                             });
                         } else {
-                            user.update({steam: steamIdLink, validated: true}).then(test => {
+                            user.update({steam: steamIdLink, validated: false}).then(test => {
                                 sendChannelandMention(message.channel.id, message.author.id, "I have linked your steam id `" + steamIdLink + "`. If I do not promote you right away then you probably used the wrong steam id or you are set to Invisible on Discord.");
                                 updateRoles(message, test, true, false);
                             });
@@ -1603,7 +1627,7 @@ discordClient.on('message', message => {
                             User.create({
                                 discord: createLinkPlayerDiscordId,
                                 steam: forceSteamIdLink,
-                                validated: true,
+                                validated: false,
                             }).then(test => {
                                 // logger.info(test.toJSON());
                                 sendChannelandMention(message.channel.id, message.author.id, "Sir, I have linked <@" + createLinkPlayerDiscordId + "> steam id `" + forceSteamIdLink + "`. Remember they will not have any roles. Use `!adminupdateroles [@discord]`.");
