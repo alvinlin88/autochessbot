@@ -1,5 +1,3 @@
-const winston = require("winston");
-
 const Discord = require('discord.js'),
     discordClient = new Discord.Client();
 
@@ -7,83 +5,17 @@ const randtoken = require("rand-token");
 
 const config = require("./config");
 
-const logger = winston.createLogger({
-    level: 'error',
-    format: winston.format.json(),
-    transports: [
-        new winston.transports.File({ filename: config.logfile_error, level: 'error' }),
-        new winston.transports.File({ filename: config.logfile })
-    ]
-});
+const logger = require('./logger.js');
 
 const request = require('request');
 
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-const sequelize = new Sequelize('autochess', 'postgres', 'postgres', {
-    host: 'localhost',
-    dialect: 'sqlite',
 
-    pool: {
-        max: 5,
-        min: 0,
-        acquire: 30000,
-        idle: 10000
-    },
+const User = require('./schema/user.js');
 
-    logging: logger.info,
-
-    // http://docs.sequelizejs.com/manual/tutorial/querying.html#operators
-    operatorsAliases: false,
-
-    // SQLite only
-    storage: config.sqlitedb
-});
-
-const User = sequelize.define('user', {
-    discord: {
-        type: Sequelize.TEXT,
-        unique: true,
-        allowNull: false,
-    },
-    steam: {
-        type: Sequelize.TEXT,
-        // unique: true, // might be bad idea to enforce this (others might steal steam_id without verification)
-        allowNull: true,
-    },
-    rank: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-    },
-    // unused, future proofing database
-    score: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-    },
-    games_played: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-    },
-    steamLinkToken: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-    },
-    validated: {
-        type: Sequelize.BOOLEAN,
-        allowNull: true,
-    },
-    // last_played: {
-    //
-    // }
-    // preferredregions: {
-    //
-    // }
-});
-
-User.sync();
-
-const Lobbies = require("./lobbies.js").Lobbies,
-    lobbies = new Lobbies(logger);
+const Lobbies = require("./lobbies.js"),
+    lobbies = new Lobbies();
 lobbies.restoreLobbies();
 lobbies.startBackupJob();
 
@@ -1608,7 +1540,7 @@ discordClient.on('message', message => {
                             }).then(test => {
                                 // logger.info(test.toJSON());
                                 sendChannelandMention(message.channel.id, message.author.id, "Sir, I have linked <@" + createLinkPlayerDiscordId + "> steam id `" + forceSteamIdLink + "`. Remember they will not have any roles. Use `!adminupdateroles [@discord]`.");
-                            }).catch(Sequelize.ValidationError, function (msg) {
+                            }).catch(function (msg) {
                                 logger.error("error " + msg);
                             });
                         } else {
