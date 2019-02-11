@@ -1,13 +1,13 @@
 "use strict";
 
-const fs = require("fs");
+const fs = require('fs');
 const config = require("./config");
 const CronJob = require('cron').CronJob;
+const logger = require('./logger.js');
 
-module.exports.Lobbies = class Lobbies {
-    constructor(logger) {
+module.exports = class Lobbies {
+    constructor() {
         this.lobbies = {};
-        this.logger = logger;
         this.backupJob = new CronJob(config.lobbies_backup_cron, function() {
             this.backupLobbies();
         }.bind(this), null, /* don't start right after init */ false, 'America/Los_Angeles');
@@ -93,7 +93,7 @@ module.exports.Lobbies = class Lobbies {
     overwriteBackupFile(content) {
         fs.writeFileSync(config.lobbies_file, content, (err) => {
             if (err) {
-                this.logger.error(err)
+                logger.error(err)
             }
         });
     }
