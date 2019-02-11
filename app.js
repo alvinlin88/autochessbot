@@ -82,7 +82,7 @@ const User = sequelize.define('user', {
 
 User.sync();
 
-const Lobbies = require("./lobbies.js"),
+const Lobbies = require("./lobbies.js").Lobbies,
     lobbies = new Lobbies(logger);
 lobbies.restoreLobbies();
 lobbies.startBackupJob();
