@@ -95,16 +95,23 @@ function deleteMessage(message) {
     }
 }
 
-function getRankString(rank) {
-    if (rank === 0) { return "Unranked"; }
-    if (rank > 0 && rank <= 9) { return "♟ Pawn-" + (rank).toString(); }
-    if (rank >= 10 && rank < (10 + 9)) { return "♞ Knight-" + (rank - 9).toString(); }
-    if (rank >= (10 + 9) && rank < (10 + 9 + 9)) { return "♝ Bishop-" + (rank - 9 - 9).toString(); }
-    if (rank >= (10 + 9 + 9) && rank < (10 + 9 + 9 + 9)) { return "♖ Rook-" + (rank - 9 - 9 - 9).toString(); }
-    if (rank >= (10 + 9 + 9 + 9) && rank < (10 + 9 + 9 + 9 + 1)) { return "♚ King"; }
-    if (rank >= (10 + 9 + 9 + 9 + 1)) { return "♕ Queen"; }
+function getRank(rank) {
+    if (rank === 0) { return ["", "Unranked"]; }
+    if (rank > 0 && rank <= 9) { return ["♟", "Pawn", (rank).toString()]; }
+    if (rank >= 10 && rank < (10 + 9)) { return ["♞", "Knight", (rank - 9).toString()]; }
+    if (rank >= (10 + 9) && rank < (10 + 9 + 9)) { return ["♝", "Bishop", (rank - 9 - 9).toString()]; }
+    if (rank >= (10 + 9 + 9) && rank < (10 + 9 + 9 + 9)) { return ["♖", "Rook", (rank - 9 - 9 - 9).toString()]; }
+    if (rank >= (10 + 9 + 9 + 9) && rank < (10 + 9 + 9 + 9 + 1)) { return ["♚", "King"]; }
+    if (rank >= (10 + 9 + 9 + 9 + 1)) { return ["♕", "Queen"]; }
     // if (rank >= (10 + 9 + 9 + 9) && rank < (10 + 9 + 9 + 9 + 1)) { return "King-" + (rank - 9 - 9 - 9 - 9).toString(); }
     // if (rank >= (10 + 9 + 9 + 9 + 1)) { return "Queen-" + (rank - 9 - 9 - 9 - 9 - 1).toString(); }
+    return "ERROR";
+}
+
+function getRankString(rank) {
+    let rankData = getRank(rank);
+    if (rankData.length === 2) { return "**" + rankData[0] + " " + rankData[1] + "**"; }
+    if (rankData.length === 3) { return "**" + rankData[0] + " " + rankData[1] + "-" + rankData[2] + "**"; }
     return "ERROR";
 }
 
@@ -401,18 +408,18 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
 
                 // always show and whisper about demotions in case they cannot see the channel anymore
                 if (removed.length > 0) {
-                    sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
-                    sendDM(message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
+                    sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
+                    sendDM(message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
                 }
 
                 if (notifyOnChange) {
                     if (added.length > 0) {
-                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + messagePrefix2 + " promoted to: `" + added.join("`, `") + "`");
+                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " promoted to: `" + added.join("`, `") + "`");
                     }
                 }
                 if (notifyNoChange) {
                     if (added.length === 0 && removed.length === 0) {
-                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + " No role changes based on your rank.");
+                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + " No role changes based on your rank.");
 
                     }
                 }
@@ -611,11 +618,11 @@ discordClient.on('message', message => {
                             if (rank.score === null) delete rankUpdate["score"];
                             user.update(rankUpdate);
                             if (rank.mmr_level < leagueRequirements[leagueRole]) {
-                                sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: `" + getRankString(rank.mmr_level) + "`, required rank: `" + getRankString(leagueRequirements[leagueRole]) + "`)");
+                                sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required rank: " + getRankString(leagueRequirements[leagueRole]) + ")");
                                 return 0;
                             }
                             if (rank.mmr_level < rankRequirement) {
-                                sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: `" + getRankString(rank.mmr_level) + "`, required rank: `" + getRankString(rankRequirement) + "`)");
+                                sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required rank: " + getRankString(rankRequirement) + ")");
                                 return 0;
                             }
                             // good to start
@@ -624,7 +631,7 @@ discordClient.on('message', message => {
 
                             // let currentLobby = getLobbyForPlayer(leagueChannel, user.steam);
 
-                            sendChannelandMention(message.channel.id, message.author.id, "**=== <@&" + message.guild.roles.find(r => r.name === region).id + "> Lobby started by <@" + user.discord + "> `" + getRankString(rank.mmr_level) + "`. Type \"!join <@" + user.discord + ">\" to join! [`" + getRankString(newLobby["rankRequirement"]) + "` required to join]** \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords here.", false);
+                            sendChannelandMention(message.channel.id, message.author.id, "**=== <@&" + message.guild.roles.find(r => r.name === region).id + "> Lobby started by <@" + user.discord + "> " + getRankString(rank.mmr_level) + ". Type \"!join <@" + user.discord + ">\" to join! [" + getRankString(newLobby["rankRequirement"]) + " required to join]** \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords here.", false);
                             sendDM(message.author.id, "<#" + message.channel.id + "> **Please host a private Dota Auto Chess lobby in @" + region + " region with the following password:** `" + newLobby["password"] + "`. \nPlease remember to double check people's ranks and make sure the right ones joined the game before starting. \nYou can see the all players in the lobby by using `!lobby` in the channel. \nWait until the game has started in the Dota 2 client before typing `!start`. \nIf you need to kick a player from the Discord lobby that has not joined your Dota 2 lobby or if their rank changed, use `!kick @player` in the channel.");
                         });
                     })();
@@ -668,9 +675,9 @@ discordClient.on('message', message => {
 
                                     players.forEach(player => {
                                         if (player.steam !== lobby.host) {
-                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" `" + getRankString(player.rank) + "`");
+                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank) + "");
                                         } else {
-                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" `" + getRankString(player.rank) + "` **[Host]**");
+                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank) + " **[Host]**");
                                             hostUserDiscordId = player.discord;
                                         }
                                     });
@@ -693,9 +700,9 @@ discordClient.on('message', message => {
 
                                         players.forEach(player => {
                                             if (player.steam !== lobby.host) {
-                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" `" + getRankString(player.rank) + "`");
+                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank));
                                             } else {
-                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" `" + getRankString(player.rank) + "` **[Host]**");
+                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank) + " **[Host]**");
                                                 hostUserDiscordId = player.discord;
                                             }
                                         });
@@ -824,12 +831,12 @@ discordClient.on('message', message => {
                                 if (rank.score === null) delete rankUpdate["score"];
                                 user.update(rankUpdate);
                                 if (rank.mmr_level < leagueRequirements[leagueRole]) {
-                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\":You are not high enough rank to join lobbies in this league. (Your rank: `" + getRankString(rank.mmr_level) + "`, required league rank: `" + getRankString(leagueRequirements[leagueRole]) + "`)");
+                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\":You are not high enough rank to join lobbies in this league. (Your rank: " + getRankString(rank.mmr_level) + ", required league rank: " + getRankString(leagueRequirements[leagueRole]) + ")");
                                     deleteMessage(message);
                                     return 0;
                                 }
                                 if (rank.mmr_level < lobby["rankRequirement"]) {
-                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not high enough rank to join this lobby. (Your rank: `" + getRankString(rank.mmr_level) + "`, required lobby rank: `" + getRankString(lobby["rankRequirement"]) + "`)", true);
+                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not high enough rank to join this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required lobby rank: " + getRankString(lobby["rankRequirement"]) + ")", true);
                                     deleteMessage(message);
                                     return 0;
                                 }
@@ -838,8 +845,8 @@ discordClient.on('message', message => {
                                 lobby.lastactivity = Date.now();
 
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
-                                    sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" `" + getRankString(rank.mmr_level) + "` **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`");
-                                    sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" `" + getRankString(rank.mmr_level) + "` **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
+                                    sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`");
+                                    sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
                                     sendDM(message.author.id, "<#" + message.channel.id + "> Lobby password for <@" + hostUser.discord + "> " + lobby["region"] + " region: `" + lobby["password"] + "`. Please join this lobby in Dota 2 Custom Games. If you cannot find the lobby, try refreshing in your Dota 2 client or whisper the host on Discord to create it <@" + hostUser.discord + ">.");
                                     if (lobby.players.length === 8) {
                                         sendChannel(message.channel.id, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**", false);
@@ -985,9 +992,9 @@ discordClient.on('message', message => {
                                             let hostDiscordId = null;
                                             players.forEach(player => {
                                                 if (player.steam !== lobby.host) {
-                                                    playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + "`");
+                                                    playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank));
                                                 } else {
-                                                    hostDiscord = "<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + "` **[Host]**";
+                                                    hostDiscord = "<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + " **[Host]**";
                                                     hostDiscordId = player.discord;
                                                 }
                                             });
@@ -1027,9 +1034,9 @@ discordClient.on('message', message => {
 
                                             if (!dontPrint) {
                                                 if (printFullList === true) {
-                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [`" + getRankString(lobby.rankRequirement) + "+`] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr);
+                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr);
                                                 } else {
-                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [`" + getRankString(lobby.rankRequirement) + "+`] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + "Use \"!join <@" + hostDiscordId + ">\" to join lobby. (" + lobbyTime + "m)" + lastActivityStr + fullStr);
+                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + "Use \"!join <@" + hostDiscordId + ">\" to join lobby. (" + lobbyTime + "m)" + lastActivityStr + fullStr);
                                                 }
                                             }
                                         });
@@ -1088,9 +1095,9 @@ discordClient.on('message', message => {
                                         let hostDiscordId = null;
                                         players.forEach(player => {
                                             if (player.steam !== lobby.host) {
-                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + "`");
+                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank));
                                             } else {
-                                                hostDiscord = "<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + "` **[Host]**";
+                                                hostDiscord = "<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + " **[Host]**";
                                                 hostDiscordId = player.discord;
                                             }
                                         });
@@ -1102,9 +1109,9 @@ discordClient.on('message', message => {
                                                 lastActivityStr = " (" + +"m last activity)";
                                             }
                                         }
-                                        sendChannelandMention(message.channel.id, message.author.id, "=== **@" + lobby.region + "** [`" + getRankString(lobby.rankRequirement) + "+`] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
+                                        sendChannelandMention(message.channel.id, message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
                                         // also whisper
-                                        sendDM(message.author.id, "=== **@" + lobby.region + "** [`" + getRankString(lobby.rankRequirement) + "+`] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
+                                        sendDM(message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
                                         deleteMessage(message);
                                     });
                                 });
@@ -1704,7 +1711,7 @@ discordClient.on('message', message => {
                                 if (rank.score !== null) {
                                     MMRStr =  " MMR is: `" + rank.score + "`.";
                                 }
-                                sendChannelandMention(message.channel.id, message.author.id, "Current rank for " + publicSteamId + " is: `" + getRankString(rank.mmr_level) + "`." + MMRStr);
+                                sendChannelandMention(message.channel.id, message.author.id, "Current rank for " + publicSteamId + " is: " + getRankString(rank.mmr_level) + "." + MMRStr);
 
                                 if (leagueLobbies.includes(message.channel.name)) {
                                     deleteMessage(message);
@@ -1726,7 +1733,7 @@ discordClient.on('message', message => {
                                 if (rank.score !== null) {
                                     MMRStr =  " MMR is: `" + rank.score + "`. ";
                                 }
-                                sendChannelandMention(message.channel.id, message.author.id, "Your current rank is: `" + getRankString(rank.mmr_level) + "`." + MMRStr);
+                                sendChannelandMention(message.channel.id, message.author.id, "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
                                 let rankUpdate = {rank: rank.mmr_level, score: rank.score};
                                 if (rank.score === null) delete rankUpdate["score"];
                                 user.update(rankUpdate).then(nothing => {
