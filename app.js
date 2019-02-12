@@ -25,10 +25,12 @@ app.post("/private/linksteam", (req, res, err) => {
         let channel = discordClient.channels.find(r => r.name === "staff-bot");
         channel.send("Got validation: " + JSON.stringify(req.body)).then(logger.info).catch(logger.error); // debugging / logging
         sendDM(req.body.userID, "Your steam account has now been verified.");
-        // TODO: Verify req.body.steamIDs is not an empty list
+        // Verify req.body.steamIDs is not an empty list - done
+        // Let users switch between steam IDs - done
+        // note to @Vinthian: I made this endpoint take 1 and only 1 steamID. expect req.body.steamID is always there
+
         // TODO: Update DB with validated=true
         // TODO: Better web confirmation landing page
-        // TODO: Let users switch between steam IDs ?
         res.sendStatus(200);
     } catch(err) {
         res.sendStatus(500);
@@ -1276,7 +1278,15 @@ discordClient.on('message', message => {
                 break;
             case "verify":
                 (function() {
-                    sendDM(message.author.id, "Before you begin, please link your steam account on Discord. Go to `User Settings` > `Connections` and click on the Steam icon. Follow the instructions to link your steam account (You have to log in with your steam credentials) and connect your steam account to Discord. Then, click he following link to verify your account.\nhttps://discordapp.com/api/oauth2/authorize?client_id=" + CLIENT_ID + "&redirect_uri=http%3A%2F%2Flocalhost%3A80%2Fcallback&response_type=code&scope=connections%20identify\nThis will allow the bot to know what account is linked to your discord account.\nNOTE THAT THIS URL SHOULD BE `discordapp.com` and the . Be careful of phishing attempts where the URL is not correct.");
+                    let authorize_endpoint = "https://discordapp.com/api/oauth2/authorize";
+                    let query = '?' + querystring.stringify({
+                        client_id: CLIENT_ID,
+                        redirect_uri: config.verify_redirect_url,
+                        scope: "connections identify",
+                    });
+                    let redirect = authorize_endpoint + query;
+
+                    sendDM(message.author.id, "Before you begin, please link your steam account on Discord. Go to `User Settings` > `Connections` and click on the Steam icon. Follow the instructions to link your steam account (You have to log in with your steam credentials) and connect your steam account to Discord. Then, click he following link to verify your account.\n" + redirect + "\nThis will allow the bot to know what account is linked to your discord account.\nNOTE THAT THIS URL SHOULD BE `discordapp.com` and the . Be careful of phishing attempts where the URL is not correct.");
                 })();
                 break;
             case "link":
