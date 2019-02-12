@@ -1284,6 +1284,7 @@ discordClient.on('message', message => {
                         client_id: CLIENT_ID,
                         redirect_uri: config.verify_redirect_url,
                         scope: "connections identify",
+                        response_type: "code"
                     });
                     let redirect = authorize_endpoint + query;
 
