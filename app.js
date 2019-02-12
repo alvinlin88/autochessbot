@@ -188,7 +188,8 @@ function deleteMessage(message) {
 }
 
 function getRankString(rank) {
-    if (rank > 0 && rank <= 9) { return "Pawn-" + (rank).toString();}
+    if (rank === 0) { return "Unranked"; }
+    if (rank > 0 && rank <= 9) { return "Pawn-" + (rank).toString(); }
     if (rank >= 10 && rank < (10 + 9)) { return "Knight-" + (rank - 9).toString(); }
     if (rank >= (10 + 9) && rank < (10 + 9 + 9)) { return "Bishop-" + (rank - 9 - 9).toString(); }
     if (rank >= (10 + 9 + 9) && rank < (10 + 9 + 9 + 9)) { return "Rook-" + (rank - 9 - 9 - 9).toString(); }
