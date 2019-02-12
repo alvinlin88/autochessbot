@@ -16,6 +16,7 @@ install_dependencies:
   artifacts:
     paths:
       - node_modules/
+      - config.js
 
 test_with_lab:
   stage: test
