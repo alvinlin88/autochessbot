@@ -13,6 +13,7 @@ const app = express();
 app.use(bodyParser.json());
 
 const request = require('request');
+const querystring = require('querystring');
 
 app.post("/private/linksteam", (req, res, err) => {
     if (req.header("Authorization") !== "Bearer SUPERSECRET1!") {
