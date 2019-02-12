@@ -12,6 +12,7 @@ install_dependencies:
   stage: build
   script:
     - npm install
+    - cp config-example.js config.js
   artifacts:
     paths:
       - node_modules/
