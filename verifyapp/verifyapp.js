@@ -1,23 +1,41 @@
 const express = require("express");
 const app = express();
 const rp = require("request-promise");
+const querystring = require('querystring');
 
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
+app.set('view engine', 'pug');
+app.set('views', __dirname + '/views');
 
 const config = require("./config");
 const CLIENT_ID = config.discord_client_id;
 const CLIENT_SECRET = config.discord_client_secret;
-const redirect = "https://discordapp.com/api/oauth2/authorize?client_id=" + CLIENT_ID + "&redirect_uri=http%3A%2F%2Flocalhost%3A80%2Fcallback&response_type=code&scope=connections%20identify";
+const authorize_endpoint = "https://discordapp.com/api/oauth2/authorize";
 
 
-app.get("/", function (request, response) {
-    response.write("<!DOCTYPE html>");
-    response.write("<a href=\"" + redirect + "\">Verify</a>");
-    response.send();
+app.get("/", function (req, res) {
+    let query = '?' + querystring.stringify({
+        client_id: CLIENT_ID,
+        redirect_uri: config.verify_redirect_url,
+        scope: "connections identify",
+    });
+
+    let redirect = authorize_endpoint + query;
+
+    res.redirect(redirect);
 });
 
 app.get("/confirm", function (req, res) {
+
+    let steamID = req.query.steamID;
+    let data = req.cookies.data;
+    if (!data.steamIDs.includes(steamID)) {
+        // The steamID is selected from the select page, this should never happen unless someone tries to access
+        // this page directly.
+        res.clearCookie("data", {httpOnly: true});
+        res.render("select_error");
+    }
 
     rp({
         uri: "http://localhost:8080/private/linksteam",
@@ -26,16 +44,24 @@ app.get("/confirm", function (req, res) {
         headers: {
             "Authorization": "Bearer " + "SUPERSECRET1!", // just in case port leaks
         },
-        body: req.cookies.data
+        body: {
+            username: data.username,
+            userID: data.userID,
+            steamID: steamID,
+        }
     }).then(() => {
         res.clearCookie("data", {httpOnly: true});
-        res.sendStatus(200);
+        res.render("select_success", {steamID: steamID});
     }).catch(err => {
-        console.log(err.message);
+        console.log(err.message); // need logging
         res.clearCookie("data", {httpOnly: true});
-        res.sendStatus(500);
+        res.render("select_error");
     });
 
+});
+
+app.get("/select", function (req, res) {
+    res.render('select', {steamIDs: req.cookies.data.steamIDs});
 });
 
 app.get("/callback", (req, res, err) => {
@@ -83,17 +109,22 @@ app.get("/callback", (req, res, err) => {
                     }
                 });
 
+                if (steamIDs.length === 0) {
+                    res.render('no_steam');
+                }
+
                 let data = {
-                    "username": user_response.username,
-                    "userID": user_response.id,
-                    "steamIDs": steamIDs,
+                    username: user_response.username,
+                    userID: user_response.id,
+                    steamIDs: steamIDs,
                 };
 
                 res.cookie("data", data);
-                res.redirect("/confirm");
+                res.redirect("/select");
             }
         )
     }).catch(err => {
+        // need logging
         res.sendStatus(500);
     });
 });

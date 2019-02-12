@@ -31,7 +31,8 @@ app.post("/private/linksteam", (req, res, err) => {
         // TODO: Let users switch between steam IDs ?
         res.sendStatus(200);
     } catch(err) {
-        logger.error(err);
+        res.sendStatus(500);
+        logger.error(err.message);
     }
 });
 

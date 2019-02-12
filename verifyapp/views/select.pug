@@ -1,0 +1,8 @@
+html
+    head
+        title= "Select the steam id you'd like to link to your discord account."
+    body
+        ul
+            each steamID in steamIDs
+                li
+                    a(href='/confirm?steamID=' + steamID) #{steamID}
