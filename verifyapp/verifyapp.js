@@ -3,7 +3,7 @@ const app = express();
 const request = require("request");
 
 
-const config = require("../config");
+const config = require("./config");
 const CLIENT_ID = config.discord_client_id;
 const CLIENT_SECRET = config.discord_client_secret;
 const redirect = "https://discordapp.com/api/oauth2/authorize?client_id=" + CLIENT_ID + "&redirect_uri=http%3A%2F%2Fautochessbot.vinthian.com%2Fcallback&response_type=code&scope=connections%20identify";
@@ -58,7 +58,6 @@ app.get("/callback", (req, res, err) => {
                 "Authorization": "Bearer " + tokens.access_token,
             }
         });
-        console.log(user_response);
 
         let connections_response = await requestPromise({
             uri: "http://discordapp.com/api/users/@me/connections",
@@ -68,7 +67,13 @@ app.get("/callback", (req, res, err) => {
                 "Authorization": "Bearer " + tokens.access_token,
             }
         });
-        console.log(connections_response);
+
+        let steamIDs = [];
+        connections_response.forEach(item => {
+            if (item.type === "steam") {
+                steamIDs.push(item.id);
+            }
+        });
 
         let validatesteam = await requestPromise({
             uri: "http://localhost:8080/private/linksteam",
@@ -77,12 +82,14 @@ app.get("/callback", (req, res, err) => {
             headers: {
                 "Authorization": "Bearer " + "SUPERSECRET1!", // just in case port leaks
             },
-            body: JSON.stringify({
-                "user": user_response,
-                "connections": connections_response
-            }),
+            body: {
+                "username": user_response.username,
+                "userID": user_response.id,
+                "steamIDs": steamIDs,
+            },
         });
-        res.send();
+
+        res.send(200);
     })();
 });
 

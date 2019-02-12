@@ -8,7 +8,9 @@ const config = require("./config");
 const logger = require('./logger.js');
 
 const express = require("express");
+var bodyParser = require('body-parser');
 const app = express();
+app.use(bodyParser.json());
 
 const request = require('request');
 
@@ -19,7 +21,15 @@ app.post("/private/linksteam", (req, res, err) => {
     }
 
     try {
-        discordClient.channels.get("542754359860264981").send("Got validation: " + res.body).then(logger.info).catch(logger.error);
+        logger.info(JSON.stringify(req.body));
+        let channel = discordClient.channels.find(r => r.name === "staff-bot");
+        channel.send("Got validation: " + JSON.stringify(req.body)).then(logger.info).catch(logger.error); // debugging / logging
+        sendDM(req.body.userID, "Your steam account has now been verified.");
+        // TODO: Verify req.body.steamIDs is not an empty list
+        // TODO: Update DB with validated=true
+        // TODO: Better web confirmation landing page
+        // TODO: Let users switch between steam IDs ?
+        res.send(200);
     } catch(err) {
         logger.error(err);
     }
@@ -47,6 +57,7 @@ PREFIX = "!cb ";
 
 let botDownMessage = "Bot is restarting. Lobby commands are currently disabled. Be back in a second!";
 
+const CLIENT_ID = config.discord_client_id;
 let adminRoleName = config.adminRoleName;
 let leagueRoles = config.leagueRoles;
 let leagueToLobbiesPrefix = config.leagueToLobbiesPrefix;
@@ -1260,6 +1271,11 @@ discordClient.on('message', message => {
                     } else {
                         sendChannelandMention(message.channel.id, message.author.id, "You have not linked a steam id. See <#542454956825903104> for more information.");
                     }
+                })();
+                break;
+            case "verify":
+                (function() {
+                    sendDM(message.author.id, "Before you begin, please link your steam account on Discord. Go to `User Settings` > `Connections` and click on the Steam icon. Follow the instructions to link your steam account (You have to log in with your steam credentials) and connect your steam account to Discord. Then, click he following link to verify your account.\nhttps://discordapp.com/api/oauth2/authorize?client_id=" + CLIENT_ID + "&redirect_uri=http%3A%2F%2Fautochessbot.vinthian.com%2Fcallback&response_type=code&scope=connections%20identify\nThis will allow the bot to know what account is linked to your discord account.\nNOTE THAT THIS URL SHOULD BE `discordapp.com` and the . Be careful of phishing attempts where the URL is not correct.");
                 })();
                 break;
             case "link":
