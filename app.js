@@ -513,11 +513,16 @@ discordClient.on('message', message => {
                         let hostLobbyDiscordId = parseDiscordId(parsedCommand.args[0]);
                         User.findByDiscord(hostLobbyDiscordId).then(hostUser => {
                             let hostLobbyEnd = getLobbyForHost(leagueChannel, hostUser.steam);
-                            let regionEnd = hostLobbyEnd["region"];
+                            if (hostLobbyEnd === null) {
+                                sendChannelandMention(message.channel.id, message.author.id, "Sir, <@" + hostUser.discord + "> is not hosting any lobby.");
+                            }
+                            else {
+                                let regionEnd = hostLobbyEnd["region"];
 
-                            lobbies.deleteLobby(leagueChannel, hostUser.steam);
-                            sendChannelandMention(message.channel.id, message.author.id, "Sir, I cancelled <@" + hostUser.discord + ">'s lobby for @" + regionEnd + ".");
-                            sendDM(hostUser.discord, "**Your lobby in <#" + message.channel.id + " was cancelled by an admin.**");
+                                lobbies.deleteLobby(leagueChannel, hostUser.steam);
+                                sendChannelandMention(message.channel.id, message.author.id, "Sir, I cancelled <@" + hostUser.discord + ">'s lobby for @" + regionEnd + ".");
+                                sendDM(hostUser.discord, "**Your lobby in <#" + message.channel.id + " was cancelled by an admin.**");
+                            }
                         });
                     })();
                     break;
