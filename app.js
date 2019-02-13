@@ -16,6 +16,13 @@ const Lobbies = require("./lobbies.js"),
 lobbies.restoreLobbies();
 lobbies.startBackupJob();
 
+// Send consolidated messages at configured speed
+messageConsolidator = require('./message-consolidator');
+messageConsolidator = new messageConsolidator.MessageConsolidator(discordClient);
+setInterval(function() { 
+    messageConsolidator.processQueue();
+}, config.sendMessageInterval);
+
 PREFIX = "!cb ";
 
 let botDownMessage = "Bot is restarting. Lobby commands are currently disabled. Be back in a second!";
@@ -63,13 +70,13 @@ function parseCommand(message) {
 function sendChannelandMention(channelDiscordId, userDiscordId, text) {
     let channel = discordClient.channels.get(channelDiscordId);
     let user = discordClient.users.get(userDiscordId);
-    channel.send('<@' + user.id + '> ' + text).then(logger.info).catch(logger.error).then(logger.info).catch(logger.error);
+    messageConsolidator.enqueueMessage(channel, text, userDiscordId);
     logger.info('Sent message in channel ' + channel.name + ' to ' + user.username + ': ' + text);
 }
 
 function sendChannel(channelDiscordId, text) {
     let channel = discordClient.channels.get(channelDiscordId);
-    channel.send(text).then(logger.info).catch(logger.error).then(logger.info).catch(logger.error);
+    messageConsolidator.enqueueMessage(channel, text);
     logger.info('Sent message in channel ' + channel.name + ': ' + text);
 }
 
