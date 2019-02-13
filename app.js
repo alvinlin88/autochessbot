@@ -549,7 +549,7 @@ function command_adminkick(message, args, leagueChannel, user) {
                 }
 
                 lobbies.removePlayerFromLobby(leagueChannel, hostUser.steam, playerUser.steam);
-                let kickUserName = message.client.users.find("id", playerUser.discord);
+                let kickUserName = message.client.users.find(r => r.id === playerUser.discord);
                 sendChannelandMention(message.channel.id, user.id, "kicked " + kickUserName + " from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby. `(" + getLobbyForHost(leagueChannel, hostUser.steam).players.length + "/8)`");
                 sendDM(playerUser.discord, "<#" + message.channel.id + "> <@" + user.id + "> (Admin) kicked you from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby.");
                 resolve(true);
@@ -560,6 +560,12 @@ function command_adminkick(message, args, leagueChannel, user) {
 
 discordClient.on('ready', () => {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
+    // TODO: Rotate these!
+    let botActivities = [
+        ["WATCHING", {type: "quest in the bathtub"}],
+    ];
+    let botActivity = botActivities[Math.floor(Math.random() * botActivities.length)];
+    discordClient.user.setActivity(botActivity[0], botActivity[1]);
     try {
         discordClient.channels.get("542754359860264981").send("I am back!").then(logger.info).catch(logger.error);
     } catch(err) {
@@ -780,7 +786,7 @@ discordClient.on('message', message => {
                                 });
                             });
                         } else {
-                            if (lobby.players.length === 8) {
+                            if (lobby.players.length === 8) { // TODO: recheck player ranks and roles here...
                                 User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                     getSteamPersonaNames(lobby.players).then(personas => {
                                         let playerDiscordIds = [];
