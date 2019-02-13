@@ -937,7 +937,7 @@ discordClient.on('message', message => {
                                 return 0;
                             }
                             if (hostLobby.host === kickedPlayerUser.steam) {
-                                sendChannelandMention(message.channel.id, message.author.id, "You can not kick yourself.");
+                                sendChannelandMention(message.channel.id, message.author.id, "You can not kick yourself. (Use !cancel to cancel a lobby you have hosted)");
                                 return 0;
                             }
                             if (!hostLobby.players.includes(kickedPlayerUser.steam)) {
