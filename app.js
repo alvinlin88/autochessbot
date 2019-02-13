@@ -623,12 +623,17 @@ discordClient.on('message', message => {
                             let rankUpdate = {rank: rank.mmr_level, score: rank.score};
                             if (rank.score === null) delete rankUpdate["score"];
                             user.update(rankUpdate);
+                            let minHostRankRestrictions = rank.mmr_level - 2;
                             if (rank.mmr_level < leagueRequirements[leagueRole]) {
                                 sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required rank: " + getRankString(leagueRequirements[leagueRole]) + ")");
                                 return 0;
                             }
                             if (rank.mmr_level < rankRequirement) {
                                 sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required rank: " + getRankString(rankRequirement) + ")");
+                                return 0;
+                            }
+                            if (rankRequirement > minHostRankRestrictions && minHostRankRestrictions > leagueRequirements[leagueRole]) {
+                                sendChannelandMention(message.channel.id, message.author.id, "You can not restrict ranks to more than 2 levels below your current rank. (Your rank: " + getRankString(rank.mmr_level) + ", minimum restriction rank: " + getRankString(minHostRankRestrictions) + ")");
                                 return 0;
                             }
                             // good to start
