@@ -424,7 +424,9 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
 
                 // always show and whisper about demotions in case they cannot see the channel anymore
                 if (removed.length > 0) {
-                    sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + ". " + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
+                    if (message.channel.type !== "dm") {
+                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + ". " + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
+                    }
                     sendDM(message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
 
                     // If the user was demoted, cancel and kick them from all lobbies... we're too lazy to check if they're still qualified or not so we just do a blanket cancel/kick
