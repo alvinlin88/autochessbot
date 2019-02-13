@@ -14,6 +14,7 @@ app.use(bodyParser.json());
 
 const request = require('request');
 const querystring = require('querystring');
+const User = require('./schema/user.js');
 
 app.post("/private/linksteam", (req, res, err) => {
     if (req.header("Authorization") !== "Bearer SUPERSECRET1!") {
@@ -25,14 +26,50 @@ app.post("/private/linksteam", (req, res, err) => {
         logger.info(JSON.stringify(req.body));
         let channel = discordClient.channels.find(r => r.name === "staff-bot");
         channel.send("Got validation: " + JSON.stringify(req.body)).then(logger.info).catch(logger.error); // debugging / logging
-        sendDM(req.body.userID, "Your steam account has now been verified.");
-        // Verify req.body.steamIDs is not an empty list - done
-        // Let users switch between steam IDs - done
-        // note to @Vinthian: I made this endpoint take 1 and only 1 steamID. expect req.body.steamID is always there
 
-        // TODO: Update DB with validated=true
-        // TODO: Better web confirmation landing page
-        res.sendStatus(200);
+        let userDiscordId = req.body.userID;
+        let userSteamId = req.body.steamID;
+
+        let verifyExistingLink = false;
+
+        User.findAllBySteam(userSteamId).then(users => {
+            let overwriteOtherUsersWithSameSteam = [];
+
+            users.forEach(user => {
+                if (user.discord === userDiscordId) {
+                    verifyExistingLink = true;
+                    user.update({validated: true}).then( () =>
+                        sendDM(userDiscordId, "Your steam account has now been verified.")
+                    );
+                } else {
+                    overwriteOtherUsersWithSameSteam.push(user.update({steam: null, validated: false}));
+                }
+            });
+
+            if (!verifyExistingLink) {
+                User.findByDiscord(userDiscordId).then(user => {
+                    if (user === null) {
+                        User.create({
+                            discord: userDiscordId,
+                            steam: userSteamId,
+                            validated: true,
+                        }).then(() => sendDM(userDiscordId, "Your steam account has now been verified."));
+                    } else {
+                        user.update({steam: userSteamId, validated: true})
+                            .then(() => sendDM(userDiscordId, "Your steam account has now been verified."));
+                    }
+                })
+            }
+
+            if (overwriteOtherUsersWithSameSteam.length > 0) {
+                Promise.all(overwriteOtherUsersWithSameSteam).then(users => {
+                    let discordIds = users.map(user => user.discord).join(',');
+                    channel.send("The following discord ids: ${discordIds} are linked to steam id ${userSteamId} that is now verified by ${userDiscordId}");
+                })
+            }
+
+            res.sendStatus(200);
+        });
     } catch(err) {
         res.sendStatus(500);
         logger.error(err.message);
@@ -46,8 +83,6 @@ app.listen("8080", (err) => {
 
     console.log("private validation server started");
 });
-
-const User = require('./schema/user.js');
 
 const Lobbies = require("./lobbies.js"),
     lobbies = new Lobbies();
@@ -478,6 +513,19 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
     }
 }
 
+function verifySteam(discordId) {
+    let authorize_endpoint = "https://discordapp.com/api/oauth2/authorize";
+    let query = '?' + querystring.stringify({
+        client_id: CLIENT_ID,
+        redirect_uri: config.verify_redirect_url,
+        scope: "connections identify",
+        response_type: "code"
+    });
+    let redirect = authorize_endpoint + query;
+
+    sendDM(discordId, "Before you begin, please link your steam account on Discord. Go to `User Settings` > `Connections` and click on the Steam icon. Follow the instructions to link your steam account (You have to log in with your steam credentials) and connect your steam account to Discord. Then, click he following link to verify your account.\n" + redirect + "\nThis will allow the bot to know what account is linked to your discord account.\nNOTE THAT THIS URL SHOULD BE `discordapp.com` and the . Be careful of phishing attempts where the URL is not correct.");
+}
+
 discordClient.on('ready', () => {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
@@ -506,7 +554,6 @@ discordClient.on('message', message => {
     logger.info(" *** Received command: " + message.content);
 
     let parsedCommand = parseCommand(message);
-    let userPromise = User.findByDiscord(message.author.id);
 
     if (message.channel.type !== "dm" && (message.member === null || message.guild === null)) {
         sendDM(message.author.id, "Error! Are you set to invisible mode?");
@@ -523,6 +570,14 @@ discordClient.on('message', message => {
         deleteMessage(message);
         return 0;
     }
+
+    let linkAliases = ["link", "verify"];
+    if (linkAliases.includes(parsedCommand.command)) {
+        verifySteam(message.author.id);
+        return 0;
+    }
+
+    let userPromise = User.findByDiscord(message.author.id);
 
     userPromise.then(user => {
         let isLobbyCommand = null;
@@ -606,6 +661,10 @@ discordClient.on('message', message => {
                     break;
                 case "host":
                     (function () {
+                        if (user === null) {
+
+                        }
+
                         if (disableLobbyCommands === true) {
                             sendChannelandMention(message.channel.id, message.author.id, botDownMessage);
                             return 0;
@@ -1281,79 +1340,6 @@ discordClient.on('message', message => {
                     }
                 })();
                 break;
-            case "verify":
-                (function() {
-                    let authorize_endpoint = "https://discordapp.com/api/oauth2/authorize";
-                    let query = '?' + querystring.stringify({
-                        client_id: CLIENT_ID,
-                        redirect_uri: config.verify_redirect_url,
-                        scope: "connections identify",
-                        response_type: "code"
-                    });
-                    let redirect = authorize_endpoint + query;
-
-                    sendDM(message.author.id, "Before you begin, please link your steam account on Discord. Go to `User Settings` > `Connections` and click on the Steam icon. Follow the instructions to link your steam account (You have to log in with your steam credentials) and connect your steam account to Discord. Then, click he following link to verify your account.\n" + redirect + "\nThis will allow the bot to know what account is linked to your discord account.\nNOTE THAT THIS URL SHOULD BE `discordapp.com` and the . Be careful of phishing attempts where the URL is not correct.");
-                })();
-                break;
-            case "link":
-                (function () {
-                    if (message.channel.type === "dm") {
-                        sendChannelandMention(message.channel.id, message.author.id, "I can not link steam id in direct messages. Please try in <#542465986859761676>.");
-                        return 0;
-                    }
-                    // this version does not do linking and assumes validated by default
-                    const steamIdLink = parsedCommand.args[0];
-
-                    if (steamIdLink === undefined) {
-                        sendChannelandMention(message.channel.id, message.author.id, 'Invalid arguments. The commands is `!link [Steam64 ID]`. See <#542494966220587038> for help.');
-                        return 0;
-                    }
-
-                    if (steamIdLink.includes("[") || steamIdLink.includes("STEAM") || steamIdLink.length < 12) {
-                        sendChannelandMention(message.channel.id, message.author.id, "**WARNING** That looks like an invalid steam id. Make sure you are using the \"Steam64 ID\". See <#542494966220587038> for help.");
-                    }
-
-                    if (!parseInt(steamIdLink)) {
-                        sendChannelandMention(message.channel.id, message.author.id, 'Invalid steam id. See <#542494966220587038> for help.');
-                        return 0;
-                    }
-
-                    // const token = randtoken.generate(6);
-
-                    User.findAllBySteam(steamIdLink).then(existingUsers => {
-                        let playerDiscordIds = [];
-
-                        // TODO: recheck ranks here
-                        existingUsers.forEach(player => {
-                            playerDiscordIds.push("<@" + player.discord + ">");
-                        });
-
-                        if ((user === null && existingUsers.length > 0) || (user !== null && existingUsers.length >= 1)) {
-                            sendChannelandMention(message.channel.id, message.author.id, "**WARNING!** Could not link that steam id. The steam id `" + steamIdLink + "` has already been linked to these accounts: " + playerDiscordIds.join(", ") + ". See <#542494966220587038> for help.");
-                            return 0;
-                        }
-
-                        if (user === null) {
-                            User.create({
-                                discord: message.author.id,
-                                steam: steamIdLink,
-                                validated: false,
-                            }).then(test => {
-                                // logger.info(test.toJSON());
-                                sendChannelandMention(message.channel.id, message.author.id, "I have linked your steam id `" + steamIdLink + "`. If I do not promote you right away then you probably used the wrong steam id or you are set to Invisible on Discord.");
-                                updateRoles(message, test, true, false);
-                            }).catch(function (error) {
-                                logger.error("error " + error);
-                            });
-                        } else {
-                            user.update({steam: steamIdLink, validated: false}).then(test => {
-                                sendChannelandMention(message.channel.id, message.author.id, "I have linked your steam id `" + steamIdLink + "`. If I do not promote you right away then you probably used the wrong steam id or you are set to Invisible on Discord.");
-                                updateRoles(message, test, true, false);
-                            });
-                        }
-                    });
-                })();
-                break;
             case "adminrestartbot":
             case "restartbot":
             case "suicide":
@@ -1783,7 +1769,11 @@ discordClient.on('message', message => {
                                 if (rank.score !== null) {
                                     MMRStr =  " MMR is: `" + rank.score + "`. ";
                                 }
-                                sendChannelandMention(message.channel.id, message.author.id, "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
+                                let notVerifiedReminder = "";
+                                if (!user.validated) {
+                                    notVerifiedReminder = "(Not verified) ";
+                                }
+                                sendChannelandMention(message.channel.id, message.author.id, notVerifiedReminder + "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
                                 let rankUpdate = {rank: rank.mmr_level, score: rank.score};
                                 if (rank.score === null) delete rankUpdate["score"];
                                 user.update(rankUpdate).then(nothing => {
