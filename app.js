@@ -1079,7 +1079,7 @@ discordClient.on('message', message => {
                             let lobby = lobbies.getLobbyForPlayer(leagueChannel, hostUser.steam);
 
                             if (lobby === null) {
-                                sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": That user/you are is not hosting any lobbies.");
+                                sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": That user is not (or you are not) hosting any lobbies.");
                                 deleteMessage(message);
                                 return 0;
                             }
