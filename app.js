@@ -47,9 +47,6 @@ app.listen("8080", (err) => {
     console.log("private validation server started");
 });
 
-const Sequelize = require('sequelize');
-const Op = Sequelize.Op;
-
 const User = require('./schema/user.js');
 
 const Lobbies = require("./lobbies.js"),
@@ -134,16 +131,32 @@ function deleteMessage(message) {
     }
 }
 
-function getRankString(rank) {
-    if (rank === 0) { return "Unranked"; }
-    if (rank > 0 && rank <= 9) { return "Pawn-" + (rank).toString(); }
-    if (rank >= 10 && rank < (10 + 9)) { return "Knight-" + (rank - 9).toString(); }
-    if (rank >= (10 + 9) && rank < (10 + 9 + 9)) { return "Bishop-" + (rank - 9 - 9).toString(); }
-    if (rank >= (10 + 9 + 9) && rank < (10 + 9 + 9 + 9)) { return "Rook-" + (rank - 9 - 9 - 9).toString(); }
-    if (rank >= (10 + 9 + 9 + 9) && rank < (10 + 9 + 9 + 9 + 1)) { return "King"; }
-    if (rank >= (10 + 9 + 9 + 9 + 1)) { return "Queen"; }
+function getRank(rank) {
+    if (rank === 0) { return {name: "Unranked"}; }
+    if (rank > 0 && rank <= 9) { return {icon: "♟", name: "Pawn", level: (rank).toString()}; }
+    if (rank >= 10 && rank < (10 + 9)) { return {icon: "♞", name: "Knight", level: (rank - 9).toString()}; }
+    if (rank >= (10 + 9) && rank < (10 + 9 + 9)) { return {icon: "♝", name: "Bishop", level: (rank - 9 - 9).toString()}; }
+    if (rank >= (10 + 9 + 9) && rank < (10 + 9 + 9 + 9)) { return {icon: "♜", name: "Rook", level: (rank - 9 - 9 - 9).toString()}; }
+    if (rank >= (10 + 9 + 9 + 9) && rank < (10 + 9 + 9 + 9 + 1)) { return {icon: "♚", name: "King"}; }
+    if (rank >= (10 + 9 + 9 + 9 + 1)) { return {icon: "♕", name: "Queen"}; }
     // if (rank >= (10 + 9 + 9 + 9) && rank < (10 + 9 + 9 + 9 + 1)) { return "King-" + (rank - 9 - 9 - 9 - 9).toString(); }
     // if (rank >= (10 + 9 + 9 + 9 + 1)) { return "Queen-" + (rank - 9 - 9 - 9 - 9 - 1).toString(); }
+    return "ERROR";
+}
+
+function getRankString(rank) {
+    let rankData = getRank(rank);
+    let iconStr = "";
+    if (rankData.hasOwnProperty("icon")) {
+        iconStr = rankData.icon + " ";
+    }
+    if (rankData.hasOwnProperty("icon") && rankData.hasOwnProperty("name")) {
+        if (rankData.hasOwnProperty("level")) {
+            return iconStr + "**" + rankData.name + "-" + rankData.level + "**";
+        } else {
+            return iconStr + "**" + rankData.name + "**";
+        }
+    }
     return "ERROR";
 }
 
@@ -440,18 +453,18 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
 
                 // always show and whisper about demotions in case they cannot see the channel anymore
                 if (removed.length > 0) {
-                    sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
-                    sendDM(message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
+                    sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
+                    sendDM(message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
                 }
 
                 if (notifyOnChange) {
                     if (added.length > 0) {
-                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + messagePrefix2 + " promoted to: `" + added.join("`, `") + "`");
+                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " promoted to: `" + added.join("`, `") + "`");
                     }
                 }
                 if (notifyNoChange) {
                     if (added.length === 0 && removed.length === 0) {
-                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is `" + rankStr + "`." + MMRStr + " No role changes based on your rank.");
+                        sendChannelandMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + " No role changes based on your rank.");
 
                     }
                 }
@@ -493,7 +506,7 @@ discordClient.on('message', message => {
     logger.info(" *** Received command: " + message.content);
 
     let parsedCommand = parseCommand(message);
-    let userPromise = User.findOne({where: {discord: message.author.id}});
+    let userPromise = User.findByDiscord(message.author.id);
 
     if (message.channel.type !== "dm" && (message.member === null || message.guild === null)) {
         sendDM(message.author.id, "Error! Are you set to invisible mode?");
@@ -537,13 +550,18 @@ discordClient.on('message', message => {
                         }
 
                         let hostLobbyDiscordId = parseDiscordId(parsedCommand.args[0]);
-                        User.find({where: {discord: hostLobbyDiscordId}}).then(hostUser => {
+                        User.findByDiscord(hostLobbyDiscordId).then(hostUser => {
                             let hostLobbyEnd = getLobbyForHost(leagueChannel, hostUser.steam);
-                            let regionEnd = hostLobbyEnd["region"];
+                            if (hostLobbyEnd === null) {
+                                sendChannelandMention(message.channel.id, message.author.id, "Sir, <@" + hostUser.discord + "> is not hosting any lobby.");
+                            }
+                            else {
+                                let regionEnd = hostLobbyEnd["region"];
 
-                            lobbies.deleteLobby(leagueChannel, hostUser.steam);
-                            sendChannelandMention(message.channel.id, message.author.id, "Sir, I cancelled <@" + hostUser.discord + ">'s lobby for @" + regionEnd + ".");
-                            sendDM(hostUser.discord, "**Your lobby in <#" + message.channel.id + " was cancelled by an admin.**");
+                                lobbies.deleteLobby(leagueChannel, hostUser.steam);
+                                sendChannelandMention(message.channel.id, message.author.id, "Sir, I cancelled <@" + hostUser.discord + ">'s lobby for @" + regionEnd + ".");
+                                sendDM(hostUser.discord, "**Your lobby in <#" + message.channel.id + " was cancelled by an admin.**");
+                            }
                         });
                     })();
                     break;
@@ -565,8 +583,8 @@ discordClient.on('message', message => {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, that player id is invalid.");
                         }
 
-                        User.findOne({where: {discord: hostDiscordIdKick}}).then(hostUser => {
-                            User.findOne({where: {discord: playerDiscordIdKick}}).then(playerUser => {
+                        User.findByDiscord(hostDiscordIdKick).then(hostUser => {
+                            User.findByDiscord(playerDiscordIdKick).then(playerUser => {
                                 let hostLobby = getLobbyForHost(leagueChannel, hostUser.steam);
                                 if (hostLobby === null) {
                                     sendChannelandMention(message.channel.id, message.author.id, "Sir, that person is not hosting a lobby currently.");
@@ -649,12 +667,17 @@ discordClient.on('message', message => {
                             let rankUpdate = {rank: rank.mmr_level, score: rank.score};
                             if (rank.score === null) delete rankUpdate["score"];
                             user.update(rankUpdate);
+                            let minHostRankRestrictions = rank.mmr_level - 2;
                             if (rank.mmr_level < leagueRequirements[leagueRole]) {
-                                sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: `" + getRankString(rank.mmr_level) + "`, required rank: `" + getRankString(leagueRequirements[leagueRole]) + "`)");
+                                sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required rank: " + getRankString(leagueRequirements[leagueRole]) + ")");
                                 return 0;
                             }
                             if (rank.mmr_level < rankRequirement) {
-                                sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: `" + getRankString(rank.mmr_level) + "`, required rank: `" + getRankString(rankRequirement) + "`)");
+                                sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required rank: " + getRankString(rankRequirement) + ")");
+                                return 0;
+                            }
+                            if (rankRequirement > minHostRankRestrictions && minHostRankRestrictions > leagueRequirements[leagueRole]) {
+                                sendChannelandMention(message.channel.id, message.author.id, "You can not restrict ranks to more than 2 levels below your current rank. (Your rank: " + getRankString(rank.mmr_level) + ", minimum restriction rank: " + getRankString(minHostRankRestrictions) + ")");
                                 return 0;
                             }
                             // good to start
@@ -663,7 +686,7 @@ discordClient.on('message', message => {
 
                             // let currentLobby = getLobbyForPlayer(leagueChannel, user.steam);
 
-                            sendChannelandMention(message.channel.id, message.author.id, "**=== <@&" + message.guild.roles.find(r => r.name === region).id + "> Lobby started by <@" + user.discord + "> `" + getRankString(rank.mmr_level) + "`. Type \"!join <@" + user.discord + ">\" to join! [`" + getRankString(newLobby["rankRequirement"]) + "` required to join]** \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords here.", false);
+                            sendChannelandMention(message.channel.id, message.author.id, "**=== <@&" + message.guild.roles.find(r => r.name === region).id + "> Lobby started by <@" + user.discord + "> " + getRankString(rank.mmr_level) + ". Type \"!join <@" + user.discord + ">\" to join! [" + getRankString(newLobby["rankRequirement"]) + " required to join]** \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords here.", false);
                             sendDM(message.author.id, "<#" + message.channel.id + "> **Please host a private Dota Auto Chess lobby in @" + region + " region with the following password:** `" + newLobby["password"] + "`. \nPlease remember to double check people's ranks and make sure the right ones joined the game before starting. \nYou can see the all players in the lobby by using `!lobby` in the channel. \nWait until the game has started in the Dota 2 client before typing `!start`. \nIf you need to kick a player from the Discord lobby that has not joined your Dota 2 lobby or if their rank changed, use `!kick @player` in the channel.");
                         });
                     })();
@@ -696,20 +719,16 @@ discordClient.on('message', message => {
                                 return 0;
                             }
 
-                            let wheres = [];
-                            lobby.players.forEach(steamId => {
-                                wheres.push({steam: steamId});
-                            });
-                            User.findAll({where: {[Op.or]: wheres}}).then(players => {
+                            User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                 getSteamPersonaNames(lobby.players).then(personas => {
                                     let playerDiscordIds = [];
                                     let hostUserDiscordId = null;
 
                                     players.forEach(player => {
                                         if (player.steam !== lobby.host) {
-                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" `" + getRankString(player.rank) + "`");
+                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank) + "");
                                         } else {
-                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" `" + getRankString(player.rank) + "` **[Host]**");
+                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank) + " **[Host]**");
                                             hostUserDiscordId = player.discord;
                                         }
                                     });
@@ -721,20 +740,16 @@ discordClient.on('message', message => {
                             });
                         } else {
                             if (lobby.players.length === 8) {
-                                let wheres = [];
-                                lobby.players.forEach(steamId => {
-                                    wheres.push({steam: steamId});
-                                });
-                                User.findAll({where: {[Op.or]: wheres}}).then(players => {
+                                User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                     getSteamPersonaNames(lobby.players).then(personas => {
                                         let playerDiscordIds = [];
                                         let hostUserDiscordId = null;
 
                                         players.forEach(player => {
                                             if (player.steam !== lobby.host) {
-                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" `" + getRankString(player.rank) + "`");
+                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank));
                                             } else {
-                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" `" + getRankString(player.rank) + "` **[Host]**");
+                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank) + " **[Host]**");
                                                 hostUserDiscordId = player.discord;
                                             }
                                         });
@@ -831,15 +846,15 @@ discordClient.on('message', message => {
                                 }
                             }
 
-                            let filter = null;
+                            let userPromise = null;
 
                             if (resultLobbyHostId === null) {
-                                filter = {where: {discord: parseDiscordId(parsedCommand.args[0])}};
+                                userPromise = User.findByDiscord(parseDiscordId(parsedCommand.args[0]));
                             } else {
-                                filter = {where: {steam: resultLobbyHostId}};
+                                userPromise = User.findOneBySteam(resultLobbyHostId);
                             }
 
-                            User.findOne(filter).then(function (hostUser) {
+                            userPromise.then(function (hostUser) {
                                 if (hostUser === null) {
                                     sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Host not found in database.");
                                     deleteMessage(message);
@@ -863,12 +878,12 @@ discordClient.on('message', message => {
                                 if (rank.score === null) delete rankUpdate["score"];
                                 user.update(rankUpdate);
                                 if (rank.mmr_level < leagueRequirements[leagueRole]) {
-                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\":You are not high enough rank to join lobbies in this league. (Your rank: `" + getRankString(rank.mmr_level) + "`, required league rank: `" + getRankString(leagueRequirements[leagueRole]) + "`)");
+                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\":You are not high enough rank to join lobbies in this league. (Your rank: " + getRankString(rank.mmr_level) + ", required league rank: " + getRankString(leagueRequirements[leagueRole]) + ")");
                                     deleteMessage(message);
                                     return 0;
                                 }
                                 if (rank.mmr_level < lobby["rankRequirement"]) {
-                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not high enough rank to join this lobby. (Your rank: `" + getRankString(rank.mmr_level) + "`, required lobby rank: `" + getRankString(lobby["rankRequirement"]) + "`)", true);
+                                    sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not high enough rank to join this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required lobby rank: " + getRankString(lobby["rankRequirement"]) + ")", true);
                                     deleteMessage(message);
                                     return 0;
                                 }
@@ -877,8 +892,8 @@ discordClient.on('message', message => {
                                 lobby.lastactivity = Date.now();
 
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
-                                    sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" `" + getRankString(rank.mmr_level) + "` **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`");
-                                    sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" `" + getRankString(rank.mmr_level) + "` **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
+                                    sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`");
+                                    sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
                                     sendDM(message.author.id, "<#" + message.channel.id + "> Lobby password for <@" + hostUser.discord + "> " + lobby["region"] + " region: `" + lobby["password"] + "`. Please join this lobby in Dota 2 Custom Games. If you cannot find the lobby, try refreshing in your Dota 2 client or whisper the host on Discord to create it <@" + hostUser.discord + ">.");
                                     if (lobby.players.length === 8) {
                                         sendChannel(message.channel.id, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**", false);
@@ -912,7 +927,7 @@ discordClient.on('message', message => {
                         }
 
                         let hostDiscordQuitId = playerLobbyLeave["host"];
-                        User.findOne({where: {steam: hostDiscordQuitId}}).then(function (hostUser) {
+                        User.findOneBySteam(hostDiscordQuitId).then(function (hostUser) {
                             if (lobbies.removePlayerFromLobby(leagueChannel, hostUser.steam, user.steam)) {
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
                                     let numPlayersLeft = lobbies.getLobbyForHost(leagueChannel, hostUser.steam).players.length;
@@ -950,7 +965,7 @@ discordClient.on('message', message => {
                             deleteMessage(message);
                             return 0;
                         }
-                        User.findOne({where: {discord: kickedPlayerDiscordId}}).then(function (kickedPlayerUser) {
+                        User.findByDiscord(kickedPlayerDiscordId).then(function (kickedPlayerUser) {
                             if (kickedPlayerUser === null) {
                                 sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": User not in database. Make sure to use mentions in command: `!kick @username`");
                                 deleteMessage(message);
@@ -1011,22 +1026,16 @@ discordClient.on('message', message => {
                             if (lobbiesInLeagueChannel.hasOwnProperty(hostId)) {
                                 let lobby = lobbiesInLeagueChannel[hostId];
                                 if (lobby.host !== null && lobby.password !== null) {
-                                    let wheres = [];
-
-                                    lobby.players.forEach(steamId => {
-                                        wheres.push({steam: steamId});
-                                    });
-
-                                    User.findAll({where: {[Op.or]: wheres}}).then(players => {
+                                    User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                         getSteamPersonaNames(lobby.players).then(personas => {
                                             let playerDiscordIds = [];
                                             let hostDiscord = "ERROR";
                                             let hostDiscordId = null;
                                             players.forEach(player => {
                                                 if (player.steam !== lobby.host) {
-                                                    playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + "`");
+                                                    playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank));
                                                 } else {
-                                                    hostDiscord = "<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + "` **[Host]**";
+                                                    hostDiscord = "<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + " **[Host]**";
                                                     hostDiscordId = player.discord;
                                                 }
                                             });
@@ -1066,9 +1075,9 @@ discordClient.on('message', message => {
 
                                             if (!dontPrint) {
                                                 if (printFullList === true) {
-                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [`" + getRankString(lobby.rankRequirement) + "+`] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr);
+                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr);
                                                 } else {
-                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [`" + getRankString(lobby.rankRequirement) + "+`] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + "Use \"!join <@" + hostDiscordId + ">\" to join lobby. (" + lobbyTime + "m)" + lastActivityStr + fullStr);
+                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + "Use \"!join <@" + hostDiscordId + ">\" to join lobby. (" + lobbyTime + "m)" + lastActivityStr + fullStr);
                                                 }
                                             }
                                         });
@@ -1105,7 +1114,7 @@ discordClient.on('message', message => {
                         //     sendChannelandMention(message.channel.id, message.author.id, "Could not find that user on this server.");
                         //     return 0;
                         // }
-                        User.findOne({where: {discord: lobbyHostDiscordId}}).then(hostUser => {
+                        User.findByDiscord( lobbyHostDiscordId).then(hostUser => {
                             let lobby = lobbies.getLobbyForPlayer(leagueChannel, hostUser.steam);
 
                             if (lobby === null) {
@@ -1115,21 +1124,16 @@ discordClient.on('message', message => {
                             }
 
                             if (lobby.host !== null && lobby.password !== null) {
-                                let wheres = [];
-
-                                lobby.players.forEach(steamId => {
-                                    wheres.push({steam: steamId});
-                                });
-                                User.findAll({where: {[Op.or]: wheres}}).then(players => {
+                                User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                     getSteamPersonaNames(lobby.players).then(personas => {
                                         let playerDiscordIds = [];
                                         let hostDiscord = "ERROR";
                                         let hostDiscordId = null;
                                         players.forEach(player => {
                                             if (player.steam !== lobby.host) {
-                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + "`");
+                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank));
                                             } else {
-                                                hostDiscord = "<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + "` **[Host]**";
+                                                hostDiscord = "<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + " **[Host]**";
                                                 hostDiscordId = player.discord;
                                             }
                                         });
@@ -1141,9 +1145,9 @@ discordClient.on('message', message => {
                                                 lastActivityStr = " (" + +"m last activity)";
                                             }
                                         }
-                                        sendChannelandMention(message.channel.id, message.author.id, "=== **@" + lobby.region + "** [`" + getRankString(lobby.rankRequirement) + "+`] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
+                                        sendChannelandMention(message.channel.id, message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
                                         // also whisper
-                                        sendDM(message.author.id, "=== **@" + lobby.region + "** [`" + getRankString(lobby.rankRequirement) + "+`] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
+                                        sendDM(message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
                                         deleteMessage(message);
                                     });
                                 });
@@ -1198,7 +1202,7 @@ discordClient.on('message', message => {
                         }
 
 
-                        User.findOne({where: {steam: playerSendPassLobby.host}}).then(function (hostUser) {
+                        User.findOneBySteam(playerSendPassLobby.host).then(function (hostUser) {
                             if (hostUser === null) {
                                 sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Host not found in database.");
                                 deleteMessage(message);
@@ -1316,7 +1320,7 @@ discordClient.on('message', message => {
 
                     // const token = randtoken.generate(6);
 
-                    User.findAll({where: {steam: steamIdLink}}).then(existingUsers => {
+                    User.findAllBySteam(steamIdLink).then(existingUsers => {
                         let playerDiscordIds = [];
 
                         // TODO: recheck ranks here
@@ -1529,7 +1533,7 @@ discordClient.on('message', message => {
                     }
                     let linkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
 
-                    User.findOne({where: {discord: linkPlayerDiscordId}}).then(function (linkPlayerUser) {
+                    User.findByDiscord(linkPlayerDiscordId).then(function (linkPlayerUser) {
                         if (linkPlayerUser === null) {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I could not find that user in the database. This command is for updating links, the user must link themselves first.");
                             return 0;
@@ -1563,7 +1567,7 @@ discordClient.on('message', message => {
                     }
                     let updateRolePlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
 
-                    User.findOne({where: {discord: updateRolePlayerDiscordId}}).then(function (playerUser) {
+                    User.findByDiscord(updateRolePlayerDiscordId).then(function (playerUser) {
                         if (playerUser === null) {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I could not find that user.");
                             return 0;
@@ -1584,7 +1588,7 @@ discordClient.on('message', message => {
                     let createLinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
                     let forceSteamIdLink = parsedCommand.args[1];
 
-                    User.findOne({where: {discord: createLinkPlayerDiscordId}}).then(function (linkPlayerUser) {
+                    User.findByDiscord(createLinkPlayerDiscordId).then(function (linkPlayerUser) {
                         if (linkPlayerUser === null) {
                             User.create({
                                 discord: createLinkPlayerDiscordId,
@@ -1613,7 +1617,7 @@ discordClient.on('message', message => {
                     }
                     let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
 
-                    User.findOne({where: {discord: unlinkPlayerDiscordId}}).then(function (unlinkPlayerUser) {
+                    User.findByDiscord(unlinkPlayerDiscordId).then(function (unlinkPlayerUser) {
                         let oldSteamID = unlinkPlayerUser.steam;
                         unlinkPlayerUser.update({steam: null, validated: false}).then(function (result) {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id. `" + oldSteamID + "`");
@@ -1637,7 +1641,7 @@ discordClient.on('message', message => {
                     }
                     let unlinkPlayerSteamId = parsedCommand.args[0];
 
-                    User.findAll({where: {steam: unlinkPlayerSteamId}}).then(function (unlinkPlayerUsers) {
+                    User.findAllBySteam(unlinkPlayerSteamId).then(function (unlinkPlayerUsers) {
                         unlinkPlayerUsers.forEach(unlinkPlayerUser => {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id.");
                             unlinkPlayerUser.update({steam: null, validated: false});
@@ -1662,7 +1666,7 @@ discordClient.on('message', message => {
                         return 0;
                     }
 
-                    User.findOne({where: {discord: infoPlayerDiscordId}}).then(function (infoPlayerUser) {
+                    User.findByDiscord(infoPlayerDiscordId).then(function (infoPlayerUser) {
                         if (infoPlayerUser === null) {
                             // todo infoPlayerUser is null here
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I did not find any matches in database for <@" + infoPlayerUser.discord + ">");
@@ -1693,7 +1697,7 @@ discordClient.on('message', message => {
                         return 0;
                     }
 
-                    User.findAll({where: {steam: steamId}}).then(players => {
+                    User.findAllBySteam(steamId).then(players => {
                         let playerDiscordIds = [];
 
                         // TODO: recheck ranks here
@@ -1721,7 +1725,7 @@ discordClient.on('message', message => {
                                 sendChannelandMention(message.channel.id, message.author.id, "Could not find that user on this server.");
                                 return 0;
                             }
-                            User.findOne({where: {discord: getRankUserDiscordId}}).then(getRankUser => {
+                            User.findByDiscord(getRankUserDiscordId).then(getRankUser => {
                                 if (getRankUser === null) {
                                     sendChannelandMention(message.channel.id, message.author.id, "That user has not linked a steam id yet.");
                                     return 0;
@@ -1736,7 +1740,7 @@ discordClient.on('message', message => {
                                     if (rank.score !== null) {
                                         MMRStr =  " MMR is: `" + rank.score + "`.";
                                     }
-                                    sendChannelandMention(message.channel.id, message.author.id, "Current rank for <@" + getRankUser.discord + "> is: `" + getRankString(rank.mmr_level) + "`." + MMRStr);
+                                    sendChannelandMention(message.channel.id, message.author.id, "Current rank for <@" + getRankUser.discord + "> is: " + getRankString(rank.mmr_level) + "." + MMRStr);
 
                                     if (leagueLobbies.includes(message.channel.name)) {
                                         deleteMessage(message);
@@ -1757,7 +1761,7 @@ discordClient.on('message', message => {
                                 if (rank.score !== null) {
                                     MMRStr =  " MMR is: `" + rank.score + "`.";
                                 }
-                                sendChannelandMention(message.channel.id, message.author.id, "Current rank for " + publicSteamId + " is: `" + getRankString(rank.mmr_level) + "`." + MMRStr);
+                                sendChannelandMention(message.channel.id, message.author.id, "Current rank for " + publicSteamId + " is: " + getRankString(rank.mmr_level) + "." + MMRStr);
 
                                 if (leagueLobbies.includes(message.channel.name)) {
                                     deleteMessage(message);
@@ -1779,7 +1783,7 @@ discordClient.on('message', message => {
                                 if (rank.score !== null) {
                                     MMRStr =  " MMR is: `" + rank.score + "`. ";
                                 }
-                                sendChannelandMention(message.channel.id, message.author.id, "Your current rank is: `" + getRankString(rank.mmr_level) + "`." + MMRStr);
+                                sendChannelandMention(message.channel.id, message.author.id, "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
                                 let rankUpdate = {rank: rank.mmr_level, score: rank.score};
                                 if (rank.score === null) delete rankUpdate["score"];
                                 user.update(rankUpdate).then(nothing => {
@@ -1813,7 +1817,7 @@ discordClient.on('message', message => {
                                 sendChannelandMention(message.channel.id, message.author.id, "Could not find that user on this server.");
                                 return 0;
                             }
-                            User.findOne({where: {discord: getSteamPersonaUserDiscordId}}).then(getSteamPersonaUser => {
+                            User.findByDiscord(getSteamPersonaUserDiscordId).then(getSteamPersonaUser => {
                                 getSteamPersonaNames([getSteamPersonaUser.steam]).then(personas => {
                                     sendChannelandMention(message.channel.id, message.author.id, "<@" + getSteamPersonaUser.discord + "> Steam Name is \"" + personas[getSteamPersonaUser.steam] + "\"");
                                 });
