@@ -9,9 +9,6 @@ const logger = require('./logger.js');
 
 const request = require('request');
 
-const Sequelize = require('sequelize');
-const Op = Sequelize.Op;
-
 const User = require('./schema/user.js');
 
 const Lobbies = require("./lobbies.js"),
@@ -470,7 +467,7 @@ discordClient.on('message', message => {
     logger.info(" *** Received command: " + message.content);
 
     let parsedCommand = parseCommand(message);
-    let userPromise = User.findOne({where: {discord: message.author.id}});
+    let userPromise = User.findByDiscord(message.author.id);
 
     if (message.channel.type !== "dm" && (message.member === null || message.guild === null)) {
         sendDM(message.author.id, "Error! Are you set to invisible mode?");
@@ -514,7 +511,7 @@ discordClient.on('message', message => {
                         }
 
                         let hostLobbyDiscordId = parseDiscordId(parsedCommand.args[0]);
-                        User.find({where: {discord: hostLobbyDiscordId}}).then(hostUser => {
+                        User.findByDiscord(hostLobbyDiscordId).then(hostUser => {
                             let hostLobbyEnd = getLobbyForHost(leagueChannel, hostUser.steam);
                             let regionEnd = hostLobbyEnd["region"];
 
@@ -542,8 +539,8 @@ discordClient.on('message', message => {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, that player id is invalid.");
                         }
 
-                        User.findOne({where: {discord: hostDiscordIdKick}}).then(hostUser => {
-                            User.findOne({where: {discord: playerDiscordIdKick}}).then(playerUser => {
+                        User.findByDiscord(hostDiscordIdKick).then(hostUser => {
+                            User.findByDiscord(playerDiscordIdKick).then(playerUser => {
                                 let hostLobby = getLobbyForHost(leagueChannel, hostUser.steam);
                                 if (hostLobby === null) {
                                     sendChannelandMention(message.channel.id, message.author.id, "Sir, that person is not hosting a lobby currently.");
@@ -673,11 +670,7 @@ discordClient.on('message', message => {
                                 return 0;
                             }
 
-                            let wheres = [];
-                            lobby.players.forEach(steamId => {
-                                wheres.push({steam: steamId});
-                            });
-                            User.findAll({where: {[Op.or]: wheres}}).then(players => {
+                            User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                 getSteamPersonaNames(lobby.players).then(personas => {
                                     let playerDiscordIds = [];
                                     let hostUserDiscordId = null;
@@ -698,11 +691,7 @@ discordClient.on('message', message => {
                             });
                         } else {
                             if (lobby.players.length === 8) {
-                                let wheres = [];
-                                lobby.players.forEach(steamId => {
-                                    wheres.push({steam: steamId});
-                                });
-                                User.findAll({where: {[Op.or]: wheres}}).then(players => {
+                                User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                     getSteamPersonaNames(lobby.players).then(personas => {
                                         let playerDiscordIds = [];
                                         let hostUserDiscordId = null;
@@ -808,15 +797,15 @@ discordClient.on('message', message => {
                                 }
                             }
 
-                            let filter = null;
+                            let userPromise = null;
 
                             if (resultLobbyHostId === null) {
-                                filter = {where: {discord: parseDiscordId(parsedCommand.args[0])}};
+                                userPromise = User.findByDiscord(parseDiscordId(parsedCommand.args[0]));
                             } else {
-                                filter = {where: {steam: resultLobbyHostId}};
+                                userPromise = User.findOneBySteam(resultLobbyHostId);
                             }
 
-                            User.findOne(filter).then(function (hostUser) {
+                            userPromise.then(function (hostUser) {
                                 if (hostUser === null) {
                                     sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Host not found in database.");
                                     deleteMessage(message);
@@ -889,7 +878,7 @@ discordClient.on('message', message => {
                         }
 
                         let hostDiscordQuitId = playerLobbyLeave["host"];
-                        User.findOne({where: {steam: hostDiscordQuitId}}).then(function (hostUser) {
+                        User.findOneBySteam(hostDiscordQuitId).then(function (hostUser) {
                             if (lobbies.removePlayerFromLobby(leagueChannel, hostUser.steam, user.steam)) {
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
                                     let numPlayersLeft = lobbies.getLobbyForHost(leagueChannel, hostUser.steam).players.length;
@@ -927,7 +916,7 @@ discordClient.on('message', message => {
                             deleteMessage(message);
                             return 0;
                         }
-                        User.findOne({where: {discord: kickedPlayerDiscordId}}).then(function (kickedPlayerUser) {
+                        User.findByDiscord(kickedPlayerDiscordId).then(function (kickedPlayerUser) {
                             if (kickedPlayerUser === null) {
                                 sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": User not in database. Make sure to use mentions in command: `!kick @username`");
                                 deleteMessage(message);
@@ -988,13 +977,7 @@ discordClient.on('message', message => {
                             if (lobbiesInLeagueChannel.hasOwnProperty(hostId)) {
                                 let lobby = lobbiesInLeagueChannel[hostId];
                                 if (lobby.host !== null && lobby.password !== null) {
-                                    let wheres = [];
-
-                                    lobby.players.forEach(steamId => {
-                                        wheres.push({steam: steamId});
-                                    });
-
-                                    User.findAll({where: {[Op.or]: wheres}}).then(players => {
+                                    User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                         getSteamPersonaNames(lobby.players).then(personas => {
                                             let playerDiscordIds = [];
                                             let hostDiscord = "ERROR";
@@ -1082,7 +1065,7 @@ discordClient.on('message', message => {
                         //     sendChannelandMention(message.channel.id, message.author.id, "Could not find that user on this server.");
                         //     return 0;
                         // }
-                        User.findOne({where: {discord: lobbyHostDiscordId}}).then(hostUser => {
+                        User.findByDiscord( lobbyHostDiscordId).then(hostUser => {
                             let lobby = lobbies.getLobbyForPlayer(leagueChannel, hostUser.steam);
 
                             if (lobby === null) {
@@ -1092,12 +1075,7 @@ discordClient.on('message', message => {
                             }
 
                             if (lobby.host !== null && lobby.password !== null) {
-                                let wheres = [];
-
-                                lobby.players.forEach(steamId => {
-                                    wheres.push({steam: steamId});
-                                });
-                                User.findAll({where: {[Op.or]: wheres}}).then(players => {
+                                User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                     getSteamPersonaNames(lobby.players).then(personas => {
                                         let playerDiscordIds = [];
                                         let hostDiscord = "ERROR";
@@ -1175,7 +1153,7 @@ discordClient.on('message', message => {
                         }
 
 
-                        User.findOne({where: {steam: playerSendPassLobby.host}}).then(function (hostUser) {
+                        User.findOneBySteam(playerSendPassLobby.host).then(function (hostUser) {
                             if (hostUser === null) {
                                 sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Host not found in database.");
                                 deleteMessage(message);
@@ -1279,7 +1257,7 @@ discordClient.on('message', message => {
 
                     // const token = randtoken.generate(6);
 
-                    User.findAll({where: {steam: steamIdLink}}).then(existingUsers => {
+                    User.findAllBySteam(steamIdLink).then(existingUsers => {
                         let playerDiscordIds = [];
 
                         // TODO: recheck ranks here
@@ -1492,7 +1470,7 @@ discordClient.on('message', message => {
                     }
                     let linkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
 
-                    User.findOne({where: {discord: linkPlayerDiscordId}}).then(function (linkPlayerUser) {
+                    User.findByDiscord(linkPlayerDiscordId).then(function (linkPlayerUser) {
                         if (linkPlayerUser === null) {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I could not find that user in the database. This command is for updating links, the user must link themselves first.");
                             return 0;
@@ -1526,7 +1504,7 @@ discordClient.on('message', message => {
                     }
                     let updateRolePlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
 
-                    User.findOne({where: {discord: updateRolePlayerDiscordId}}).then(function (playerUser) {
+                    User.findByDiscord(updateRolePlayerDiscordId).then(function (playerUser) {
                         if (playerUser === null) {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I could not find that user.");
                             return 0;
@@ -1547,7 +1525,7 @@ discordClient.on('message', message => {
                     let createLinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
                     let forceSteamIdLink = parsedCommand.args[1];
 
-                    User.findOne({where: {discord: createLinkPlayerDiscordId}}).then(function (linkPlayerUser) {
+                    User.findByDiscord(createLinkPlayerDiscordId).then(function (linkPlayerUser) {
                         if (linkPlayerUser === null) {
                             User.create({
                                 discord: createLinkPlayerDiscordId,
@@ -1576,7 +1554,7 @@ discordClient.on('message', message => {
                     }
                     let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
 
-                    User.findOne({where: {discord: unlinkPlayerDiscordId}}).then(function (unlinkPlayerUser) {
+                    User.findByDiscord(unlinkPlayerDiscordId).then(function (unlinkPlayerUser) {
                         let oldSteamID = unlinkPlayerUser.steam;
                         unlinkPlayerUser.update({steam: null, validated: false}).then(function (result) {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id. `" + oldSteamID + "`");
@@ -1600,7 +1578,7 @@ discordClient.on('message', message => {
                     }
                     let unlinkPlayerSteamId = parsedCommand.args[0];
 
-                    User.findAll({where: {steam: unlinkPlayerSteamId}}).then(function (unlinkPlayerUsers) {
+                    User.findAllBySteam(unlinkPlayerSteamId).then(function (unlinkPlayerUsers) {
                         unlinkPlayerUsers.forEach(unlinkPlayerUser => {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id.");
                             unlinkPlayerUser.update({steam: null, validated: false});
@@ -1625,7 +1603,7 @@ discordClient.on('message', message => {
                         return 0;
                     }
 
-                    User.findOne({where: {discord: infoPlayerDiscordId}}).then(function (infoPlayerUser) {
+                    User.findByDiscord(infoPlayerDiscordId).then(function (infoPlayerUser) {
                         if (infoPlayerUser === null) {
                             // todo infoPlayerUser is null here
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I did not find any matches in database for <@" + infoPlayerUser.discord + ">");
@@ -1656,7 +1634,7 @@ discordClient.on('message', message => {
                         return 0;
                     }
 
-                    User.findAll({where: {steam: steamId}}).then(players => {
+                    User.findAllBySteam(steamId).then(players => {
                         let playerDiscordIds = [];
 
                         // TODO: recheck ranks here
@@ -1684,7 +1662,7 @@ discordClient.on('message', message => {
                                 sendChannelandMention(message.channel.id, message.author.id, "Could not find that user on this server.");
                                 return 0;
                             }
-                            User.findOne({where: {discord: getRankUserDiscordId}}).then(getRankUser => {
+                            User.findByDiscord(getRankUserDiscordId).then(getRankUser => {
                                 if (getRankUser === null) {
                                     sendChannelandMention(message.channel.id, message.author.id, "That user has not linked a steam id yet.");
                                     return 0;
@@ -1776,7 +1754,7 @@ discordClient.on('message', message => {
                                 sendChannelandMention(message.channel.id, message.author.id, "Could not find that user on this server.");
                                 return 0;
                             }
-                            User.findOne({where: {discord: getSteamPersonaUserDiscordId}}).then(getSteamPersonaUser => {
+                            User.findByDiscord(getSteamPersonaUserDiscordId).then(getSteamPersonaUser => {
                                 getSteamPersonaNames([getSteamPersonaUser.steam]).then(personas => {
                                     sendChannelandMention(message.channel.id, message.author.id, "<@" + getSteamPersonaUser.discord + "> Steam Name is \"" + personas[getSteamPersonaUser.steam] + "\"");
                                 });
