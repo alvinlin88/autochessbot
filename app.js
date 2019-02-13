@@ -638,7 +638,7 @@ discordClient.on('message', message => {
                                 return 0;
                             }
                             if (rankRequirement > minHostRankRestrictions && minHostRankRestrictions > leagueRequirements[leagueRole]) {
-                                sendChannelandMention(message.channel.id, message.author.id, "You can not restrict ranks to more than 2 levels below your current rank. (Your rank: " + getRankString(rank.mmr_level) + ", minimum restriction rank: " + getRankString(minHostRankRestrictions) + ")");
+                                sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. The highest rank restriction you can make is 2 ranks below your current rank. (Your rank: " + getRankString(rank.mmr_level) + ", maximum rank restriction: " + getRankString(minHostRankRestrictions) + ")");
                                 return 0;
                             }
                             // good to start
