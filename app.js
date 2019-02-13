@@ -1682,7 +1682,7 @@ discordClient.on('message', message => {
                                     if (rank.score !== null) {
                                         MMRStr =  " MMR is: `" + rank.score + "`.";
                                     }
-                                    sendChannelandMention(message.channel.id, message.author.id, "Current rank for <@" + getRankUser.discord + "> is: `" + getRankString(rank.mmr_level) + "`." + MMRStr);
+                                    sendChannelandMention(message.channel.id, message.author.id, "Current rank for <@" + getRankUser.discord + "> is: " + getRankString(rank.mmr_level) + "." + MMRStr);
 
                                     if (leagueLobbies.includes(message.channel.name)) {
                                         deleteMessage(message);
