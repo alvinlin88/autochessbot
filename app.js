@@ -1080,6 +1080,8 @@ discordClient.on('message', message => {
 
                         listratelimit[leagueChannel] = Date.now();
 
+                        sendChannel(message.channel.id, "**__LOBBY LIST__ - Use `!lobby` to display players in your own lobby**");
+
                         let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
                         for (let hostId in lobbiesInLeagueChannel) {
                             if (lobbiesInLeagueChannel.hasOwnProperty(hostId)) {
@@ -1134,7 +1136,7 @@ discordClient.on('message', message => {
 
                                             if (!dontPrint) {
                                                 if (printFullList === true) {
-                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr);
+                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + " [**" + getRankString(lobby.rankRequirement) + "**+]** `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr);
                                                 } else {
                                                     sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + "Use \"!join <@" + hostDiscordId + ">\" to join lobby. (" + lobbyTime + "m)" + lastActivityStr + fullStr);
                                                 }
@@ -1204,7 +1206,7 @@ discordClient.on('message', message => {
                                                 lastActivityStr = " (" + +"m last activity)";
                                             }
                                         }
-                                        sendChannelandMention(message.channel.id, message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
+                                        sendChannelandMention(message.channel.id, message.author.id, "=== **@" + lobby.region + " [**" + getRankString(lobby.rankRequirement) + "**+]** `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
                                         // also whisper
                                         sendDM(message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
                                         deleteMessage(message);
