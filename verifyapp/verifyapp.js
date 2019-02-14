@@ -33,34 +33,35 @@ app.get("/confirm", function (req, res) {
 
     let steamID = req.query.steamID;
     let data = req.cookies.data;
-    if (!data.steamConnections.map(user => user.steamID).includes(steamID)) {
+    if (!data || !data.steamConnections.map(user => user.steamID).includes(steamID)) {
         // The steamID is selected from the select page, this should never happen unless someone tries to access
         // this page directly.
         res.clearCookie("data", {httpOnly: true});
         res.render("select_error");
+    } else {
+
+        rp({
+            uri: "http://localhost:8080/private/linksteam",
+            method: "POST",
+            json: true,
+            headers: {
+                "Authorization": "Bearer " + "SUPERSECRET1!", // just in case port leaks
+            },
+            body: {
+                username: data.username,
+                userID: data.userID,
+                steamID: steamID,
+            }
+        }).then(() => {
+            res.clearCookie("data", {httpOnly: true});
+            res.render("select_success", {steamID: steamID});
+        }).catch(err => {
+            console.log(err.message); // need logging
+            res.clearCookie("data", {httpOnly: true});
+            res.render("select_error");
+        });
+
     }
-
-    rp({
-        uri: "http://localhost:8080/private/linksteam",
-        method: "POST",
-        json: true,
-        headers: {
-            "Authorization": "Bearer " + "SUPERSECRET1!", // just in case port leaks
-        },
-        body: {
-            username: data.username,
-            userID: data.userID,
-            steamID: steamID,
-        }
-    }).then(() => {
-        res.clearCookie("data", {httpOnly: true});
-        res.render("select_success", {steamID: steamID});
-    }).catch(err => {
-        console.log(err.message); // need logging
-        res.clearCookie("data", {httpOnly: true});
-        res.render("select_error");
-    });
-
 });
 
 app.get("/select", function (req, res) {
