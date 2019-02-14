@@ -13,7 +13,6 @@ const app = express();
 app.use(bodyParser.json());
 
 const request = require('request');
-const querystring = require('querystring');
 const User = require('./schema/user.js');
 
 app.post("/private/linksteam", (req, res, err) => {
@@ -512,19 +511,6 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
     }
 }
 
-function verifySteam(discordId) {
-    let authorize_endpoint = "https://discordapp.com/api/oauth2/authorize";
-    let query = '?' + querystring.stringify({
-        client_id: CLIENT_ID,
-        redirect_uri: config.verify_redirect_url,
-        scope: "connections identify",
-        response_type: "code"
-    });
-    let redirect = authorize_endpoint + query;
-
-    sendDM(discordId, "Before you begin, please link your steam account on Discord. Go to `User Settings` > `Connections` and click on the Steam icon. Follow the instructions to link your steam account (You have to log in with your steam credentials) and connect your steam account to Discord. Then, click he following link to verify your account.\n<" + redirect + ">\n")
-}
-
 discordClient.on('ready', () => {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
@@ -563,7 +549,17 @@ discordClient.on('message', message => {
 
     let linkAliases = ["link", "verify"];
     if (linkAliases.includes(parsedCommand.command)) {
-        verifySteam(message.author.id);
+            let reminder = `These commands are deprecated. Please follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to complete verification`;
+            if (message.channel.type !== "dm") {
+                if (botChannels.includes(message.channel.name)) {
+                    sendChannelandMention(message.channel.id, message.author.id, reminder);
+                } else {
+                    sendDM(message.author.id, reminder);
+                }
+                deleteMessage(message);
+            } else {
+                sendDM(message.author.id, reminder);
+            }
         return 0;
     }
 
@@ -1739,7 +1735,7 @@ discordClient.on('message', message => {
                                     MMRStr =  " MMR is: `" + rank.score + "`. ";
                                 }
 
-                                let verificationStatus = user.validated === true ? "[✅ Verified] " : "[❌ Not Verified] ";
+                                let verificationStatus = user.validated === true ? "[✅ Verified] " : `[❌ Follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to verify] `;
 
                                 sendChannelandMention(message.channel.id, message.author.id, verificationStatus + "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
                                 let rankUpdate = {rank: rank.mmr_level, score: rank.score};
