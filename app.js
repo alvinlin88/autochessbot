@@ -225,7 +225,7 @@ function parseRank(rankInput) {
     return rank;
 }
 
-let DACSwitch = 2;
+let DACSwitch = 1;
 // TODO: Circuit breaker
 let lastDACASuccess = Date.now();
 let lastDACBSuccess = Date.now();
@@ -283,7 +283,7 @@ function getRankFromSteamIdB(steamId) {
 
 function getRankFromSteamIdA(steamId) {
     return new Promise(function(resolve, reject) {
-        request('http://101.200.189.65:431/dac/ranking/get?player_ids=' + steamId, { json: true}, (err, res, body) => {
+        request('http://101.200.189.65:431/dac/ranking/get?player_ids=' + steamId, { json: true, headers: { 'User-Agent': 'Valve/Steam HTTP Client 1.0 (570;Windows;tenfoot)' } }, (err, res, body) => {
             if (err) {
                 resolve(null); logger.error(err);
             }
