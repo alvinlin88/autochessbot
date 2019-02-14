@@ -374,7 +374,7 @@ function getSteamPersonaNames(steamIds) {
                             if (body.response.players.hasOwnProperty(playerKey)) {
                                 let player = body.response.players[playerKey];
 
-                                personaNames[player["steamid"]] = player["personaname"];
+                                personaNames[player["steamid"]] = player["personaname"].replace(/`/g, '');
                             }
                         }
 
@@ -404,6 +404,7 @@ function getSteamProfiles(steamIds) {
                         for (let playerKey in body.response.players) {
                             if (body.response.players.hasOwnProperty(playerKey)) {
                                 let player = body.response.players[playerKey];
+                                player["personaname"] = player["personaname"].replace(/`/g, '');
 
                                 personaNames[player["steamid"]] = player;
                             }
@@ -784,9 +785,9 @@ discordClient.on('message', message => {
 
                                     players.forEach(player => {
                                         if (player.steam !== lobby.host) {
-                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank) + "");
+                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + "");
                                         } else {
-                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank) + " **[Host]**");
+                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + " **[Host]**");
                                             hostUserDiscordId = player.discord;
                                         }
                                     });
