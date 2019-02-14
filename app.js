@@ -63,8 +63,8 @@ app.post("/private/linksteam", (req, res, err) => {
 
             if (overwriteOtherUsersWithSameSteam.length > 0) {
                 Promise.all(overwriteOtherUsersWithSameSteam).then(users => {
-                    let discordIds = users.map(user => user.discord).join(',');
-                    channel.send("The following discord ids: ${discordIds} are linked to steam id ${userSteamId} that is now verified by ${userDiscordId}");
+                    let discordIds = users.map(user => '<@' + user.discord + '>').join(',');
+                    channel.send(`The following discord ids: ${discordIds} were linked to steam id ${userSteamId} that is now verified by <@${userDiscordId}>`);
                 })
             }
 
@@ -1738,11 +1738,10 @@ discordClient.on('message', message => {
                                 if (rank.score !== null) {
                                     MMRStr =  " MMR is: `" + rank.score + "`. ";
                                 }
-                                let notVerifiedReminder = "";
-                                if (!user.validated) {
-                                    notVerifiedReminder = "(Not verified) ";
-                                }
-                                sendChannelandMention(message.channel.id, message.author.id, notVerifiedReminder + "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
+
+                                let verificationStatus = user.validated === true ? "✅ Verified" : "❌ Not Verified";
+
+                                sendChannelandMention(message.channel.id, message.author.id, verificationStatus + "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
                                 let rankUpdate = {rank: rank.mmr_level, score: rank.score};
                                 if (rank.score === null) delete rankUpdate["score"];
                                 user.update(rankUpdate).then(nothing => {
