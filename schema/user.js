@@ -74,6 +74,10 @@ const userUtil = {
 
     create: function (userObj) {
         return User.create(userObj);
+    },
+
+    getVerificationStats: function () {
+        return User.count({where: {validated: true}});
     }
 };
 

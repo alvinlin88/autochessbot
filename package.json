@@ -4,6 +4,7 @@
   "description": "How to run locally ==================",
   "main": "app.js",
   "dependencies": {
+    "body-parser": "latest",
     "connect-firebase": "^0.0.9",
     "connect-sqlite3": "^0.9.11",
     "cookie-parser": "^1.4.3",
@@ -21,11 +22,14 @@
     "passport-openid": "^0.4.0",
     "passport-steam": "^1.0.10",
     "pg": "^7.8.0",
+    "pug": "^2.0.3",
     "rand-token": "^0.4.0",
     "request": "^2.88.0",
+    "request-promise": "^4.2.2",
     "sequelize": "^4.42.0",
     "sqlite": "^3.0.1",
     "steam": "^1.4.0",
+    "steamid": "^1.1.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
