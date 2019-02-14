@@ -61,6 +61,7 @@ app.post("/private/linksteam", (req, res, err) => {
 
             if (overwriteOtherUsersWithSameSteam.length > 0) {
                 Promise.all(overwriteOtherUsersWithSameSteam).then(users => {
+                    //todo: update roles to demote these people;
                     let discordIds = users.map(user => '<@' + user.discord + '>').join(',');
                     channel.send(`The following discord ids: ${discordIds} were linked to steam id ${userSteamId} that is now verified by <@${userDiscordId}>`);
                 })
@@ -1289,6 +1290,7 @@ discordClient.on('message', message => {
                         sendChannelandMention(message.channel.id, message.author.id, "I can not unlink steam id in direct messages. Please try in <#542465986859761676>.");
                         return 0;
                     }
+                    let readme = discordClient.channels.find(r => r.name === 'readme').id;
                     if (user !== null && user.steam !== null) {
                         user.update({steam: null, steamLinkToken: null, validated: null});
                         // steamFriends.removeFriend(user.steam);
@@ -1324,10 +1326,9 @@ discordClient.on('message', message => {
                         if (removed.length > 0) {
                             sendChannelandMention(message.channel.id, message.author.id, "I have removed the following roles from you: `" + removed.join("`, `") + "`");
                         }
-
-                        sendChannelandMention(message.channel.id, message.author.id, "You have successfully unlinked your account. Use `!link [Steam64 ID]` to link steam id. See <#542454956825903104> for more information.");
+                        sendChannelandMention(message.channel.id, message.author.id, `You have successfully unlinked your account. Follow instructions in <#${readme}> to verify and link another steam ID.`);
                     } else {
-                        sendChannelandMention(message.channel.id, message.author.id, "You have not linked a steam id. See <#542454956825903104> for more information.");
+                        sendChannelandMention(message.channel.id, message.author.id, `You have not linked a steam id. Follow instructions in <#${readme}> to verify.`);
                     }
                 })();
                 break;
@@ -1657,6 +1658,18 @@ discordClient.on('message', message => {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I did not find any matches in database for `" + steamId + "`.");
                         }
                     });
+                })();
+                break;
+            case "verificationstats":
+            case "vstats":
+                (function () {
+                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (message.channel.type !== "dm") {
+                        User.getVerificationStats().then(count => {
+                            sendChannelandMention(message.channel.id, message.author.id, `Sir, ${count} users have verified their steam accounts.`);
+                            return 0;
+                        });
+                    }
                 })();
                 break;
             case "getrank":
