@@ -25,7 +25,6 @@ app.post("/private/linksteam", (req, res, err) => {
     try {
         logger.info(JSON.stringify(req.body));
         let channel = discordClient.channels.find(r => r.name === "staff-bot");
-        channel.send("Got validation: " + JSON.stringify(req.body)).then(logger.info).catch(logger.error); // debugging / logging
 
         let userDiscordId = req.body.userID;
         let userSteamId = req.body.steamID;
@@ -1739,7 +1738,7 @@ discordClient.on('message', message => {
                                     MMRStr =  " MMR is: `" + rank.score + "`. ";
                                 }
 
-                                let verificationStatus = user.validated === true ? "✅ Verified" : "❌ Not Verified";
+                                let verificationStatus = user.validated === true ? "[✅ Verified] " : "[❌ Not Verified] ";
 
                                 sendChannelandMention(message.channel.id, message.author.id, verificationStatus + "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
                                 let rankUpdate = {rank: rank.mmr_level, score: rank.score};
