@@ -25,7 +25,9 @@ config.lobbiesToLeague = {"tester-lobbies": "Tester", "beginner-lobbies": "Begin
 config.leagueRequirements = {"Beginner": 1, "Intermediate": 19, "Advanced": 24, "Expert": 28, "Master": 31, "Tester": 999};
 config.leagueChannels = {"beginner-lobbies": "<#542420779493490692>", "intermediate-lobbies-na": "<#543096210999869440>", "intermediate-lobbies-eu": "<#543096484091133953>", "intermediate-lobbies-sea": "<#543097896812150794>", "intermediate-lobbies-oce": "<#543097855972474891>", "intermediate-lobbies-sa": "<#543097809717428254>", "intermediate-lobbies-ru": "<#543167378792644666>", "intermediate-lobbies": "<#539360159554863114>", "advanced-lobbies": "<#539572170251173898>", "expert-lobbies": "<#542533721773965312>", "master-lobbies": "<#542927566479163420>"};
 config.validRegions = ["NAW", "NAE", "EUW", "EUE", "RU", "SEA", "OCE", "SA"];
-//config.regionTags = {"NA": "<@&539339934327111680>", "EU": "<@&539339927931060225>", "EUE": "<@&543487257001328658>", "EUW": "<@&539339927931060225>", "RU": "<@&543166887568343082>", "SEA": "<@&539339931357544448>", "OCE": "<@&540223287742169089>", "SA": "<@&539339925229928450>"};
 config.botChannels = ["development", "chessbot-commands"];
+
+config.sendMessageInterval = 1000;
+config.messageMaxLength = 2000;
 
 module.exports = config;

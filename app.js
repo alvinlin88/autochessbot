@@ -90,9 +90,9 @@ lobbies.startBackupJob();
 
 // Send consolidated messages at configured speed
 messageConsolidator = require('./message-consolidator');
-messageConsolidator = new messageConsolidator.MessageConsolidator(discordClient);
+mc = new messageConsolidator.MessageConsolidator(discordClient);
 setInterval(function() { 
-    messageConsolidator.processQueue();
+    mc.processQueue();
 }, config.sendMessageInterval);
 
 PREFIX = "!cb ";
@@ -142,13 +142,13 @@ function parseCommand(message) {
 function sendChannelandMention(channelDiscordId, userDiscordId, text) {
     let channel = discordClient.channels.get(channelDiscordId);
     let user = discordClient.users.get(userDiscordId);
-    messageConsolidator.enqueueMessage(channel, text, userDiscordId);
+    mc.enqueueMessage(channel, text, userDiscordId);
     logger.info('Sent message in channel ' + channel.name + ' to ' + user.username + ': ' + text);
 }
 
 function sendChannel(channelDiscordId, text) {
     let channel = discordClient.channels.get(channelDiscordId);
-    messageConsolidator.enqueueMessage(channel, text);
+    mc.enqueueMessage(channel, text);
     logger.info('Sent message in channel ' + channel.name + ': ' + text);
 }
 
@@ -517,7 +517,7 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
 discordClient.on('ready', () => {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
-        discordClient.channels.get("542754359860264981").send("I am back!").then(logger.info).catch(logger.error);
+        discordClient.channels.get(discordClient.channels.find(r => r.name === "staff-bot").id).send("I am back!").then(logger.info).catch(logger.error);
     } catch(err) {
         logger.error(err);
     }

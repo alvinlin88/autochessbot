@@ -4,8 +4,6 @@ const config = require("./config");
 module.exports = {
 
     MessageConsolidator: class {
-        
-
         constructor(discordClient) {
             this.discordClient = discordClient;
             this.messageQueues = [];
