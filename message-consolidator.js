@@ -1,5 +1,6 @@
 
     const logger = require('./logger.js');
+    const config = require("./config");
 
 module.exports = {
 
@@ -17,7 +18,6 @@ module.exports = {
                     targetObj: target,
                     messages: []
                 };
-                console.log("new queue");
             }
             if (userToMentionId != null) {
                 messageText = '<@' + userToMentionId + '> ' + messageText;
@@ -34,6 +34,10 @@ module.exports = {
 
                 let aggregatedMessage = "";
                 for (let messageIndex in messages) {
+                    if(aggregatedMessage.length + messages[messageIndex].length + 1 >= config.messageMaxLength) {
+                        messageTarget.send(aggregatedMessage).then(logger.info).catch(logger.error).then(logger.info).catch(logger.error);
+                        aggregatedMessage = "";
+                    }
                     aggregatedMessage = aggregatedMessage.concat(messages[messageIndex] + "\n");
                 }
                 messageTarget.send(aggregatedMessage).then(logger.info).catch(logger.error).then(logger.info).catch(logger.error);

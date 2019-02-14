@@ -25,5 +25,6 @@ config.validRegions = ["NA", "EUW", "EUE", "RU", "SEA", "OCE", "SA"];
 config.botChannels = ["development", "chessbot-commands"];
 
 config.sendMessageInterval = 1000;
+config.messageMaxLength = 2000;
 
 module.exports = config;
