@@ -1508,37 +1508,6 @@ discordClient.on('message', message => {
                     sendChannelandMention(message.channel.id, message.author.id, "OK.");
                 })();
                 break;
-            case "adminupdatelink":
-            case "adminlink":
-                (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
-
-                    if (parsedCommand.args.length < 1) {
-                        sendChannelandMention(message.channel.id, message.author.id, "Sir, the command is `!adminupdatelink [@discord] [[steamid]]`");
-                        return 0;
-                    }
-                    let linkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
-
-                    User.findByDiscord(linkPlayerDiscordId).then(function (linkPlayerUser) {
-                        if (linkPlayerUser === null) {
-                            sendChannelandMention(message.channel.id, message.author.id, "Sir, I could not find that user in the database. This command is for updating links, the user must link themselves first.");
-                            return 0;
-                        }
-                        let steamId = null;
-                        if (parsedCommand.args.length > 1) {
-                            steamId = parsedCommand.args[1];
-                        } else {
-                            steamId = linkPlayerUser.steam;
-                        }
-                        linkPlayerUser.update({steam: steamId, steamLinkToken: null}).then(function (result) {
-                            sendChannelandMention(message.channel.id, message.author.id, "Sir, I have linked steam id " + steamId + " to <@" + linkPlayerUser.discord + ">.");
-                            return 0;
-                        }, function (error) {
-                            logger.error(error);
-                        });
-                    });
-                })();
-                break;
             case "adminupdateroles":
                 (function () {
                     if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;

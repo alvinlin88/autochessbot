@@ -13,6 +13,8 @@ const CLIENT_ID = config.discord_client_id;
 const CLIENT_SECRET = config.discord_client_secret;
 const authorize_endpoint = "https://discordapp.com/api/oauth2/authorize";
 
+const SteamID = require('steamid');
+
 
 app.get("/", function (req, res) {
     let query = '?' + querystring.stringify({
@@ -106,7 +108,9 @@ app.get("/callback", (req, res, err) => {
                 let steamIDs = [];
                 connections_response.forEach(item => {
                     if (item.type === "steam") {
-                        steamIDs.push(item.id);
+                        let steamID = new SteamID(item.id);
+                        steamID.instance = SteamID.Instance.DESKTOP;
+                        steamIDs.push(steamID.getSteamID64());
                     }
                 });
 
