@@ -88,6 +88,13 @@ const Lobbies = require("./lobbies.js"),
 lobbies.restoreLobbies();
 lobbies.startBackupJob();
 
+// Send consolidated messages at configured speed
+messageConsolidator = require('./message-consolidator');
+mc = new messageConsolidator.MessageConsolidator(discordClient);
+setInterval(function() { 
+    mc.processQueue();
+}, config.sendMessageInterval);
+
 PREFIX = "!cb ";
 
 let botDownMessage = "Bot is restarting. Lobby commands are currently disabled. Be back in a second!";
@@ -135,13 +142,13 @@ function parseCommand(message) {
 function sendChannelandMention(channelDiscordId, userDiscordId, text) {
     let channel = discordClient.channels.get(channelDiscordId);
     let user = discordClient.users.get(userDiscordId);
-    channel.send('<@' + user.id + '> ' + text).then(logger.info).catch(logger.error).then(logger.info).catch(logger.error);
+    mc.enqueueMessage(channel, text, userDiscordId);
     logger.info('Sent message in channel ' + channel.name + ' to ' + user.username + ': ' + text);
 }
 
 function sendChannel(channelDiscordId, text) {
     let channel = discordClient.channels.get(channelDiscordId);
-    channel.send(text).then(logger.info).catch(logger.error).then(logger.info).catch(logger.error);
+    mc.enqueueMessage(channel, text);
     logger.info('Sent message in channel ' + channel.name + ': ' + text);
 }
 
@@ -218,7 +225,7 @@ function parseRank(rankInput) {
     return rank;
 }
 
-let DACSwitch = 2;
+let DACSwitch = 1;
 // TODO: Circuit breaker
 let lastDACASuccess = Date.now();
 let lastDACBSuccess = Date.now();
@@ -243,7 +250,7 @@ function getRankFromSteamId(steamId) {
 
 function getRankFromSteamIdB(steamId) {
     return new Promise(function(resolve, reject) {
-        request('http://101.200.189.65:431/dac/heros/get/@' + steamId, { json: true}, (err, res, body) => {
+        request('http://101.200.189.65:431/dac/heros/get/@' + steamId + '&hehe=' + Math.floor(Math.random()*10000), { json: true}, (err, res, body) => {
             if (err) {
                 resolve(null); logger.error(err);
             }
@@ -276,7 +283,7 @@ function getRankFromSteamIdB(steamId) {
 
 function getRankFromSteamIdA(steamId) {
     return new Promise(function(resolve, reject) {
-        request('http://101.200.189.65:431/dac/ranking/get?player_ids=' + steamId, { json: true}, (err, res, body) => {
+        request('http://101.200.189.65:431/dac/ranking/get?player_ids=' + steamId + '&hehe=' + Math.floor(Math.random()*10000), { json: true, headers: { 'User-Agent': 'Valve/Steam HTTP Client 1.0 (570;Windows;tenfoot)' } }, (err, res, body) => {
             if (err) {
                 resolve(null); logger.error(err);
             }
@@ -312,7 +319,7 @@ function getRankFromSteamIdA(steamId) {
 
 function getRanksFromSteamIdList(steamIdList) {
     return new Promise(function(resolve, reject) {
-        request('http://101.200.189.65:431/dac/ranking/get?player_ids=' + steamIdList.join(','), { json: true}, (err, res, body) => {
+        request('http://101.200.189.65:431/dac/ranking/get?player_ids=' + steamIdList.join(',') + '&hehe=' + Math.floor(Math.random()*10000), { json: true, headers: { 'User-Agent': 'Valve/Steam HTTP Client 1.0 (570;Windows;tenfoot)'} }, (err, res, body) => {
             if (err) { reject(err); }
 
             if (res !== undefined && res.hasOwnProperty("statusCode")) {
@@ -510,7 +517,7 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
 discordClient.on('ready', () => {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
-        discordClient.channels.get("542754359860264981").send("I am back!").then(logger.info).catch(logger.error);
+        discordClient.channels.get(discordClient.channels.find(r => r.name === "staff-bot").id).send("I am back!").then(logger.info).catch(logger.error);
     } catch(err) {
         logger.error(err);
     }
