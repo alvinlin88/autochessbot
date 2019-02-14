@@ -70,7 +70,6 @@ app.get("/select", function (req, res) {
 
 app.get("/callback", (req, res, err) => {
     let code = req.query.code;
-    console.log(req.query.code);
 
     rp({
         uri: "https://discordapp.com/api/oauth2/token",
@@ -120,16 +119,17 @@ app.get("/callback", (req, res, err) => {
 
                 if (steamConnections.length === 0) {
                     res.render('no_steam');
+                } else {
+
+                    let data = {
+                        username: user_response.username,
+                        userID: user_response.id,
+                        steamConnections: steamConnections,
+                    };
+
+                    res.cookie("data", data);
+                    res.redirect("/select");
                 }
-
-                let data = {
-                    username: user_response.username,
-                    userID: user_response.id,
-                    steamConnections: steamConnections,
-                };
-
-                res.cookie("data", data);
-                res.redirect("/select");
             }
         )
     }).catch(err => {
