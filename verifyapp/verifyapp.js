@@ -33,7 +33,7 @@ app.get("/confirm", function (req, res) {
 
     let steamID = req.query.steamID;
     let data = req.cookies.data;
-    if (!data.steamIDs.includes(steamID)) {
+    if (!data.steamConnections.map(user => user.steamID).includes(steamID)) {
         // The steamID is selected from the select page, this should never happen unless someone tries to access
         // this page directly.
         res.clearCookie("data", {httpOnly: true});
@@ -64,7 +64,7 @@ app.get("/confirm", function (req, res) {
 });
 
 app.get("/select", function (req, res) {
-    res.render('select', {steamIDs: req.cookies.data.steamIDs});
+    res.render('select', {connections: req.cookies.data.steamConnections});
 });
 
 app.get("/callback", (req, res, err) => {
@@ -105,23 +105,26 @@ app.get("/callback", (req, res, err) => {
             values => {
                 let user_response = values[0];
                 let connections_response = values[1];
-                let steamIDs = [];
+                let steamConnections = [];
                 connections_response.forEach(item => {
                     if (item.type === "steam") {
                         let steamID = new SteamID(item.id);
                         steamID.instance = SteamID.Instance.DESKTOP;
-                        steamIDs.push(steamID.getSteamID64());
+                        steamConnections.push({
+                            profile_name: item.name,
+                            steamID: steamID.getSteamID64()
+                        });
                     }
                 });
 
-                if (steamIDs.length === 0) {
+                if (steamConnections.length === 0) {
                     res.render('no_steam');
                 }
 
                 let data = {
                     username: user_response.username,
                     userID: user_response.id,
-                    steamIDs: steamIDs,
+                    steamConnections: steamConnections,
                 };
 
                 res.cookie("data", data);

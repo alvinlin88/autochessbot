@@ -3,6 +3,6 @@ html
         title= "Select the steam id you'd like to link to your discord account."
     body
         ul
-            each steamID in steamIDs
+            each connection in connections
                 li
-                    a(href='/confirm?steamID=' + steamID) Link #{steamID}
+                    a(href='/confirm?steamID=' + connection.steamID) Link #{connection.steamID} #{connection.profile_name}

@@ -522,7 +522,7 @@ function verifySteam(discordId) {
     });
     let redirect = authorize_endpoint + query;
 
-    sendDM(discordId, "Before you begin, please link your steam account on Discord. Go to `User Settings` > `Connections` and click on the Steam icon. Follow the instructions to link your steam account (You have to log in with your steam credentials) and connect your steam account to Discord. Then, click he following link to verify your account.\n<" + redirect + ">\nThis will allow the bot to know what account is linked to your discord account.\nNOTE THAT THIS URL SHOULD BE `discordapp.com`. Be careful of phishing attempts where the URL is not correct.");
+    sendDM(discordId, "Before you begin, please link your steam account on Discord. Go to `User Settings` > `Connections` and click on the Steam icon. Follow the instructions to link your steam account (You have to log in with your steam credentials) and connect your steam account to Discord. Then, click he following link to verify your account.\n<" + redirect + ">\n")
 }
 
 discordClient.on('ready', () => {
@@ -561,6 +561,12 @@ discordClient.on('message', message => {
         return 0;
     }
 
+    let linkAliases = ["link", "verify"];
+    if (linkAliases.includes(parsedCommand.command)) {
+        verifySteam(message.author.id);
+        return 0;
+    }
+
     if (message.channel.type !== "dm" && message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) {
         // if we can see user roles (not a DM) and user is staff, continue
     } else if (message.channel.type !== "dm" && !leagueLobbies.includes(message.channel.name) && !botChannels.includes(message.channel.name)) {
@@ -570,11 +576,6 @@ discordClient.on('message', message => {
         return 0;
     }
 
-    let linkAliases = ["link", "verify"];
-    if (linkAliases.includes(parsedCommand.command)) {
-        verifySteam(message.author.id);
-        return 0;
-    }
 
     let userPromise = User.findByDiscord(message.author.id);
 
