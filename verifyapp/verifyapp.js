@@ -64,7 +64,7 @@ app.get("/confirm", function (req, res) {
 });
 
 app.get("/select", function (req, res) {
-    res.render('select', {connections: req.cookies.data.steamConnections});
+    res.render('select', {connections: req.cookies.data.steamConnections, username: req.cookies.data.username});
 });
 
 app.get("/callback", (req, res, err) => {

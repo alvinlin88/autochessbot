@@ -91,7 +91,6 @@ PREFIX = "!cb ";
 
 let botDownMessage = "Bot is restarting. Lobby commands are currently disabled. Be back in a second!";
 
-const CLIENT_ID = config.discord_client_id;
 let adminRoleName = config.adminRoleName;
 let leagueRoles = config.leagueRoles;
 let leagueToLobbiesPrefix = config.leagueToLobbiesPrefix;
@@ -445,10 +444,6 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
 
             let discordUser = message.guild.members.get(user.discord);
 
-            if (message.guild === null) {
-                sendChannelandMention(message.channel.id, message.author.id, "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#542465986859761676>.");
-            }
-
             if (discordUser === null) {
                 sendChannelandMention(message.channel.id, message.author.id, "I am having a problem seeing your roles. Are you set to Invisible on Discord?");
             } else {
@@ -549,7 +544,7 @@ discordClient.on('message', message => {
 
     let linkAliases = ["link", "verify"];
     if (linkAliases.includes(parsedCommand.command)) {
-            let reminder = `These commands are deprecated. Please follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to complete verification`;
+            let reminder = `These commands are deprecated. Please follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to complete verification.`;
             if (message.channel.type !== "dm") {
                 if (botChannels.includes(message.channel.name)) {
                     sendChannelandMention(message.channel.id, message.author.id, reminder);
@@ -1749,7 +1744,7 @@ discordClient.on('message', message => {
                                 });
                             });
                         } else {
-                            sendChannelandMention(message.channel.id, message.author.id, "You have not linked a steam id. See <#542454956825903104> for more information.");
+                            sendChannelandMention(message.channel.id, message.author.id, `You have not linked a steam id. Follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to verify.`);
                         }
                     }
                 })();
