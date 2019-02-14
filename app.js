@@ -806,9 +806,9 @@ discordClient.on('message', message => {
 
                                         players.forEach(player => {
                                             if (player.steam !== lobby.host) {
-                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank));
+                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank));
                                             } else {
-                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam].replace(/`/g, '') + "\" " + getRankString(player.rank) + " **[Host]**");
+                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + " **[Host]**");
                                                 hostUserDiscordId = player.discord;
                                             }
                                         });
@@ -1094,7 +1094,7 @@ discordClient.on('message', message => {
                                                 if (player.steam !== lobby.host) {
                                                     playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank));
                                                 } else {
-                                                    hostDiscord = "<@" + player.discord + "> \"" + personas[player.steam] + "\" `" + getRankString(player.rank) + " **[Host]**";
+                                                    hostDiscord = "<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + " **[Host]**";
                                                     hostDiscordId = player.discord;
                                                 }
                                             });
