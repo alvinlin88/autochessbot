@@ -736,7 +736,7 @@ discordClient.on('message', message => {
                                 return 0;
                             }
                             if (rankRequirement > minHostRankRestrictions && minHostRankRestrictions > leagueRequirements[leagueRole]) {
-                                sendChannelandMention(message.channel.id, message.author.id, "You can not restrict ranks to more than 2 levels below your current rank. (Your rank: " + getRankString(rank.mmr_level) + ", minimum restriction rank: " + getRankString(minHostRankRestrictions) + ")");
+                                sendChannelandMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. The highest rank restriction you can make is 2 ranks below your current rank. (Your rank: " + getRankString(rank.mmr_level) + ", maximum rank restriction: " + getRankString(minHostRankRestrictions) + ")");
                                 return 0;
                             }
                             // good to start
@@ -1035,7 +1035,7 @@ discordClient.on('message', message => {
                                 return 0;
                             }
                             if (hostLobby.host === kickedPlayerUser.steam) {
-                                sendChannelandMention(message.channel.id, message.author.id, "You can not kick yourself.");
+                                sendChannelandMention(message.channel.id, message.author.id, "You can not kick yourself. (Use !cancel to cancel a lobby you have hosted)");
                                 return 0;
                             }
                             if (!hostLobby.players.includes(kickedPlayerUser.steam)) {
@@ -1177,7 +1177,7 @@ discordClient.on('message', message => {
                             let lobby = lobbies.getLobbyForPlayer(leagueChannel, hostUser.steam);
 
                             if (lobby === null) {
-                                sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": That user/you are is not hosting any lobbies.");
+                                sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": That user is not (or you are not) hosting any lobbies.");
                                 deleteMessage(message);
                                 return 0;
                             }
