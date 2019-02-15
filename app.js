@@ -1722,7 +1722,8 @@ discordClient.on('message', message => {
                 break;
             case "setactivetournament":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (message.author.id !== "204094307689431043") return 0; // no permissions
+
                     if (parsedCommand.args.length !== 1) {
                         sendChannelandMention(message.channel.id, message.author.id, "!setactivetournament [id]");
                     }
@@ -1732,7 +1733,7 @@ discordClient.on('message', message => {
                 break;
             case "createtournament":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (message.author.id !== "204094307689431043") return 0; // no permissions
 
                     Tournament.createTournament({
                         name: "Team Liquid & qihl Auto Chess Masters!",
