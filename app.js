@@ -267,7 +267,7 @@ function getRankFromSteamId(steamId) {
 
 function getRankFromSteamIdB(steamId) {
     return new Promise(function(resolve, reject) {
-        request('http://101.200.189.65:431/dac/heros/get/@' + steamId + '&hehe=' + Math.floor(Math.random()*10000), { json: true}, (err, res, body) => {
+        request('http://autochess.ppbizon.com/courier/get/@' + steamId, { json: true}, (err, res, body) => {
             if (err) {
                 resolve(null); logger.error(err);
             }
@@ -300,7 +300,7 @@ function getRankFromSteamIdB(steamId) {
 
 function getRankFromSteamIdA(steamId) {
     return new Promise(function(resolve, reject) {
-        request('http://101.200.189.65:431/dac/ranking/get?player_ids=' + steamId + '&hehe=' + Math.floor(Math.random()*10000), { json: true, headers: { 'User-Agent': 'Valve/Steam HTTP Client 1.0 (570;Windows;tenfoot)' } }, (err, res, body) => {
+        request('http://autochess.ppbizon.com/ranking/get?player_ids=' + steamId, { json: true, headers: { 'User-Agent': 'Valve/Steam HTTP Client 1.0 (570;Windows;tenfoot)' } }, (err, res, body) => {
             if (err) {
                 resolve(null); logger.error(err);
             }
