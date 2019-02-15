@@ -17,7 +17,6 @@ const SteamID = require('steamid');
 
 
 app.get("/", function (req, res) {
-
     let query = '?' + querystring.stringify({
         client_id: CLIENT_ID,
         redirect_uri: config.verify_redirect_url,
@@ -40,6 +39,7 @@ app.get("/confirm", function (req, res) {
         res.clearCookie("data", {httpOnly: true});
         res.render("select_error");
     } else {
+
         rp({
             uri: "http://localhost:8080/private/linksteam",
             method: "POST",
@@ -60,6 +60,7 @@ app.get("/confirm", function (req, res) {
             res.clearCookie("data", {httpOnly: true});
             res.render("select_error");
         });
+
     }
 });
 
@@ -100,40 +101,40 @@ app.get("/callback", (req, res, err) => {
             }
         });
 
-        return Promise.all([fetch_user, fetch_connections]);
-    }).then(
-        values => {
-            let user_response = values[0];
-            let connections_response = values[1];
-            let steamConnections = [];
-            connections_response.forEach(item => {
-                if (item.type === "steam") {
-                    let steamID = new SteamID(item.id);
-                    steamID.instance = SteamID.Instance.DESKTOP;
-                    steamConnections.push({
-                        profile_name: item.name,
-                        steamID: steamID.getSteamID64()
-                    });
+        Promise.all([fetch_user, fetch_connections]).then(
+            values => {
+                let user_response = values[0];
+                let connections_response = values[1];
+                let steamConnections = [];
+                connections_response.forEach(item => {
+                    if (item.type === "steam") {
+                        let steamID = new SteamID(item.id);
+                        steamID.instance = SteamID.Instance.DESKTOP;
+                        steamConnections.push({
+                            profile_name: item.name,
+                            steamID: steamID.getSteamID64()
+                        });
+                    }
+                });
+
+                if (steamConnections.length === 0) {
+                    res.render('no_steam');
+                } else {
+
+                    let data = {
+                        username: user_response.username,
+                        userID: user_response.id,
+                        steamConnections: steamConnections,
+                    };
+
+                    res.cookie("data", data);
+                    res.redirect("/select");
                 }
-            });
-
-            if (steamConnections.length === 0) {
-                res.render('no_steam');
-            } else {
-
-                let data = {
-                    username: user_response.username,
-                    userID: user_response.id,
-                    steamConnections: steamConnections,
-                };
-
-                res.cookie("data", data);
-                res.redirect("/select");
             }
-        }
-    ).catch(err => {
+        )
+    }).catch(err => {
         // need logging
-        res.render('select_error');
+        res.sendStatus(500);
     });
 });
 
@@ -143,11 +144,5 @@ app.listen("80", (err) => {
     }
 
     console.log("server started");
-});
-
-// no stacktraces leaked to user
-app.use(function (err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('select_error');
 });
 
