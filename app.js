@@ -1131,16 +1131,18 @@ discordClient.on('message', message => {
 
                                             let fullStr = "";
                                             let fullStr2 = "";
+                                            let joinStr = " | Use \"!join <@" + hostDiscordId + ">\" to join lobby.";
                                             if (lobby.players.length >= 8) {
                                                 fullStr = "~~_";
                                                 fullStr2 = "_~~";
+                                                joinStr = "";
                                             }
 
                                             if (!dontPrint) {
                                                 if (printFullList === true) {
                                                     sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + " [**" + getRankString(lobby.rankRequirement) + "**+]** `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr2);
                                                 } else {
-                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + "Use \"!join <@" + hostDiscordId + ">\" to join lobby. (" + lobbyTime + "m)" + lastActivityStr + fullStr2);
+                                                    sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + " [**" + getRankString(lobby.rankRequirement) + "**+]** `(" + lobby.players.length + "/8)` " + hostDiscord + joinStr + " (" + lobbyTime + "m)" + lastActivityStr + fullStr2);
                                                 }
                                             }
                                         });
