@@ -1133,8 +1133,8 @@ discordClient.on('message', message => {
                                             let fullStr2 = "";
                                             let joinStr = " | Use \"!join <@" + hostDiscordId + ">\" to join lobby.";
                                             if (lobby.players.length >= 8) {
-                                                fullStr = "~~__";
-                                                fullStr2 = "__~~";
+                                                fullStr = "~~***";
+                                                fullStr2 = "***~~";
                                                 joinStr = "";
                                             }
 
