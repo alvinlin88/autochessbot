@@ -14,6 +14,7 @@ app.use(bodyParser.json());
 
 const request = require('request');
 const User = require('./schema/user.js');
+const Tournament = require('./schema/tournament.js');
 
 app.post("/private/linksteam", (req, res, err) => {
     if (req.header("Authorization") !== "Bearer SUPERSECRET1!") {
@@ -110,6 +111,8 @@ let botChannels = config.botChannels;
 let listratelimit = {};
 let disableLobbyCommands = false;
 let disableLobbyHost = false;
+
+let activeTournament = 1;
 
 let leagueLobbies = [];
 let leagueChannelToRegion = {};
@@ -415,6 +418,37 @@ function getSteamProfiles(steamIds) {
                         logger.error(error.message + " " + error.stack);
                     }
                 }
+            }
+        });
+    });
+}
+
+qs = require('querystring');
+
+function submitTournamentSignup(message, discord, discordname, steam, steamname, rank, mmr, datetime) {
+    return new Promise(function(resolve, reject) {
+        let data = qs.stringify({
+            discord: discord,
+            discordname: discordname,
+            steam: steam,
+            steamname: steamname,
+            rank: rank,
+            mmr: mmr,
+            datetime: datetime,
+        });
+        request("https://script.google.com/macros/s/AKfycbxa3sVhst5AaKfdsDXYuTei71oa9HBkNlOwtOP3Ge9e7cuRYW3M/exec", {
+            method: "POST",
+            followAllRedirects: true,
+            json: true,
+            headers: {
+                'Content-Length': data.length,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: data,
+        }, (err, res, body) => {
+            if (err) { reject(err); }
+            if (res.statusCode === 200) {
+                resolve();
             }
         });
     });
@@ -1682,6 +1716,50 @@ discordClient.on('message', message => {
                         User.getVerificationStats().then(count => {
                             sendChannelandMention(message.channel.id, message.author.id, `Sir, ${count} users have verified their steam accounts.`);
                             return 0;
+                        });
+                    }
+                })();
+                break;
+            case "setactivetournament":
+                (function () {
+                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (parsedCommand.args.length !== 1) {
+                        sendChannelandMention(message.channel.id, message.author.id, "!setactivetournament [id]");
+                    }
+
+                    activeTournament = parsedCommand.args[0];
+                })();
+                break;
+            case "createtournament":
+                (function () {
+                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+
+                    Tournament.createTournament({
+                        name: "Team Liquid & qihl Auto Chess Masters!",
+                        description: "- 32 Players, with only the highest ranking players who sign-up getting to compete.\n- 5 Round point-based format.\n- $400 prize pool: $200 for first place, $125 for second place, and $75 for third.",
+                        signupstartdatetime: Date.now(),
+                        signupenddatetime: Date.now(),
+                        tournamentstartdatetime: Date.now(),
+                        tournamentenddatetime: Date.now(),
+                        tournamentsettings: JSON.stringify({"test": "test"}),
+                    }).then(tournament => {
+                        sendChannelandMention(message.channel.id, message.author.id, "Created!");
+                    })
+                })();
+                break;
+            case "signup":
+                (function () {
+                    if (message.channel.name === "tournament-signups") {
+                        Tournament.findRegistration()
+                        Tournament.createRegistration({
+                            fk_tournament: activeTournament,
+                            discord: user.discord,
+                            steam: user.steam,
+                            rank: user.rank,
+                            score: user.score,
+                            date: Date.now(),
+                        }).then(registration => {
+                            sendChannelandMention(message.channel.id, message.author.id, "Created!");
                         });
                     }
                 })();
