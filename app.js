@@ -1736,7 +1736,7 @@ discordClient.on('message', message => {
                     if (message.author.id !== "204094307689431043") return 0; // no permissions
 
                     Tournament.createTournament({
-                        name: "Team Liquid & qihl Auto Chess Masters!",
+                        name: "Team Liquid & qihl Auto Chess Masters",
                         description: "- 32 Players, with only the highest ranking players who sign-up getting to compete.\n- 5 Round point-based format.\n- $400 prize pool: $200 for first place, $125 for second place, and $75 for third.",
                         signupstartdatetime: Date.now(),
                         signupenddatetime: Date.now(),
@@ -1749,18 +1749,26 @@ discordClient.on('message', message => {
                 })();
                 break;
             case "signup":
+            case "register":
                 (function () {
                     if (message.channel.name === "tournament-signups") {
-                        Tournament.findRegistration()
-                        Tournament.createRegistration({
-                            fk_tournament: activeTournament,
-                            discord: user.discord,
-                            steam: user.steam,
-                            rank: user.rank,
-                            score: user.score,
-                            date: Date.now(),
-                        }).then(registration => {
-                            sendChannelandMention(message.channel.id, message.author.id, "Created!");
+                        Tournament.findRegistration({fk_tournament: activeTournament, steam: user.steam}).then(result => {
+                            if (result !== null) {
+                                sendChannelandMention(message.channel.id, message.author.id, "That steam id has already been registered in this tournament. Information: Dsicord: <@" + result.discord + ">, Steam ID: `" + result.steam + "`, Rank: " + getRankString(result.rank) + ", MMR: `" + result.score + "`.");
+                                return 0;
+                            }
+                            Tournament.createRegistration({
+                                fk_tournament: activeTournament,
+                                discord: user.discord,
+                                steam: user.steam,
+                                rank: user.rank,
+                                score: user.score,
+                                date: Date.now(),
+                            }).then(registration => {
+                                Tournament.getTournament(registration.fk_tournament).then(tournament => {
+                                    sendChannelandMention(message.channel.id, message.author.id, "Successfully registered you for the " + tournament.name + "! I have recorded your rank " + getRankString(registration.rank) + " and MMR `" + registration.score + "` on `" + registration.date + "` and `" + registration.steam + "`.");
+                                });
+                            });
                         });
                     }
                 })();
