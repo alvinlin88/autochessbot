@@ -1805,7 +1805,7 @@ discordClient.on('message', message => {
                                 country: country,
                             }).then(registration => {
                                 Tournament.getTournament(registration.fk_tournament).then(tournament => {
-                                    sendChannelandMention(message.channel.id, message.author.id, "Successfully registered you for the " + tournament.name + "! I have recorded your rank " + getRankString(registration.rank) + " and MMR `" + registration.score + "` on `" + new Date(parseInt(registration.date)).toString() + "` and `" + registration.steam + "`. Your preferred region is `" + registration.region + "`. Your country is " + registration.country + ".");
+                                    sendChannelandMention(message.channel.id, message.author.id, "Successfully registered you for the " + tournament.name + "! I have recorded your rank " + getRankString(registration.rank) + " and MMR `" + registration.score + "` on `" + new Date(parseInt(registration.date)).toString() + "` with Steam ID: `" + registration.steam + "`. Your preferred region is `" + registration.region + "`. Your country is " + registration.country + ".");
                                 });
                             });
                         });
