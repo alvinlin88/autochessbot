@@ -31,7 +31,7 @@ const Tournament = dbInstance.define('tournament', {
     tournamentsettings: { // free form json settings
         type: Sequelize.TEXT,
         allowNull: true,
-    }
+    },
 });
 
 Tournament.sync();
@@ -56,6 +56,10 @@ const TournamentRegistration = dbInstance.define('tournamentRegistration', {
     date: {
         type: Sequelize.TEXT,
         allowNull: false,
+    },
+    region: {
+        type: Sequelize.TEXT,
+        allowNull: false,
     }
 });
 
@@ -71,13 +75,13 @@ const tournamentUtil = {
 
     getTournament: function (tournamentID) {
         return Tournament.findOne({
-            where: {tournament_id: tournamentID}
+            where: {id: tournamentID}
         });
     },
 
-    findRegistration: function (tournamentID, discord, steam) {
+    findRegistration: function (where) {
         return TournamentRegistration.findOne({
-            where: {discord: discord, fk_tournament: tournamentID}
+            where: where,
         });
     },
 

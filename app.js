@@ -1762,15 +1762,27 @@ discordClient.on('message', message => {
                     })
                 })();
                 break;
-            case "signup":
             case "register":
                 (function () {
                     if (message.channel.name === "tournament-signups") {
                         Tournament.findRegistration({fk_tournament: activeTournament, steam: user.steam}).then(result => {
                             if (result !== null) {
-                                sendChannelandMention(message.channel.id, message.author.id, "That steam id has already been registered in this tournament. Information: Dsicord: <@" + result.discord + ">, Steam ID: `" + result.steam + "`, Rank: " + getRankString(result.rank) + ", MMR: `" + result.score + "`.");
+                                sendChannelandMention(message.channel.id, message.author.id, "That steam id has already been registered in this tournament. Information: Discord: <@" + result.discord + ">, Steam ID: `" + result.steam + "`, Rank: " + getRankString(result.rank) + ", MMR: `" + result.score + "`, Preferred Region: `" + result.region + "`.");
                                 return 0;
                             }
+
+                            if (parsedCommand.args.length === 0) {
+                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!signup [" + validRegions.join(', ').toLowerCase() + "]`");
+                                return 0;
+                            }
+
+                            let region = parsedCommand.args[0].toUpperCase();
+
+                            if (!validRegions.includes(region)) {
+                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!signup [" + validRegions.join(', ').toLowerCase() + "]`");
+                                return 0;
+                            }
+
                             Tournament.createRegistration({
                                 fk_tournament: activeTournament,
                                 discord: user.discord,
@@ -1778,13 +1790,47 @@ discordClient.on('message', message => {
                                 rank: user.rank,
                                 score: user.score,
                                 date: Date.now(),
+                                region: region,
                             }).then(registration => {
                                 Tournament.getTournament(registration.fk_tournament).then(tournament => {
-                                    sendChannelandMention(message.channel.id, message.author.id, "Successfully registered you for the " + tournament.name + "! I have recorded your rank " + getRankString(registration.rank) + " and MMR `" + registration.score + "` on `" + registration.date + "` and `" + registration.steam + "`.");
+                                    sendChannelandMention(message.channel.id, message.author.id, "Successfully registered you for the " + tournament.name + "! I have recorded your rank " + getRankString(registration.rank) + " and MMR `" + registration.score + "` on `" + registration.date + "` and `" + registration.steam + "`. Your preferred region is `" + registration.region + "`.");
                                 });
                             });
                         });
                     }
+                })();
+                break;
+            case "unregister":
+                (function () {
+                    if (message.channel.name === "tournament-signups") {
+                        Tournament.findRegistration({
+                            fk_tournament: activeTournament,
+                            steam: user.steam
+                        }).then(result => {
+                            if (result !== null) {
+                                result.destroy().then(success => {
+                                    sendChannelandMention(message.channel.id, message.author.id, "I have unregistered you for the current tournament.");
+                                    return 0;
+                                })
+                            } else {
+                                sendChannelandMention(message.channel.id, message.author.id, "You have not registered for the current tournament yet.");
+                                return 0;
+                            }
+                        });
+                    }
+                })();
+                break;
+            case "adminunregister":
+                (function () {
+                    if (message.author.id !== "204094307689431043") return 0; // no permissions
+
+                    let discordUser = parseDiscordId(parsedCommand.args[0]);
+
+                    Tournament.findRegistration({discord: discordUser}).then(registration => {
+                        registration.destroy().then(deleted => {
+                            sendChannelandMention(message.channel.id, message.author.id, "Sir, I deleted that tournament registration by <@" + deleted.discord + ">");
+                        });
+                    });
                 })();
                 break;
             case "getrank":
