@@ -1777,20 +1777,20 @@ discordClient.on('message', message => {
                             }
 
                             if (parsedCommand.args.length < 2) {
-                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "] [:flag_us:]`");
+                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "] [:flag_ca:, :flag_us:, ...]`");
                                 return 0;
                             }
 
                             let region = parsedCommand.args[0].toUpperCase();
 
                             if (!validRegions.includes(region)) {
-                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "] [:flag_us:]`");
+                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "] [:flag_ca:, :flag_us:, ...]`");
                                 return 0;
                             }
 
                             let country = parsedCommand.args[1].toUpperCase();
                             if (country.length !== 4) { // emoji utf-8 character for flag
-                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "] [:flag_us:]`");
+                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "] [:flag_ca:, :flag_us:, ...]`");
                                 return 0;
                             }
 
