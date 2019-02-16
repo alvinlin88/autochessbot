@@ -1772,14 +1772,14 @@ discordClient.on('message', message => {
                             }
 
                             if (parsedCommand.args.length === 0) {
-                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!signup [" + validRegions.join(', ').toLowerCase() + "]`");
+                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "]`");
                                 return 0;
                             }
 
                             let region = parsedCommand.args[0].toUpperCase();
 
                             if (!validRegions.includes(region)) {
-                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!signup [" + validRegions.join(', ').toLowerCase() + "]`");
+                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "]`");
                                 return 0;
                             }
 
