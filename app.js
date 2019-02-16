@@ -1767,7 +1767,7 @@ discordClient.on('message', message => {
                     if (message.channel.name === "tournament-signups") {
                         Tournament.findRegistration({fk_tournament: activeTournament, steam: user.steam}).then(result => {
                             if (result !== null) {
-                                sendChannelandMention(message.channel.id, message.author.id, "That steam id has already been registered in this tournament. Information: Date: `" + new Date(parseInt(result.date)).toString() + "`, Discord: <@" + result.discord + ">, Steam ID: `" + result.steam + "`, Rank: " + getRankString(result.rank) + ", MMR: `" + result.score + "`, Preferred Region: `" + result.region + "`, Country: + " + result.country + ".");
+                                sendChannelandMention(message.channel.id, message.author.id, "That steam id has already been registered in this tournament. Information:\nDate: `" + new Date(parseInt(result.date)).toString() + "`\nDiscord: <@" + result.discord + ">\nSteam ID: `" + result.steam + "`\nRank: " + getRankString(result.rank) + "\nMMR: `" + result.score + "`\nPreferred Region: `" + result.region + "`\nCountry: " + result.country);
                                 return 0;
                             }
 
