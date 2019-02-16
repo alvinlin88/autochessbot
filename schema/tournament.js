@@ -60,6 +60,10 @@ const TournamentRegistration = dbInstance.define('tournamentRegistration', {
     region: {
         type: Sequelize.TEXT,
         allowNull: false,
+    },
+    country: {
+        type: Sequelize.TEXT,
+        allowNull: false,
     }
 });
 
