@@ -1765,6 +1765,11 @@ discordClient.on('message', message => {
             case "register":
                 (function () {
                     if (message.channel.name === "tournament-signups") {
+                        if (user.validated !== true) {
+                            sendChannelandMention(message.channel.id, message.author.id, "You must have a verified account in order to register for tournaments. See <#" + discordClient.channels.find(r => r.name === 'readme').id + "> for instructions.");
+                            return 0;
+                        }
+
                         Tournament.findRegistration({fk_tournament: activeTournament, steam: user.steam}).then(result => {
                             if (result !== null) {
                                 sendChannelandMention(message.channel.id, message.author.id, "That steam id has already been registered in this tournament. Information:\nDate: `" + new Date(parseInt(result.date)).toString() + "`\nDiscord: <@" + result.discord + ">\nSteam ID: `" + result.steam + "`\nRank: " + getRankString(result.rank) + "\nMMR: `" + result.score + "`\nPreferred Region: `" + result.region + "`\nCountry: " + result.country);
