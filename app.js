@@ -1800,7 +1800,7 @@ discordClient.on('message', message => {
                                 return 0;
                             }
                             User.findByDiscord(getRankUserDiscordId).then(getRankUser => {
-                                if (getRankUser === null) {
+                                if (getRankUser === null || getRankUser.steam === null) {
                                     sendChannelandMention(message.channel.id, message.author.id, "That user has not linked a steam id yet.");
                                     return 0;
                                 }
@@ -1814,7 +1814,7 @@ discordClient.on('message', message => {
                                     if (rank.score !== null) {
                                         MMRStr =  " MMR is: `" + rank.score + "`.";
                                     }
-                                    let verificationStatus = user.validated === true ? "[✅ Verified] " : `[❌ Follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to verify] `;
+                                    let verificationStatus = getRankUser.validated === true ? "[✅ Verified] " : `[❌ Follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to verify] `;
 
                                     sendChannelandMention(message.channel.id, message.author.id, verificationStatus + "Current rank for <@" + getRankUser.discord + "> is: " + getRankString(rank.mmr_level) + "." + MMRStr);
 
@@ -1837,8 +1837,7 @@ discordClient.on('message', message => {
                                 if (rank.score !== null) {
                                     MMRStr =  " MMR is: `" + rank.score + "`.";
                                 }
-                                let verificationStatus = user.validated === true ? "[✅ Verified] " : `[❌ Follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to verify] `;
-                                sendChannelandMention(message.channel.id, message.author.id, verificationStatus + "Current rank for " + publicSteamId + " is: " + getRankString(rank.mmr_level) + "." + MMRStr);
+                                sendChannelandMention(message.channel.id, message.author.id, "Current rank for " + publicSteamId + " is: " + getRankString(rank.mmr_level) + "." + MMRStr);
 
                                 if (leagueLobbies.includes(message.channel.name)) {
                                     deleteMessage(message);
