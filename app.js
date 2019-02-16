@@ -1767,7 +1767,7 @@ discordClient.on('message', message => {
                     if (message.channel.name === "tournament-signups") {
                         Tournament.findRegistration({fk_tournament: activeTournament, steam: user.steam}).then(result => {
                             if (result !== null) {
-                                sendChannelandMention(message.channel.id, message.author.id, "That steam id has already been registered in this tournament. Information: Discord: <@" + result.discord + ">, Steam ID: `" + result.steam + "`, Rank: " + getRankString(result.rank) + ", MMR: `" + result.score + "`, Preferred Region: `" + result.region + "`, Country: + " + result.country + ".");
+                                sendChannelandMention(message.channel.id, message.author.id, "That steam id has already been registered in this tournament. Information: Date: `" + new Date(parseInt(result.date)).toString() + "`, Discord: <@" + result.discord + ">, Steam ID: `" + result.steam + "`, Rank: " + getRankString(result.rank) + ", MMR: `" + result.score + "`, Preferred Region: `" + result.region + "`, Country: + " + result.country + ".");
                                 return 0;
                             }
 
@@ -1800,7 +1800,7 @@ discordClient.on('message', message => {
                                 country: country,
                             }).then(registration => {
                                 Tournament.getTournament(registration.fk_tournament).then(tournament => {
-                                    sendChannelandMention(message.channel.id, message.author.id, "Successfully registered you for the " + tournament.name + "! I have recorded your rank " + getRankString(registration.rank) + " and MMR `" + registration.score + "` on `" + registration.date + "` and `" + registration.steam + "`. Your preferred region is `" + registration.region + "`. Your country is " + registration.country + ".");
+                                    sendChannelandMention(message.channel.id, message.author.id, "Successfully registered you for the " + tournament.name + "! I have recorded your rank " + getRankString(registration.rank) + " and MMR `" + registration.score + "` on `" + new Date(parseInt(registration.date)).toString() + "` and `" + registration.steam + "`. Your preferred region is `" + registration.region + "`. Your country is " + registration.country + ".");
                                 });
                             });
                         });
