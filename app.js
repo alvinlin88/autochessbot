@@ -9,6 +9,7 @@ const logger = require('./logger.js');
 
 const request = require('request');
 const User = require('./schema/user.js');
+const VerifiedSteam = require('./schema/verified-steam.js');
 const Tournament = require('./schema/tournament.js');
 
 const Lobbies = require("./lobbies.js"),
@@ -1499,6 +1500,12 @@ discordClient.on('message', message => {
                         return 0;
                     }
                     let unlinkPlayerSteamId = parsedCommand.args[0];
+                    VerifiedSteam.findOneBySteam(unlinkPlayerSteamId).then(verifiedSteam => {
+                        if (verifiedSteam !== null) {
+                            verifiedSteam.destroy().then(
+                                () => sendChannelandMention(message.channel.id, message.author.id, `Sir, I have removed verified steam id record for \`${unlinkPlayerSteamId}\``))
+                        }
+                    });
 
                     User.findAllBySteam(unlinkPlayerSteamId).then(function (unlinkPlayerUsers) {
                         unlinkPlayerUsers.forEach(unlinkPlayerUser => {
