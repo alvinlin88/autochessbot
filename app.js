@@ -127,6 +127,7 @@ function getRankString(rank) {
             return iconStr + "**" + rankData.name + "**";
         }
     }
+    if (rankData.hasOwnProperty())
     return "ERROR";
 }
 
@@ -1533,6 +1534,10 @@ discordClient.on('message', message => {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I could not find a steam id for <@" + infoPlayerUser.discord + ">. This user has tried to link a steam id and has probably unlinked it.");
                             return 0;
                         }
+                        if (infoPlayerUser.validated === false && infoPlayerUser.verifiedSteams.length === 0) {
+                            sendChannelandMention(message.channel.id, message.author.id, `Sir, <@${infoPlayerUser.discord}> is linked to steam id ${infoPlayerUser.steam} (not verified).`);
+                        }
+
                         let verifiedSteams = infoPlayerUser.verifiedSteams.map(verifiedSteam => {
                             let active = (verifiedSteam.steam === infoPlayerUser.steam) ? "(active)" : "";
                             return `\`${verifiedSteam.steam}${active}\``
