@@ -98,6 +98,10 @@ const models = {
         region: {
             type: Sequelize.TEXT,
             allowNull: false,
+        },
+        country: {
+            type: Sequelize.TEXT,
+            allowNull: false,
         }
     }),
 };
