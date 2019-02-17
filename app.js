@@ -7,69 +7,9 @@ const config = require("./config");
 
 const logger = require('./logger.js');
 
-const express = require("express");
-const bodyParser = require('body-parser');
-const app = express();
-app.use(bodyParser.json());
-
 const request = require('request');
 const User = require('./schema/user.js');
 const Tournament = require('./schema/tournament.js');
-
-app.post("/private/linksteam", (req, res, err) => {
-    if (req.header("Authorization") !== "Bearer SUPERSECRET1!") {
-        logger.error("Unauthorized access on /private/linksteam!!!"); // port is leaking
-        res.sendStatus(401);
-    } else {
-        let channel = discordClient.channels.find(r => r.name === "staff-bot");
-
-        let userDiscordId = req.body.userID;
-        let userSteamId = req.body.steamID;
-
-        User.findOneByVerifiedSteam(userSteamId).then(user => {
-            if (user !== null) {
-                res.status(400).send({
-                    message: 'Steam is verified by another user'
-                });
-            } else {
-                User.findByDiscord(userDiscordId).then(user => {
-                        if (user === null) {
-                            return User.create({
-                                discord: userDiscordId,
-                                steam: userSteamId,
-                                validated: true,
-                            });
-                        } else {
-                            return user.update({steam: userSteamId, validated: true});
-                        }
-                    }
-                ).then(() => {
-                    sendDM(userDiscordId, "Your steam account has now been verified.");
-                    // At this point we can be sure the user verification is complete. Overwrite can be performed async.
-                    res.sendStatus(200);
-                }).catch(err =>
-                    res.status(500).send({
-                        message: err.message
-                    })
-                );
-            }
-        });
-    }
-});
-
-app.listen("8080", (err) => {
-    if (err) {
-        return console.log("err!", err)
-    }
-
-    console.log("private validation server started");
-});
-
-// no stacktraces leaked to user
-app.use(function (err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('select_error');
-});
 
 const Lobbies = require("./lobbies.js"),
     lobbies = new Lobbies();
@@ -569,22 +509,6 @@ discordClient.on('message', message => {
         sendDM(message.author.id, "Error! Are you set to invisible mode?");
         logger.error("message.member: " + message.member + " or message.guild " + message.guild + " was null " + message.author.id + ": " + message.author.username + "#" + message.author.discriminator);
 
-        return 0;
-    }
-
-    let linkAliases = ["link", "verify"];
-    if (linkAliases.includes(parsedCommand.command)) {
-            let reminder = `These commands are deprecated. Please follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to complete verification.`;
-            if (message.channel.type !== "dm") {
-                if (botChannels.includes(message.channel.name)) {
-                    sendChannelandMention(message.channel.id, message.author.id, reminder);
-                } else {
-                    sendDM(message.author.id, reminder);
-                }
-                deleteMessage(message);
-            } else {
-                sendDM(message.author.id, reminder);
-            }
         return 0;
     }
 
@@ -1319,54 +1243,6 @@ discordClient.on('message', message => {
         let isBotCommand = true;
 
         switch (parsedCommand.command) {
-            case "unlink":
-                (function () {
-                    if (message.channel.type === "dm") {
-                        sendChannelandMention(message.channel.id, message.author.id, "I can not unlink steam id in direct messages. Please try in <#542465986859761676>.");
-                        return 0;
-                    }
-                    let readme = discordClient.channels.find(r => r.name === 'readme').id;
-                    if (user !== null && user.steam !== null) {
-                        user.update({steam: null, steamLinkToken: null, validated: null});
-                        // steamFriends.removeFriend(user.steam);
-                        // console.log("Removed steam friends " + user.steam);
-
-                        let ranks = [];
-
-                        leagueRoles.forEach(leagueRole => {
-                            if (message.guild === null) {
-                                sendChannelandMention(message.channel.id, message.author.id, "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#542465986859761676>.");
-                            }
-                            let roleObj = message.guild.roles.find(r => r.name === leagueRole);
-
-                            if (roleObj !== null) {
-                                ranks.push({
-                                    name: leagueRole,
-                                    rank: leagueRequirements[leagueRole],
-                                    role: message.guild.roles.find(r => r.name === leagueRole),
-                                })
-                            }
-                        });
-                        let removed = [];
-
-                        if (message.member === null) {
-                            sendChannelandMention(message.channel.id, message.author.id, "I am having a problem seeing your roles. Are you set to Invisible on Discord?");
-                        }
-                        ranks.forEach(r => {
-                            if (message.member.roles.has(r.role.id)) {
-                                message.member.removeRole(r.role).catch(logger.error);
-                                removed.push(r.name);
-                            }
-                        });
-                        if (removed.length > 0) {
-                            sendChannelandMention(message.channel.id, message.author.id, "I have removed the following roles from you: `" + removed.join("`, `") + "`");
-                        }
-                        sendChannelandMention(message.channel.id, message.author.id, `You have successfully unlinked your account. Follow instructions in <#${readme}> to verify and link another steam ID.`);
-                    } else {
-                        sendChannelandMention(message.channel.id, message.author.id, `You have not linked a steam id. Follow instructions in <#${readme}> to verify.`);
-                    }
-                })();
-                break;
             case "adminrestartbot":
             case "restartbot":
             case "suicide":

@@ -3,6 +3,7 @@ const app = express();
 const rp = require("request-promise");
 const querystring = require('querystring');
 const User = require('../schema/user.js');
+const VerifiedSteam = require('../schema/verified-steam.js');
 
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
@@ -39,28 +40,38 @@ app.get("/confirm", function (req, res) {
         // The steamID is selected from the select page, this should never happen unless someone tries to access
         // this page directly.
         res.clearCookie("data", {httpOnly: true});
-        res.render("select_error");
+        res.render("error");
         // todo: log attempt
     } else {
-        rp({
-            uri: "http://localhost:8080/private/linksteam",
-            method: "POST",
-            json: true,
-            headers: {
-                "Authorization": "Bearer " + "SUPERSECRET1!", // just in case port leaks
-            },
-            body: {
-                username: data.username,
-                userID: data.userID,
-                steamID: steamID,
-            }
-        }).then(() => {
-            res.clearCookie("data", {httpOnly: true});
-            res.render("select_success", {steamID: steamID});
-        }).catch(err => {
-            console.log(err.message); // need logging
-            res.clearCookie("data", {httpOnly: true});
-            res.render("select_error");
+
+        VerifiedSteam.findOneBySteam(steamID)
+            .then(verifiedSteam => {
+                if (verifiedSteam === null) {
+                    // The steam is not known to us
+                    User.upsertUserWithVerifiedSteam(data.id, steamID).then(() => {
+                        res.clearCookie("data", {httpOnly: true});
+                        res.render("select_success", {steamID: steamID});
+                    });
+                } else {
+                    return User.findById(verifiedSteam.userId).then(
+                        user => {
+                            if (user.discord === data.id) {
+                                // The user has verified with this steam before, simply switch to it
+                                return user.update({steam: verifiedSteam.steam, validated: true}).then(() => {
+                                    res.clearCookie("data", {httpOnly: true});
+                                    res.render("select_success", {steamID: steamID});
+                                });
+                            } else {
+                                // The steam was verified by another user.
+                                res.clearCookie("data", {httpOnly: true});
+                                res.render("error", {message: 'The steam id was verified by another user. If you own the other discord account, post in #help-desk and a staff member can help you'});
+                            }
+                        }
+                    )
+                }
+            }).catch(err => {
+            // todo: needs logging
+            res.render('error');
         });
     }
 });
@@ -87,6 +98,7 @@ function getAvatarUrl(user_response) {
 app.get("/callback", (req, res, err) => {
     let code = req.query.code;
 
+    // todo: I believe we don't need to obtain a new token every time (it does expire thou)
     rp({
         uri: "https://discordapp.com/api/oauth2/token",
         qs: {
@@ -151,7 +163,7 @@ app.get("/callback", (req, res, err) => {
                 let data = {
                     avatar: getAvatarUrl(user_response),
                     username: `${user_response.username}#${user_response.discriminator}`,
-                    userID: user_response.id,
+                    id: user_response.id,
                     connections: steam_response.response.players,
                 };
 
@@ -161,7 +173,7 @@ app.get("/callback", (req, res, err) => {
         }
     ).catch(err => {
         // need logging
-        res.render('select_error');
+        res.render('error');
     });
 });
 
@@ -176,6 +188,6 @@ app.listen("80", (err) => {
 // no stacktraces leaked to user
 // app.use(function (err, req, res, next) {
 //     res.status(err.status || 500);
-//     res.render('select_error');
+//     res.render('error');
 // });
 
