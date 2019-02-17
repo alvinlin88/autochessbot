@@ -1738,21 +1738,32 @@ discordClient.on('message', message => {
             case "register":
                 (function () {
                     if (message.channel.name === "tournament-signups") {
+                        if (user.validated !== true) {
+                            sendChannelandMention(message.channel.id, message.author.id, "You must have a verified account in order to register for tournaments. See <#" + discordClient.channels.find(r => r.name === 'readme').id + "> for instructions.");
+                            return 0;
+                        }
+
                         Tournament.findRegistration({fk_tournament: activeTournament, steam: user.steam}).then(result => {
                             if (result !== null) {
-                                sendChannelandMention(message.channel.id, message.author.id, "That steam id has already been registered in this tournament. Information: Discord: <@" + result.discord + ">, Steam ID: `" + result.steam + "`, Rank: " + getRankString(result.rank) + ", MMR: `" + result.score + "`, Preferred Region: `" + result.region + "`.");
+                                sendChannelandMention(message.channel.id, message.author.id, "That steam id has already been registered in this tournament. Information:\nDate: `" + new Date(parseInt(result.date)).toString() + "`\nDiscord: <@" + result.discord + ">\nSteam ID: `" + result.steam + "`\nRank: " + getRankString(result.rank) + "\nMMR: `" + result.score + "`\nPreferred Region: `" + result.region + "`\nCountry: " + result.country);
                                 return 0;
                             }
 
-                            if (parsedCommand.args.length === 0) {
-                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "]`");
+                            if (parsedCommand.args.length < 2) {
+                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "] [:flag_ca:, :flag_us:, ...]`");
                                 return 0;
                             }
 
                             let region = parsedCommand.args[0].toUpperCase();
 
                             if (!validRegions.includes(region)) {
-                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "]`");
+                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "] [:flag_ca:, :flag_us:, ...]`");
+                                return 0;
+                            }
+
+                            let country = parsedCommand.args[1].toUpperCase();
+                            if (country.length !== 4) { // emoji utf-8 character for flag
+                                sendChannelandMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "] [:flag_ca:, :flag_us:, ...]`");
                                 return 0;
                             }
 
@@ -1764,9 +1775,10 @@ discordClient.on('message', message => {
                                 score: user.score,
                                 date: Date.now(),
                                 region: region,
+                                country: country,
                             }).then(registration => {
                                 Tournament.getTournament(registration.fk_tournament).then(tournament => {
-                                    sendChannelandMention(message.channel.id, message.author.id, "Successfully registered you for the " + tournament.name + "! I have recorded your rank " + getRankString(registration.rank) + " and MMR `" + registration.score + "` on `" + registration.date + "` and `" + registration.steam + "`. Your preferred region is `" + registration.region + "`.");
+                                    sendChannelandMention(message.channel.id, message.author.id, "Successfully registered you for the " + tournament.name + "! I have recorded your rank " + getRankString(registration.rank) + " and MMR `" + registration.score + "` on `" + new Date(parseInt(registration.date)).toString() + "` with Steam ID: `" + registration.steam + "`. Your preferred region is `" + registration.region + "`. Your country is " + registration.country + ".");
                                 });
                             });
                         });
