@@ -26,27 +26,13 @@ app.post("/private/linksteam", (req, res, err) => {
         let userDiscordId = req.body.userID;
         let userSteamId = req.body.steamID;
 
-        let usersPromise = User.findAllBySteam(userSteamId).then(users => {
-            let usersWithMatchingSteam = {
-                verifier: null, // The verifier, who had linked his discord to the steam id before verification system is in place.
-                nonVerifier: [] // List of discord users who aren't the verifier but had linked to the same steam.
-            };
-            users.forEach(user => {
-                if (user.discord === userDiscordId) {
-                    usersWithMatchingSteam.verifier = user;
-                } else {
-                    usersWithMatchingSteam.nonVerifier.push(user);
-                }
-            });
-            return new Promise((resolve, reject) => resolve(usersWithMatchingSteam));
-        });
-
-        usersPromise.then(usersWithMatchingSteam => {
-            // todo Is there a way to do upsert so we can get rid of if/else?
-            let upsertUserPromise;
-            if (usersWithMatchingSteam.verifier === null) {
-                // The verifier did not link or is new to the qihl.
-                upsertUserPromise = User.findByDiscord(userDiscordId).then(user => {
+        User.findOneByVerifiedSteam(userSteamId).then(user => {
+            if (user !== null) {
+                res.status(400).send({
+                    message: 'Steam is verified by another user'
+                });
+            } else {
+                User.findByDiscord(userDiscordId).then(user => {
                         if (user === null) {
                             return User.create({
                                 discord: userDiscordId,
@@ -57,30 +43,17 @@ app.post("/private/linksteam", (req, res, err) => {
                             return user.update({steam: userSteamId, validated: true});
                         }
                     }
+                ).then(() => {
+                    sendDM(userDiscordId, "Your steam account has now been verified.");
+                    // At this point we can be sure the user verification is complete. Overwrite can be performed async.
+                    res.sendStatus(200);
+                }).catch(err =>
+                    res.status(500).send({
+                        message: err.message
+                    })
                 );
-            } else {
-                upsertUserPromise = usersWithMatchingSteam.verifier.update({validated: true});
             }
-            return upsertUserPromise;
-        }).then(() => {
-            sendDM(userDiscordId, "Your steam account has now been verified.");
-            // At this point we can be sure the user verification is complete. Overwrite can be performed async.
-            res.sendStatus(200);
-        }).catch(err => {
-            res.sendStatus(500);
-            logger.error(err);
         });
-
-        usersPromise.then(usersWithMatchingSteam =>
-            Promise.all(usersWithMatchingSteam.nonVerifier.map(
-                user => user.update({steam: null, validated: false})))
-        ).then(users => {
-            //todo: update roles to demote these people;
-            if (users.length > 0) {
-                let discordIds = users.map(user => '<@' + user.discord + '>').join(',');
-                channel.send(`The following discord ids: ${discordIds} were linked to steam id ${userSteamId} that is now verified by <@${userDiscordId}>`);
-            }
-        }).catch(logger.error);
     }
 });
 

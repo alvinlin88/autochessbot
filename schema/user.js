@@ -1,3 +1,4 @@
+// Define foreign keys here. Avoid cyclic dependency
 const Sequelize = require('sequelize');
 const dbInstance = require('./db.js');
 const Op = Sequelize.Op;
@@ -55,6 +56,12 @@ const userUtil = {
     findOneBySteam: function (steam) {
         return User.findOne({
             where: {steam: steam}
+        });
+    },
+
+    findOneByVerifiedSteam: function (steam) {
+        return User.findOne({
+            where: {steam: steam, validated: true}
         });
     },
 

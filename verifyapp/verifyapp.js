@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const rp = require("request-promise");
 const querystring = require('querystring');
+const User = require('../schema/user.js');
 
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
@@ -34,11 +35,12 @@ app.get("/confirm", function (req, res) {
 
     let steamID = req.query.steamID;
     let data = req.cookies.data;
-    if (!data || !data.steamConnections.map(user => user.steamID).includes(steamID)) {
+    if (!data || !data.connections.map(user => user.steamid).includes(steamID)) {
         // The steamID is selected from the select page, this should never happen unless someone tries to access
         // this page directly.
         res.clearCookie("data", {httpOnly: true});
         res.render("select_error");
+        // todo: log attempt
     } else {
         rp({
             uri: "http://localhost:8080/private/linksteam",
@@ -64,8 +66,23 @@ app.get("/confirm", function (req, res) {
 });
 
 app.get("/select", function (req, res) {
-    res.render('select', {connections: req.cookies.data.steamConnections, username: req.cookies.data.username});
+    res.render('select', req.cookies.data);
 });
+
+// Discord api returns an "alternate" steamID64, this converts it to the correct one.
+function convertSteamId(connection) {
+    let steamID = new SteamID(connection.id);
+    steamID.instance = SteamID.Instance.DESKTOP;
+    return steamID.getSteamID64()
+}
+
+// https://discordapp.com/developers/docs/reference#image-formatting
+function getAvatarUrl(user_response) {
+    if (user_response.avatar === null) {
+        return `https://cdn.discordapp.com/embed/avatars/${user_response.discriminator % 5}.png`;
+    }
+    return `https://cdn.discordapp.com/avatars/${user_response.id}/${user_response.avatar}.png`;
+}
 
 app.get("/callback", (req, res, err) => {
     let code = req.query.code;
@@ -98,33 +115,44 @@ app.get("/callback", (req, res, err) => {
             headers: {
                 "Authorization": "Bearer " + tokens.access_token,
             }
-        });
+        }).then(connections =>
+            connections
+                .filter(connection => connection.type === 'steam')
+                .map(convertSteamId)
+        ).then(steamIDs => {
+                if (steamIDs.length > 0) {
+                    return rp({
+                        uri: "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/",
+                        method: "GET",
+                        json: true,
+                        qs: {
+                            key: config.steam_token,
+                            steamids: steamIDs.join(',')
+                        }
+                    });
+                } else {
+                    return null;
+                }
+            }
+        );
 
         return Promise.all([fetch_user, fetch_connections]);
     }).then(
         values => {
             let user_response = values[0];
-            let connections_response = values[1];
-            let steamConnections = [];
-            connections_response.forEach(item => {
-                if (item.type === "steam") {
-                    let steamID = new SteamID(item.id);
-                    steamID.instance = SteamID.Instance.DESKTOP;
-                    steamConnections.push({
-                        profile_name: item.name,
-                        steamID: steamID.getSteamID64()
-                    });
-                }
-            });
+            let steam_response = values[1];
 
-            if (steamConnections.length === 0) {
+            if (steam_response === null ||
+                !steam_response.response.hasOwnProperty('players') ||
+                steam_response.response.players.length === 0) {
                 res.render('no_steam');
             } else {
 
                 let data = {
-                    username: user_response.username,
+                    avatar: getAvatarUrl(user_response),
+                    username: `${user_response.username}#${user_response.discriminator}`,
                     userID: user_response.id,
-                    steamConnections: steamConnections,
+                    connections: steam_response.response.players,
                 };
 
                 res.cookie("data", data);
@@ -146,8 +174,8 @@ app.listen("80", (err) => {
 });
 
 // no stacktraces leaked to user
-app.use(function (err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('select_error');
-});
+// app.use(function (err, req, res, next) {
+//     res.status(err.status || 500);
+//     res.render('select_error');
+// });
 
