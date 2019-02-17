@@ -19,9 +19,9 @@ const userUtil = {
         });
     },
 
-    findUserAndVerifiedSteamsByDiscord: function (steam) {
+    findUserAndVerifiedSteamsByDiscord: function (discord) {
         return User.findOne({
-            where: {steam: steam},
+            where: {discord: discord},
             include: [VerifiedSteam]
         });
     },

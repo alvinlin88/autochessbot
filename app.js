@@ -1524,17 +1524,21 @@ discordClient.on('message', message => {
                         return 0;
                     }
 
-                    User.findByDiscord(infoPlayerDiscordId).then(function (infoPlayerUser) {
+                    User.findUserAndVerifiedSteamsByDiscord(infoPlayerDiscordId).then(function (infoPlayerUser) {
                         if (infoPlayerUser === null) {
-                            // todo infoPlayerUser is null here
-                            sendChannelandMention(message.channel.id, message.author.id, "Sir, I did not find any matches in database for <@" + infoPlayerUser.discord + ">");
+                            sendChannelandMention(message.channel.id, message.author.id, "Sir, I did not find any matches in database for <@" + infoPlayerDiscordId + ">");
                             return 0;
                         }
                         if (infoPlayerUser.steam === null) {
                             sendChannelandMention(message.channel.id, message.author.id, "Sir, I could not find a steam id for <@" + infoPlayerUser.discord + ">. This user has tried to link a steam id and has probably unlinked it.");
                             return 0;
                         }
-                        sendChannelandMention(message.channel.id, message.author.id, "Sir, <@" + infoPlayerUser.discord + "> is linked to steam id: `" + infoPlayerUser.steam + "`.");
+                        let verifiedSteams = infoPlayerUser.verifiedSteams.map(verifiedSteam => {
+                            let active = (verifiedSteam.steam === infoPlayerUser.steam) ? "(active)" : "";
+                            return `\`${verifiedSteam.steam}${active}\``
+                        }).join(',');
+                        sendChannelandMention(message.channel.id, message.author.id,
+                            `Sir, <@${infoPlayerUser.discord}> is linked to steam id: ${verifiedSteams}.`);
                     });
                 })();
                 break;
