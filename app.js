@@ -128,7 +128,6 @@ function getRankString(rank) {
             return iconStr + "**" + rankData.name + "**";
         }
     }
-    if (rankData.hasOwnProperty())
     return "ERROR";
 }
 
