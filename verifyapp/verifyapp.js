@@ -1,12 +1,17 @@
-const express = require("express");
+const express = require('express');
 const app = express();
-const rp = require("request-promise");
+const rp = require('request-promise');
 const querystring = require('querystring');
+const User = require('../schema/user.js');
+const VerifiedSteam = require('../schema/verified-steam.js');
 
-const cookieParser = require("cookie-parser");
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+
 app.use(cookieParser());
 app.set('view engine', 'pug');
 app.set('views', __dirname + '/views');
+app.use(session({secret: 'tony numba wan', resave: false, saveUninitialized: false}));
 
 const config = require("./config");
 const CLIENT_ID = config.discord_client_id;
@@ -33,43 +38,65 @@ app.get("/", function (req, res) {
 app.get("/confirm", function (req, res) {
 
     let steamID = req.query.steamID;
-    let data = req.cookies.data;
-    if (!data || !data.steamConnections.map(user => user.steamID).includes(steamID)) {
+    let data = req.session.data;
+    if (!data || !data.connections.map(user => user.steamid).includes(steamID)) {
         // The steamID is selected from the select page, this should never happen unless someone tries to access
         // this page directly.
-        res.clearCookie("data", {httpOnly: true});
-        res.render("select_error");
+        res.render("error");
+        // todo: log attempt
     } else {
-        rp({
-            uri: "http://localhost:8080/private/linksteam",
-            method: "POST",
-            json: true,
-            headers: {
-                "Authorization": "Bearer " + "SUPERSECRET1!", // just in case port leaks
-            },
-            body: {
-                username: data.username,
-                userID: data.userID,
-                steamID: steamID,
-            }
-        }).then(() => {
-            res.clearCookie("data", {httpOnly: true});
-            res.render("select_success", {steamID: steamID});
-        }).catch(err => {
-            console.log(err.message); // need logging
-            res.clearCookie("data", {httpOnly: true});
-            res.render("select_error");
+
+        VerifiedSteam.findOneBySteam(steamID)
+            .then(verifiedSteam => {
+                if (verifiedSteam === null) {
+                    // The steam is not known to us
+                    User.upsertUserWithVerifiedSteam(data.id, steamID).then(() => res.render("select_success", {steamID: steamID}));
+                } else {
+                    return User.findById(verifiedSteam.userId).then(
+                        user => {
+                            if (user.discord === data.id) {
+                                // The user has verified with this steam before, simply switch to it
+                                return user.update({
+                                    steam: verifiedSteam.steam,
+                                    validated: true
+                                }).then(() => res.render("select_success", {steamID: steamID}));
+                            } else {
+                                // The steam was verified by another user.
+                                res.render("error", {message: 'The steam id was verified by another user. If you own the other discord account, post in #help-desk and a staff member can help you'});
+                            }
+                        }
+                    )
+                }
+            }).catch(err => {
+            // todo: needs logging
+            res.render('error');
         });
     }
 });
 
 app.get("/select", function (req, res) {
-    res.render('select', {connections: req.cookies.data.steamConnections, username: req.cookies.data.username});
+    res.render('select', req.session.data);
 });
+
+// Discord api returns an "alternate" steamID64, this converts it to the correct one.
+function convertSteamId(connection) {
+    let steamID = new SteamID(connection.id);
+    steamID.instance = SteamID.Instance.DESKTOP;
+    return steamID.getSteamID64()
+}
+
+// https://discordapp.com/developers/docs/reference#image-formatting
+function getAvatarUrl(user_response) {
+    if (user_response.avatar === null) {
+        return `https://cdn.discordapp.com/embed/avatars/${user_response.discriminator % 5}.png`;
+    }
+    return `https://cdn.discordapp.com/avatars/${user_response.id}/${user_response.avatar}.png`;
+}
 
 app.get("/callback", (req, res, err) => {
     let code = req.query.code;
 
+    // todo: I believe we don't need to obtain a new token every time (it does expire thou)
     rp({
         uri: "https://discordapp.com/api/oauth2/token",
         qs: {
@@ -98,42 +125,53 @@ app.get("/callback", (req, res, err) => {
             headers: {
                 "Authorization": "Bearer " + tokens.access_token,
             }
-        });
+        }).then(connections =>
+            connections
+                .filter(connection => connection.type === 'steam')
+                .map(convertSteamId)
+        ).then(steamIDs => {
+                if (steamIDs.length > 0) {
+                    return rp({
+                        uri: "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/",
+                        method: "GET",
+                        json: true,
+                        qs: {
+                            key: config.steam_token,
+                            steamids: steamIDs.join(',')
+                        }
+                    });
+                } else {
+                    return null;
+                }
+            }
+        );
 
         return Promise.all([fetch_user, fetch_connections]);
     }).then(
         values => {
             let user_response = values[0];
-            let connections_response = values[1];
-            let steamConnections = [];
-            connections_response.forEach(item => {
-                if (item.type === "steam") {
-                    let steamID = new SteamID(item.id);
-                    steamID.instance = SteamID.Instance.DESKTOP;
-                    steamConnections.push({
-                        profile_name: item.name,
-                        steamID: steamID.getSteamID64()
-                    });
-                }
-            });
+            let steam_response = values[1];
 
-            if (steamConnections.length === 0) {
+            if (steam_response === null ||
+                !steam_response.response.hasOwnProperty('players') ||
+                steam_response.response.players.length === 0) {
                 res.render('no_steam');
             } else {
 
                 let data = {
-                    username: user_response.username,
-                    userID: user_response.id,
-                    steamConnections: steamConnections,
+                    avatar: getAvatarUrl(user_response),
+                    username: `${user_response.username}#${user_response.discriminator}`,
+                    id: user_response.id,
+                    connections: steam_response.response.players,
                 };
 
-                res.cookie("data", data);
+                req.session.data = data;
                 res.redirect("/select");
             }
         }
     ).catch(err => {
         // need logging
-        res.render('select_error');
+        res.render('error');
     });
 });
 
@@ -148,6 +186,6 @@ app.listen("80", (err) => {
 // no stacktraces leaked to user
 app.use(function (err, req, res, next) {
     res.status(err.status || 500);
-    res.render('select_error');
+    res.render('error');
 });
 
