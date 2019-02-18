@@ -104,12 +104,25 @@ const models = {
             allowNull: false,
         }
     }),
+
+    VerifiedSteam: dbInstance.define(
+        'verifiedSteam', {
+            steam: {
+                type: Sequelize.TEXT,
+                unique: true,
+                allowNull: false,
+            }
+        }
+    ),
 };
 
 // Define foreign keys here BEFORE syncing all models
 
 models.Tournament.hasMany(models.TournamentRegistration, {foreignKey: 'fk_tournament'});
 models.TournamentRegistration.belongsTo(models.Tournament, {foreignKey: 'fk_tournament'});
+
+models.User.hasMany(models.VerifiedSteam);
+models.VerifiedSteam.belongsTo(models.User);
 
 Object.values(models).forEach(model => model.sync());
 
