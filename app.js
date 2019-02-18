@@ -1542,6 +1542,7 @@ discordClient.on('message', message => {
                         }
                         if (infoPlayerUser.validated === false && infoPlayerUser.verifiedSteams.length === 0) {
                             sendChannelandMention(message.channel.id, message.author.id, `Sir, <@${infoPlayerUser.discord}> is linked to steam id ${infoPlayerUser.steam} (not verified).`);
+                            return 0;
                         }
 
                         let verifiedSteams = infoPlayerUser.verifiedSteams.map(verifiedSteam => {
