@@ -20,6 +20,16 @@ const tournamentUtil = {
 
     createRegistration: function (tournamentRegistrationObj) {
         return TournamentRegistration.create(tournamentRegistrationObj);
+    },
+
+    findAllTopRegistrations: function (limit) {
+        return TournamentRegistration.findAll({
+            order: [
+                ['score', 'DESC'],
+                ['date', 'DESC'],
+            ],
+            limit: limit,
+        });
     }
 };
 

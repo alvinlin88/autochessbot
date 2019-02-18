@@ -1626,6 +1626,23 @@ discordClient.on('message', message => {
                     })
                 })();
                 break;
+            case "admintournamentlist":
+                (function () {
+                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    let list = "";
+                    let counter = 0;
+                    Tournament.findAllTopRegistrations(64).then(registrations => {
+                        registrations.forEach(registration => {
+                            counter++;
+                            let discordUser = message.guild.members.find(r => r.id === registration.discord);
+                            if (discordUser !== null) {
+                                list += "`(" + counter + ") " + discordUser.user.username + "#" + discordUser.user.discriminator + " MMR " + registration.score + " " + registration.region + "` " + registration.country + " `" + new Date(parseInt(registration.date)).toUTCString() + "`\n";
+                            }
+                        });
+                        sendChannel(message.channel.id, list);
+                    });
+                })();
+                break;
             case "register":
                 (function () {
                     if (message.channel.name === "tournament-signups") {
