@@ -16,6 +16,7 @@ config.sqlitedb = "db.sqlite";
 config.sentry = "sentry";
 config.lobbies_file = "lobbies-data.json";
 config.lobbies_backup_cron = "*/5 * * * * *"; // Every five seconds.
+config.message_flush_cron = "* * * * * *"; // Every second.
 
 config.adminRoleName = "Staff";
 config.leagueRoles = ["Tester", "Beginner", "Intermediate", "Advanced", "Expert", "Master"];
@@ -27,7 +28,6 @@ config.leagueChannels = {"beginner-lobbies": "<#542420779493490692>", "intermedi
 config.validRegions = ["NAW", "NAE", "EUW", "EUE", "RU", "SEA", "OCE", "SA"];
 config.botChannels = ["development", "chessbot-commands"];
 
-config.sendMessageInterval = 1000;
 config.messageMaxLength = 2000;
 
 module.exports = config;

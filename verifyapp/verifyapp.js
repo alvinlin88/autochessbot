@@ -147,8 +147,7 @@ app.get("/callback", (req, res, err) => {
         );
 
         return Promise.all([fetch_user, fetch_connections]);
-    }).then(
-        values => {
+    }).then(values => {
             let user_response = values[0];
             let steam_response = values[1];
 
@@ -168,8 +167,7 @@ app.get("/callback", (req, res, err) => {
                 req.session.data = data;
                 res.redirect("/select");
             }
-        }
-    ).catch(err => {
+    }).catch(err => {
         // need logging
         res.render('error');
     });
