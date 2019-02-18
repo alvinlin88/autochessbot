@@ -1635,7 +1635,7 @@ discordClient.on('message', message => {
                             counter++;
                             let discordUser = message.guild.members.find(r => r.id === registration.discord);
                             if (discordUser !== null) {
-                                sendChannel(message.channel.id, "`(" + counter + ") " + discordUser.user.username + "#" + discordUser.user.discriminator + " MMR " + registration.score + " " + registration.region + "` " + registration.country + " `" + new Date(parseInt(registration.date)).toUTCString());
+                                sendChannel(message.channel.id, "`(" + counter + ") " + discordUser.user.username + "#" + discordUser.user.discriminator + " MMR " + registration.score + " " + registration.region + "` " + registration.country + " `" + new Date(parseInt(registration.date)).toUTCString() + "`");
                             }
                         });
                     });
