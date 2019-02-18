@@ -41,7 +41,7 @@ const userUtil = {
                 } else {
                     return user.update({
                         steam: steam,
-                        verified: true
+                        validated: true
                     })
                 }
             }
