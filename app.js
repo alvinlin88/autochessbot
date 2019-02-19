@@ -1497,7 +1497,7 @@ discordClient.on('message', message => {
                 (function () {
                     if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
                     let counter = 0;
-                    Tournament.findAllTopRegistrations(64).then(registrations => {
+                    Tournament.findAllTopRegistrations(48).then(registrations => {
                         registrations.forEach(registration => {
                             counter++;
                             let discordUser = message.guild.members.find(r => r.id === registration.discord);
