@@ -1403,7 +1403,7 @@ discordClient.on('message', message => {
                             return 0;
                         }
                         if (infoPlayerUser.steam === null) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I could not find a steam id for <@" + infoPlayerUser.discord + ">. This user has tried to link a steam id and has probably unlinked it.");
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I could not find a steam id for <@" + infoPlayerUser.discord + ">.");
                             return 0;
                         }
                         if (infoPlayerUser.validated === false && infoPlayerUser.verifiedSteams.length === 0) {
