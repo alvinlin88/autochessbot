@@ -26,7 +26,6 @@ module.exports = class DiscordUtil {
         user.send(text).then(logger.info).catch(function (error) {
             if (error.code === 50007) {
                 // TODO: figure out how to send this in the channel the user sent it from... we don't have message.channel.id
-                this.sendChannelAndMention(this.discordClient.channels.find(r => r.name === "chessbot-commands").id, userDiscordId, "It looks like you might have turned off direct messages from server members in your Discord Settings under 'Privacy & Safety'. Please turn this setting on to receive bot messages.");
                 this.sendChannelAndMention(this.discordClient.channels.find(r => r.name === "chessbot-warnings").id, userDiscordId, "I could not send a direct message to this user. They might have turned direct messages from server members off in their Discord Settings under 'Privacy & Safety'.");
             }
             logger.log(error);
