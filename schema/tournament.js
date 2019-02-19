@@ -1,97 +1,97 @@
-const Sequelize = require('sequelize');
-const dbInstance = require('./db.js');
-const Op = Sequelize.Op;
+const Sequelize = require("sequelize")
+const dbInstance = require("./db.js")
 
-const Tournament = dbInstance.define('tournament', {
-    name: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-    },
-    description: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-    },
-    signupstartdatetime: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-    },
-    signupenddatetime: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-    },
-    // unused, future proofing database
-    tournamentstartdatetime: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-    },
-    tournamentenddatetime: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-    },
-    tournamentsettings: { // free form json settings
-        type: Sequelize.TEXT,
-        allowNull: true,
-    },
-});
+const Tournament = dbInstance.define("tournament", {
+  name: {
+    type: Sequelize.TEXT,
+    allowNull: true
+  },
+  description: {
+    type: Sequelize.TEXT,
+    allowNull: true
+  },
+  signupstartdatetime: {
+    type: Sequelize.TEXT,
+    allowNull: true
+  },
+  signupenddatetime: {
+    type: Sequelize.TEXT,
+    allowNull: true
+  },
+  // unused, future proofing database
+  tournamentstartdatetime: {
+    type: Sequelize.TEXT,
+    allowNull: true
+  },
+  tournamentenddatetime: {
+    type: Sequelize.TEXT,
+    allowNull: true
+  },
+  tournamentsettings: {
+    // free form json settings
+    type: Sequelize.TEXT,
+    allowNull: true
+  }
+})
 
-Tournament.sync();
+Tournament.sync()
 
-const TournamentRegistration = dbInstance.define('tournamentRegistration', {
-    discord: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-    },
-    steam: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-    },
-    rank: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-    },
-    score: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-    },
-    date: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-    },
-    region: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-    },
-    country: {
-        type: Sequelize.TEXT,
-        allowNull: false,
-    }
-});
+const TournamentRegistration = dbInstance.define("tournamentRegistration", {
+  discord: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  },
+  steam: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  },
+  rank: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  },
+  score: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  },
+  date: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  },
+  region: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  },
+  country: {
+    type: Sequelize.TEXT,
+    allowNull: false
+  }
+})
 
-TournamentRegistration.belongsTo(Tournament, {foreignKey: 'fk_tournament'});
+TournamentRegistration.belongsTo(Tournament, { foreignKey: "fk_tournament" })
 
-Tournament.sync();
-TournamentRegistration.sync();
+Tournament.sync()
+TournamentRegistration.sync()
 
 const tournamentUtil = {
-    createTournament: function (tournamentObj) {
-        return Tournament.create(tournamentObj);
-    },
+  createTournament: function(tournamentObj) {
+    return Tournament.create(tournamentObj)
+  },
 
-    getTournament: function (tournamentID) {
-        return Tournament.findOne({
-            where: {id: tournamentID}
-        });
-    },
+  getTournament: function(tournamentID) {
+    return Tournament.findOne({
+      where: { id: tournamentID }
+    })
+  },
 
-    findRegistration: function (where) {
-        return TournamentRegistration.findOne({
-            where: where,
-        });
-    },
+  findRegistration: function(where) {
+    return TournamentRegistration.findOne({
+      where: where
+    })
+  },
 
-    createRegistration: function (tournamentRegistrationObj) {
-        return TournamentRegistration.create(tournamentRegistrationObj);
-    }
-};
+  createRegistration: function(tournamentRegistrationObj) {
+    return TournamentRegistration.create(tournamentRegistrationObj)
+  }
+}
 
-module.exports = tournamentUtil;
+module.exports = tournamentUtil

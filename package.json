@@ -4,6 +4,7 @@
   "description": "How to run locally ==================",
   "main": "app.js",
   "dependencies": {
+    "axios": "^0.18.0",
     "body-parser": "latest",
     "connect-firebase": "^0.0.9",
     "connect-sqlite3": "^0.9.11",
@@ -33,7 +34,9 @@
     "winston": "^3.2.1"
   },
   "devDependencies": {
+    "babel-eslint": "^10.0.1",
     "chai": "^4.2.0",
+    "eslint": "^5.14.1",
     "mocha": "^5.2.0"
   },
   "scripts": {
