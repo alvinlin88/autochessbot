@@ -333,6 +333,13 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
             }
             return 0;
         });
+    } else if (user !== null && user.steam === null) {
+        // todo cleanup after most people are verified.
+        let discordUser = message.guild.members.get(user.discord);
+        leagueRoles.forEach(leagueRole => {
+            let role = message.guild.roles.find(r => r.name === leagueRole);
+            discordUser.removeRole(role).catch(logger.error);
+        })
     }
 }
 
@@ -381,21 +388,22 @@ discordClient.on('message', message => {
         return 0;
     }
 
-
     let userPromise = User.findByDiscord(message.author.id);
 
     userPromise.then(user => {
         let isLobbyCommand = null;
 
+        if (user === null ||user.steam === null) {
+            const readme = discordClient.channels.find(r => r.name === 'readme').id;
+            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `You need to complete verification to use bot commands. See <#${readme}> for more information.`);
+            updateRoles(message, user, false, false, true);
+            return 0;
+        }
+
         if (leagueLobbies.includes(message.channel.name)) {
             let leagueRole = lobbiesToLeague[message.channel.name];
             let leagueChannel = message.channel.name;
             let leagueChannelRegion = leagueChannelToRegion[leagueChannel];
-
-            if (user === null || user.steam === null) {
-                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You need to link a steam id to use bot commands in lobbies. See <#542454956825903104> for more information.");
-                return 0;
-            }
 
             switch (parsedCommand.command) {
                 case "admincancel":
