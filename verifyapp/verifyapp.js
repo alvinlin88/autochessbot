@@ -93,6 +93,10 @@ function getAvatarUrl(user_response) {
     return `https://cdn.discordapp.com/avatars/${user_response.id}/${user_response.avatar}.png`;
 }
 
+function getUserNameWithTag(user_response) {
+    return `${user_response.username}#${user_response.discriminator}`;
+}
+
 app.get("/callback", (req, res, err) => {
     let code = req.query.code;
 
@@ -147,29 +151,30 @@ app.get("/callback", (req, res, err) => {
         );
 
         return Promise.all([fetch_user, fetch_connections]);
-    }).then(
-        values => {
-            let user_response = values[0];
-            let steam_response = values[1];
+    }).then(values => {
+        let user_response = values[0];
+        let steam_response = values[1];
 
-            if (steam_response === null ||
-                !steam_response.response.hasOwnProperty('players') ||
-                steam_response.response.players.length === 0) {
-                res.render('no_steam');
-            } else {
+        if (steam_response === null ||
+            !steam_response.response.hasOwnProperty('players') ||
+            steam_response.response.players.length === 0) {
+            res.render('no_steam', {
+                avatar: getAvatarUrl(user_response),
+                username: getUserNameWithTag(user_response)
+            });
+        } else {
 
-                let data = {
-                    avatar: getAvatarUrl(user_response),
-                    username: `${user_response.username}#${user_response.discriminator}`,
-                    id: user_response.id,
-                    connections: steam_response.response.players,
-                };
+            let data = {
+                avatar: getAvatarUrl(user_response),
+                username: getUserNameWithTag(user_response),
+                id: user_response.id,
+                connections: steam_response.response.players,
+            };
 
-                req.session.data = data;
-                res.redirect("/select");
-            }
+            req.session.data = data;
+            res.redirect("/select");
         }
-    ).catch(err => {
+    }).catch(err => {
         // need logging
         res.render('error');
     });
