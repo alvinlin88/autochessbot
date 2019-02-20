@@ -1,30 +1,31 @@
-const logger = require("./logger")
-const config = require("../config")
+const logger = require("./logger");
+const config = require("../config");
+const CronJob = require("cron").CronJob;
 
 const MessageConsolidator = () => {
-  const messageQueues = []
+  const messageQueues = [];
 
   const enqueueMessage = (target, messageText, userToMentionId = null) => {
     if (!messageQueues.hasOwnProperty(target)) {
       messageQueues[target] = {
         targetObj: target,
         messages: []
-      }
+      };
     }
     if (userToMentionId != null) {
-      messageText = "<@" + userToMentionId + "> " + messageText
+      messageText = "<@" + userToMentionId + "> " + messageText;
     }
-    messageQueues[target].messages.push(messageText)
-  }
+    messageQueues[target].messages.push(messageText);
+  };
 
   const processQueue = () => {
     for (let target in messageQueues) {
-      let messageQueue = messageQueues[target]
+      let messageQueue = messageQueues[target];
 
-      let messageTarget = messageQueue.targetObj
-      let messages = messageQueue.messages
+      let messageTarget = messageQueue.targetObj;
+      let messages = messageQueue.messages;
 
-      let aggregatedMessage = ""
+      let aggregatedMessage = "";
       for (let messageIndex in messages) {
         if (messages.hasOwnProperty(messageIndex)) {
           if (
@@ -36,12 +37,12 @@ const MessageConsolidator = () => {
               .then(logger.info)
               .catch(logger.error)
               .then(logger.info)
-              .catch(logger.error)
-            aggregatedMessage = ""
+              .catch(logger.error);
+            aggregatedMessage = "";
           }
           aggregatedMessage = aggregatedMessage.concat(
             messages[messageIndex] + "\n"
-          )
+          );
         }
       }
       messageTarget
@@ -49,17 +50,23 @@ const MessageConsolidator = () => {
         .then(logger.info)
         .catch(logger.error)
         .then(logger.info)
-        .catch(logger.error)
+        .catch(logger.error);
 
-      delete messageQueues[target]
+      delete messageQueues[target];
     }
-  }
+  };
 
-  setInterval(processQueue, config.sendMessageInterval)
+  new CronJob(
+    config.message_flush_cron,
+    processQueue,
+    null,
+    true,
+    "America/Los_Angeles"
+  );
 
   return {
     enqueueMessage
-  }
-}
+  };
+};
 
-module.exports = MessageConsolidator()
+module.exports = MessageConsolidator();

@@ -1,7 +1,6 @@
 const { adminRoleName, botChannels } = require("./config")
-const client = require("./helpers/client")
 const logger = require("./helpers/logger")
-const User = require("./schema/user.js")
+const UserAPI = require("./helpers/UserAPI")
 const { leagueLobbies } = require("./constants/leagues")
 const MessagingAPI = require("./helpers/MessagingAPI")
 const switchCase = require("./switchCase")
@@ -81,29 +80,6 @@ const handleMessage = async message => {
     return
   }
 
-  let linkAliases = ["link", "verify"]
-  if (linkAliases.includes(parsedCommand.command)) {
-    let reminder = `These commands are deprecated. Please follow instructions in <#${
-      client.channels.find(r => r.name === "readme").id
-    }> to complete verification.`
-
-    if (message.channel.type !== "dm") {
-      if (botChannels.includes(message.channel.name)) {
-        MessagingAPI.sendToChannelWithMention(
-          message.channel.id,
-          message.author.id,
-          reminder
-        )
-      } else {
-        MessagingAPI.sendDM(message.author.id, reminder)
-      }
-      MessagingAPI.deleteMessage(message)
-    } else {
-      MessagingAPI.sendDM(message.author.id, reminder)
-    }
-    return
-  }
-
   if (
     message.channel.type !== "dm" &&
     message.member.roles.has(
@@ -129,7 +105,7 @@ const handleMessage = async message => {
     return
   }
 
-  let user = await User.findByDiscord(message.author.id)
+  let user = await UserAPI.findByDiscord(message.author.id)
 
   switchCase({ parsedCommand, user, message })
 }

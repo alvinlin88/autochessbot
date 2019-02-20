@@ -7,13 +7,14 @@
   "parser": "babel-eslint",
   "extends": "eslint:recommended",
   "rules": {
+    "no-undef": "error",
     "indent": ["warn", 2, { "SwitchCase": 1 }],
     "linebreak-style": ["error", "unix"],
     "quotes": ["warn", "double"],
     "semi": ["warn", "never"],
     "no-unused-vars": "off",
     "no-console": "off",
-    "no-case-declarations": "off", 
+    "no-case-declarations": "off",
     "no-loop-func": "off"
   }
 }

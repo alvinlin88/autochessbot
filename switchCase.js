@@ -12,12 +12,12 @@ const {
   exemptLeagueRolePruning
 } = require("./config")
 const randtoken = require("rand-token")
-const User = require("./schema/user.js")
-const Tournament = require("./schema/tournament.js")
+const UserAPI = require("./helpers/UserAPI")
+const VerifiedSteamAPI = require("./helpers/VerifiedSteamAPI")
+const TournamentAPI = require("./helpers/TournamentAPI")
 const parseDiscordId = require("./helpers/discord/parseDiscordID")
 const getSteamPersonaNames = require("./helpers/steam/getSteamPersonaNames")
 const updateRoles = require("./commands/updateRoles")
-
 
 const Lobbies = require("./lobbies.js"),
   lobbies = new Lobbies()
@@ -36,19 +36,21 @@ let activeTournament = 1
 const switchCase = ({ parsedCommand, user, message }) => {
   let isLobbyCommand = null
 
+  if (user === null || user.steam === null) {
+    const readme = client.channels.find(r => r.name === "readme").id
+    MessagingAPI.sendToChannelWithMention(
+      message.channel.id,
+      message.author.id,
+      `You need to complete verification to use bot commands. See <#${readme}> for more information.`
+    )
+    updateRoles(message, user, false, false, true)
+    return 0
+  }
+
   if (leagueLobbies.includes(message.channel.name)) {
     let leagueRole = lobbiesToLeague[message.channel.name]
     let leagueChannel = message.channel.name
     let leagueChannelRegion = leagueChannelToRegion[leagueChannel]
-
-    if (user === null || user.steam === null) {
-      MessagingAPI.sendToChannelWithMention(
-        message.channel.id,
-        message.author.id,
-        "You need to link a steam id to use bot commands in lobbies. See <#542454956825903104> for more information."
-      )
-      return 0
-    }
 
     switch (parsedCommand.command) {
       case "admincancel":
@@ -72,7 +74,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
           }
 
           let hostLobbyDiscordId = parseDiscordId(parsedCommand.args[0])
-          User.findByDiscord(hostLobbyDiscordId).then(hostUser => {
+          UserAPI.findByDiscord(hostLobbyDiscordId).then(hostUser => {
             let hostLobbyEnd = lobbies.getLobbyForHostSafe(leagueChannel, hostUser.steam)
             if (hostLobbyEnd === null) {
               MessagingAPI.sendToChannelWithMention(
@@ -138,8 +140,8 @@ const switchCase = ({ parsedCommand, user, message }) => {
             )
           }
 
-          User.findByDiscord(hostDiscordIdKick).then(hostUser => {
-            User.findByDiscord(playerDiscordIdKick).then(playerUser => {
+          UserAPI.findByDiscord(hostDiscordIdKick).then(hostUser => {
+            UserAPI.findByDiscord(playerDiscordIdKick).then(playerUser => {
               let hostLobby = lobbies.getLobbyForHostSafe(leagueChannel, hostUser.steam)
               if (hostLobby === null) {
                 MessagingAPI.sendToChannelWithMention(
@@ -197,6 +199,9 @@ const switchCase = ({ parsedCommand, user, message }) => {
         break
       case "host":
         (function() {
+          if (user === null) {
+          }
+
           if (disableLobbyCommands === true) {
             MessagingAPI.sendToChannelWithMention(
               message.channel.id,
@@ -256,7 +261,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
           if (parsedCommand.args.length === 1) {
             rankRequirement = leagueRequirements[leagueRole]
           } else if (parsedCommand.args.length === 2) {
-            rankRequirement = RanksAPI.parseRank(parsedCommand.args[1])
+            rankRequirement = parseRank(parsedCommand.args[1])
 
             if (rankRequirement === null) {
               MessagingAPI.sendToChannelWithMention(
@@ -430,7 +435,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
               return 0
             }
 
-            User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
+            UserAPI.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
               getSteamPersonaNames(lobby.players).then(personas => {
                 let playerDiscordIds = []
                 let hostUserDiscordId = null
@@ -474,46 +479,48 @@ const switchCase = ({ parsedCommand, user, message }) => {
             })
           } else {
             if (lobby.players.length === 8) {
-              User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
-                getSteamPersonaNames(lobby.players).then(personas => {
-                  let playerDiscordIds = []
-                  let hostUserDiscordId = null
+              UserAPI.findAllUsersWithSteamIdsIn(lobby.players).then(
+                players => {
+                  getSteamPersonaNames(lobby.players).then(personas => {
+                    let playerDiscordIds = []
+                    let hostUserDiscordId = null
 
-                  players.forEach(player => {
-                    if (player.steam !== lobby.host) {
-                      playerDiscordIds.push(
-                        "<@" +
-                          player.discord +
-                          "> \"" +
-                          personas[player.steam] +
-                          "\" " +
-                          RanksAPI.getRankString(player.rank)
-                      )
-                    } else {
-                      playerDiscordIds.push(
-                        "<@" +
-                          player.discord +
-                          "> \"" +
-                          personas[player.steam] +
-                          "\" " +
-                          RanksAPI.getRankString(player.rank) +
-                          " **[Host]**"
-                      )
-                      hostUserDiscordId = player.discord
-                    }
+                    players.forEach(player => {
+                      if (player.steam !== lobby.host) {
+                        playerDiscordIds.push(
+                          "<@" +
+                            player.discord +
+                            "> \"" +
+                            personas[player.steam] +
+                            "\" " +
+                            RanksAPI.getRankString(player.rank)
+                        )
+                      } else {
+                        playerDiscordIds.push(
+                          "<@" +
+                            player.discord +
+                            "> \"" +
+                            personas[player.steam] +
+                            "\" " +
+                            RanksAPI.getRankString(player.rank) +
+                            " **[Host]**"
+                        )
+                        hostUserDiscordId = player.discord
+                      }
+                    })
+
+                    MessagingAPI.sendToChannelWithMention(
+                      message.channel.id,
+                      message.author.id,
+                      "**@" +
+                        lobby["region"] +
+                        " region lobby started. Good luck!** " +
+                        playerDiscordIds.join(" | ")
+                    )
+                    lobbies.deleteLobby(leagueChannel, user.steam)
                   })
-
-                  MessagingAPI.sendToChannelWithMention(
-                    message.channel.id,
-                    message.author.id,
-                    "**@" +
-                      lobby["region"] +
-                      " region lobby started. Good luck!** " +
-                      playerDiscordIds.join(" | ")
-                  )
-                  lobbies.deleteLobby(leagueChannel, user.steam)
-                })
-              })
+                }
+              )
             } else {
               MessagingAPI.sendToChannelWithMention(
                 message.channel.id,
@@ -674,11 +681,11 @@ const switchCase = ({ parsedCommand, user, message }) => {
             let userPromise = null
 
             if (resultLobbyHostId === null) {
-              userPromise = User.findByDiscord(
+              userPromise = UserAPI.findByDiscord(
                 parseDiscordId(parsedCommand.args[0])
               )
             } else {
-              userPromise = User.findOneBySteam(resultLobbyHostId)
+              userPromise = UserAPI.findOneBySteam(resultLobbyHostId)
             }
 
             userPromise.then(function(hostUser) {
@@ -879,7 +886,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
           }
 
           let hostDiscordQuitId = playerLobbyLeave["host"]
-          User.findOneBySteam(hostDiscordQuitId).then(function(hostUser) {
+          UserAPI.findOneBySteam(hostDiscordQuitId).then(function(hostUser) {
             if (
               lobbies.removePlayerFromLobby(
                 leagueChannel,
@@ -979,7 +986,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
             MessagingAPI.deleteMessage(message)
             return 0
           }
-          User.findByDiscord(kickedPlayerDiscordId).then(function(
+          UserAPI.findByDiscord(kickedPlayerDiscordId).then(function(
             kickedPlayerUser
           ) {
             if (kickedPlayerUser === null) {
@@ -1044,7 +1051,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
                   "> @" +
                   hostLobby.region +
                   " region lobby. `(" +
-                  lobbies.getLobbyForHostSafe(leagueChannel, user.steam).players
+                  lobbies.lobbies.getLobbyForHostSafe(leagueChannel, user.steam).players
                     .length +
                   "/8)`"
               )
@@ -1117,170 +1124,174 @@ const switchCase = ({ parsedCommand, user, message }) => {
             if (lobbiesInLeagueChannel.hasOwnProperty(hostId)) {
               let lobby = lobbiesInLeagueChannel[hostId]
               if (lobby.host !== null && lobby.password !== null) {
-                User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
-                  getSteamPersonaNames(lobby.players).then(personas => {
-                    let playerDiscordIds = []
-                    let hostDiscord = "ERROR"
-                    let hostDiscordId = null
-                    players.forEach(player => {
-                      if (player.steam !== lobby.host) {
-                        playerDiscordIds.push(
-                          "<@" +
+                UserAPI.findAllUsersWithSteamIdsIn(lobby.players).then(
+                  players => {
+                    getSteamPersonaNames(lobby.players).then(personas => {
+                      let playerDiscordIds = []
+                      let hostDiscord = "ERROR"
+                      let hostDiscordId = null
+                      players.forEach(player => {
+                        if (player.steam !== lobby.host) {
+                          playerDiscordIds.push(
+                            "<@" +
+                              player.discord +
+                              "> \"" +
+                              personas[player.steam] +
+                              "\" " +
+                              RanksAPI.getRankString(player.rank)
+                          )
+                        } else {
+                          hostDiscord =
+                            "<@" +
                             player.discord +
                             "> \"" +
                             personas[player.steam] +
                             "\" " +
-                            RanksAPI.getRankString(player.rank)
+                            RanksAPI.getRankString(player.rank) +
+                            " **[Host]**"
+                          hostDiscordId = player.discord
+                        }
+                      })
+
+                      let lastActivityStr = ""
+                      let dontPrint = false
+                      if (lobby.hasOwnProperty("lastactivity")) {
+                        let lastActivity = Math.round(
+                          (Date.now() - new Date(lobby.lastactivity)) /
+                            1000 /
+                            60
                         )
-                      } else {
-                        hostDiscord =
-                          "<@" +
-                          player.discord +
-                          "> \"" +
-                          personas[player.steam] +
-                          "\" " +
-                          RanksAPI.getRankString(player.rank) +
-                          " **[Host]**"
-                        hostDiscordId = player.discord
+                        if (lastActivity >= 2) {
+                          lastActivityStr =
+                            " (" + lastActivity + "m last activity)"
+                        }
+                        if (
+                          !dontPrint &&
+                          lastActivity > 15 &&
+                          !exemptLeagueRolePruning.includes(leagueRole)
+                        ) {
+                          lobbies.deleteLobby(leagueChannel, lobby.host)
+                          dontPrint = true
+                          MessagingAPI.sendToChannel(
+                            message.channel.id,
+                            "_*** @" +
+                              lobby.region +
+                              " <@" +
+                              hostDiscordId +
+                              "> lobby has been removed because of no activity (joins/leaves) for more than 15 minutes._"
+                          )
+                          MessagingAPI.sendDM(
+                            hostDiscordId,
+                            "**Your lobby in <#" +
+                              message.channel.id +
+                              "> was cancelled because of no activity (joins/leaves) for more than 15 minutes.**"
+                          )
+                        }
+                        if (
+                          !dontPrint &&
+                          lastActivity > 5 &&
+                          lobby.players.length === 8 &&
+                          !exemptLeagueRolePruning.includes(leagueRole)
+                        ) {
+                          lobbies.deleteLobby(leagueChannel, lobby.host)
+                          dontPrint = true
+                          MessagingAPI.sendToChannel(
+                            message.channel.id,
+                            "_*** @" +
+                              lobby.region +
+                              " <@" +
+                              hostDiscordId +
+                              "> lobby has been removed because it is full and has had no activity (joins/leaves) for more than 5 minutes._"
+                          )
+                          MessagingAPI.sendDM(
+                            hostDiscordId,
+                            "**Your lobby in <#" +
+                              message.channel.id +
+                              "> was cancelled because it was full and had no activity (joins/leaves) for more than 5 minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**"
+                          )
+                        }
+                      }
+                      let lobbyTime = Math.round(
+                        (Date.now() - new Date(lobby.starttime)) / 1000 / 60
+                      )
+                      if (
+                        !dontPrint &&
+                        lobbyTime > 60 &&
+                        !exemptLeagueRolePruning.includes(leagueRole)
+                      ) {
+                        lobbies.deleteLobby(leagueChannel, lobby.host)
+                        dontPrint = true
+                        MessagingAPI.sendToChannel(
+                          message.channel.id,
+                          "_*** @" +
+                            lobby.region +
+                            " <@" +
+                            hostDiscordId +
+                            "> lobby has been removed because it has not started after 60 minutes._"
+                        )
+                        MessagingAPI.sendDM(
+                          hostDiscordId,
+                          "**Your lobby in <#" +
+                            message.channel.id +
+                            "> was cancelled because it was not started after 60 minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**"
+                        )
+                      }
+
+                      let fullStr = ""
+                      let fullStr2 = ""
+                      let joinStr =
+                        " | Use \"!join <@" + hostDiscordId + ">\" to join lobby."
+                      if (lobby.players.length >= 8) {
+                        fullStr = "~~"
+                        fullStr2 = "~~"
+                        joinStr = ""
+                      }
+
+                      if (!dontPrint) {
+                        if (printFullList === true) {
+                          MessagingAPI.sendToChannel(
+                            message.channel.id,
+                            fullStr +
+                              "=== **@" +
+                              lobby.region +
+                              "** [" +
+                              RanksAPI.getRankString(lobby.rankRequirement) +
+                              "+] `(" +
+                              lobby.players.length +
+                              "/8)` " +
+                              hostDiscord +
+                              " | " +
+                              playerDiscordIds.join(" | ") +
+                              ". (" +
+                              lobbyTime +
+                              "m)" +
+                              lastActivityStr +
+                              fullStr2
+                          )
+                        } else {
+                          MessagingAPI.sendToChannel(
+                            message.channel.id,
+                            fullStr +
+                              "=== **@" +
+                              lobby.region +
+                              "** [" +
+                              RanksAPI.getRankString(lobby.rankRequirement) +
+                              "+] `(" +
+                              lobby.players.length +
+                              "/8)` " +
+                              hostDiscord +
+                              joinStr +
+                              " (" +
+                              lobbyTime +
+                              "m)" +
+                              lastActivityStr +
+                              fullStr2
+                          )
+                        }
                       }
                     })
-
-                    let lastActivityStr = ""
-                    let dontPrint = false
-                    if (lobby.hasOwnProperty("lastactivity")) {
-                      let lastActivity = Math.round(
-                        (Date.now() - new Date(lobby.lastactivity)) / 1000 / 60
-                      )
-                      if (lastActivity >= 2) {
-                        lastActivityStr =
-                          " (" + lastActivity + "m last activity)"
-                      }
-                      if (
-                        !dontPrint &&
-                        lastActivity > 15 &&
-                        !exemptLeagueRolePruning.includes(leagueRole)
-                      ) {
-                        lobbies.deleteLobby(leagueChannel, lobby.host)
-                        dontPrint = true
-                        MessagingAPI.sendToChannel(
-                          message.channel.id,
-                          "_*** @" +
-                            lobby.region +
-                            " <@" +
-                            hostDiscordId +
-                            "> lobby has been removed because of no activity (joins/leaves) for more than 15 minutes._"
-                        )
-                        MessagingAPI.sendDM(
-                          hostDiscordId,
-                          "**Your lobby in <#" +
-                            message.channel.id +
-                            "> was cancelled because of no activity (joins/leaves) for more than 15 minutes.**"
-                        )
-                      }
-                      if (
-                        !dontPrint &&
-                        lastActivity > 5 &&
-                        lobby.players.length === 8 &&
-                        !exemptLeagueRolePruning.includes(leagueRole)
-                      ) {
-                        lobbies.deleteLobby(leagueChannel, lobby.host)
-                        dontPrint = true
-                        MessagingAPI.sendToChannel(
-                          message.channel.id,
-                          "_*** @" +
-                            lobby.region +
-                            " <@" +
-                            hostDiscordId +
-                            "> lobby has been removed because it is full and has had no activity (joins/leaves) for more than 5 minutes._"
-                        )
-                        MessagingAPI.sendDM(
-                          hostDiscordId,
-                          "**Your lobby in <#" +
-                            message.channel.id +
-                            "> was cancelled because it was full and had no activity (joins/leaves) for more than 5 minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**"
-                        )
-                      }
-                    }
-                    let lobbyTime = Math.round(
-                      (Date.now() - new Date(lobby.starttime)) / 1000 / 60
-                    )
-                    if (
-                      !dontPrint &&
-                      lobbyTime > 60 &&
-                      !exemptLeagueRolePruning.includes(leagueRole)
-                    ) {
-                      lobbies.deleteLobby(leagueChannel, lobby.host)
-                      dontPrint = true
-                      MessagingAPI.sendToChannel(
-                        message.channel.id,
-                        "_*** @" +
-                          lobby.region +
-                          " <@" +
-                          hostDiscordId +
-                          "> lobby has been removed because it has not started after 60 minutes._"
-                      )
-                      MessagingAPI.sendDM(
-                        hostDiscordId,
-                        "**Your lobby in <#" +
-                          message.channel.id +
-                          "> was cancelled because it was not started after 60 minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**"
-                      )
-                    }
-
-                    let fullStr = ""
-                    let fullStr2 = ""
-                    let joinStr =
-                      " | Use \"!join <@" + hostDiscordId + ">\" to join lobby."
-                    if (lobby.players.length >= 8) {
-                      fullStr = "~~"
-                      fullStr2 = "~~"
-                      joinStr = ""
-                    }
-
-                    if (!dontPrint) {
-                      if (printFullList === true) {
-                        MessagingAPI.sendToChannel(
-                          message.channel.id,
-                          fullStr +
-                            "=== **@" +
-                            lobby.region +
-                            "** [" +
-                            RanksAPI.getRankString(lobby.rankRequirement) +
-                            "+] `(" +
-                            lobby.players.length +
-                            "/8)` " +
-                            hostDiscord +
-                            " | " +
-                            playerDiscordIds.join(" | ") +
-                            ". (" +
-                            lobbyTime +
-                            "m)" +
-                            lastActivityStr +
-                            fullStr2
-                        )
-                      } else {
-                        MessagingAPI.sendToChannel(
-                          message.channel.id,
-                          fullStr +
-                            "=== **@" +
-                            lobby.region +
-                            "** [" +
-                            RanksAPI.getRankString(lobby.rankRequirement) +
-                            "+] `(" +
-                            lobby.players.length +
-                            "/8)` " +
-                            hostDiscord +
-                            joinStr +
-                            " (" +
-                            lobbyTime +
-                            "m)" +
-                            lastActivityStr +
-                            fullStr2
-                        )
-                      }
-                    }
-                  })
-                })
+                  }
+                )
               }
             }
             numPrinted++
@@ -1327,7 +1338,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
           //     MessagingAPI.sendToChannelWithMention(message.channel.id, message.author.id, "Could not find that user on this server.");
           //     return 0;
           // }
-          User.findByDiscord(lobbyHostDiscordId).then(hostUser => {
+          UserAPI.findByDiscord(lobbyHostDiscordId).then(hostUser => {
             let lobby = lobbies.getLobbyForPlayer(leagueChannel, hostUser.steam)
 
             if (lobby === null) {
@@ -1344,86 +1355,88 @@ const switchCase = ({ parsedCommand, user, message }) => {
             }
 
             if (lobby.host !== null && lobby.password !== null) {
-              User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
-                getSteamPersonaNames(lobby.players).then(personas => {
-                  let playerDiscordIds = []
-                  let hostDiscord = "ERROR"
-                  let hostDiscordId = null
-                  players.forEach(player => {
-                    if (player.steam !== lobby.host) {
-                      playerDiscordIds.push(
-                        "<@" +
+              UserAPI.findAllUsersWithSteamIdsIn(lobby.players).then(
+                players => {
+                  getSteamPersonaNames(lobby.players).then(personas => {
+                    let playerDiscordIds = []
+                    let hostDiscord = "ERROR"
+                    let hostDiscordId = null
+                    players.forEach(player => {
+                      if (player.steam !== lobby.host) {
+                        playerDiscordIds.push(
+                          "<@" +
+                            player.discord +
+                            "> \"" +
+                            personas[player.steam] +
+                            "\" " +
+                            RanksAPI.getRankString(player.rank)
+                        )
+                      } else {
+                        hostDiscord =
+                          "<@" +
                           player.discord +
                           "> \"" +
                           personas[player.steam] +
                           "\" " +
-                          RanksAPI.getRankString(player.rank)
-                      )
-                    } else {
-                      hostDiscord =
-                        "<@" +
-                        player.discord +
-                        "> \"" +
-                        personas[player.steam] +
-                        "\" " +
-                        RanksAPI.getRankString(player.rank) +
-                        " **[Host]**"
-                      hostDiscordId = player.discord
-                    }
-                  })
+                          RanksAPI.getRankString(player.rank) +
+                          " **[Host]**"
+                        hostDiscordId = player.discord
+                      }
+                    })
 
-                  let lastActivityStr = ""
-                  if (lobby.hasOwnProperty("lastacitivity")) {
-                    let lastActivity = Math.round(
-                      (Date.now() - new Date(lobby.lastactivity)) / 1000 / 60
-                    )
-                    if (lastActivity > 5) {
-                      lastActivityStr = " (" + +"m last activity)"
+                    let lastActivityStr = ""
+                    if (lobby.hasOwnProperty("lastacitivity")) {
+                      let lastActivity = Math.round(
+                        (Date.now() - new Date(lobby.lastactivity)) / 1000 / 60
+                      )
+                      if (lastActivity > 5) {
+                        lastActivityStr = " (" + +"m last activity)"
+                      }
                     }
-                  }
-                  MessagingAPI.sendToChannelWithMention(
-                    message.channel.id,
-                    message.author.id,
-                    "=== **@" +
-                      lobby.region +
-                      " [**" +
-                      RanksAPI.getRankString(lobby.rankRequirement) +
-                      "**+]** `(" +
-                      lobby.players.length +
-                      "/8)` " +
-                      hostDiscord +
-                      " | " +
-                      playerDiscordIds.join(" | ") +
-                      ". (" +
-                      Math.round(
-                        (Date.now() - new Date(lobby.starttime)) / 1000 / 60
-                      ) +
-                      "m)" +
-                      lastActivityStr
-                  )
-                  // also whisper
-                  MessagingAPI.sendDM(
-                    message.author.id,
-                    "=== **@" +
-                      lobby.region +
-                      "** [" +
-                      RanksAPI.getRankString(lobby.rankRequirement) +
-                      "+] `(" +
-                      lobby.players.length +
-                      "/8)` " +
-                      hostDiscord +
-                      " | " +
-                      playerDiscordIds.join(" | ") +
-                      ". (" +
-                      Math.round(
-                        (Date.now() - new Date(lobby.starttime)) / 1000 / 60
-                      ) +
-                      "m)" +
-                      lastActivityStr
-                  )
-                  MessagingAPI.deleteMessage(message)
-                })
-              })
+                    MessagingAPI.sendToChannelWithMention(
+                      message.channel.id,
+                      message.author.id,
+                      "=== **@" +
+                        lobby.region +
+                        " [**" +
+                        RanksAPI.getRankString(lobby.rankRequirement) +
+                        "**+]** `(" +
+                        lobby.players.length +
+                        "/8)` " +
+                        hostDiscord +
+                        " | " +
+                        playerDiscordIds.join(" | ") +
+                        ". (" +
+                        Math.round(
+                          (Date.now() - new Date(lobby.starttime)) / 1000 / 60
+                        ) +
+                        "m)" +
+                        lastActivityStr
+                    )
+                    // also whisper
+                    MessagingAPI.sendDM(
+                      message.author.id,
+                      "=== **@" +
+                        lobby.region +
+                        "** [" +
+                        RanksAPI.getRankString(lobby.rankRequirement) +
+                        "+] `(" +
+                        lobby.players.length +
+                        "/8)`\n" +
+                        hostDiscord +
+                        "\n" +
+                        playerDiscordIds.join("\n") +
+                        "\n(Last activity: " +
+                        Math.round(
+                          (Date.now() - new Date(lobby.starttime)) / 1000 / 60
+                        ) +
+                        "m)" +
+                        lastActivityStr
+                    )
+                    MessagingAPI.deleteMessage(message)
+                  })
+                }
+              )
             }
           })
         })()
@@ -1508,7 +1521,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
             return 0
           }
 
-          User.findOneBySteam(playerSendPassLobby.host).then(function(
+          UserAPI.findOneBySteam(playerSendPassLobby.host).then(function(
             hostUser
           ) {
             if (hostUser === null) {
@@ -1571,80 +1584,6 @@ const switchCase = ({ parsedCommand, user, message }) => {
   let isBotCommand = true
 
   switch (parsedCommand.command) {
-    case "unlink":
-      (function() {
-        if (message.channel.type === "dm") {
-          MessagingAPI.sendToChannelWithMention(
-            message.channel.id,
-            message.author.id,
-            "I can not unlink steam id in direct messages. Please try in <#542465986859761676>."
-          )
-          return 0
-        }
-        let readme = client.channels.find(r => r.name === "readme").id
-        if (user !== null && user.steam !== null) {
-          user.update({ steam: null, steamLinkToken: null, validated: null })
-          // steamFriends.removeFriend(user.steam);
-          // console.log("Removed steam friends " + user.steam);
-
-          let ranks = []
-
-          leagueRoles.forEach(leagueRole => {
-            if (message.guild === null) {
-              MessagingAPI.sendToChannelWithMention(
-                message.channel.id,
-                message.author.id,
-                "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#542465986859761676>."
-              )
-            }
-            let roleObj = message.guild.roles.find(r => r.name === leagueRole)
-
-            if (roleObj !== null) {
-              ranks.push({
-                name: leagueRole,
-                rank: leagueRequirements[leagueRole],
-                role: message.guild.roles.find(r => r.name === leagueRole)
-              })
-            }
-          })
-          let removed = []
-
-          if (message.member === null) {
-            MessagingAPI.sendToChannelWithMention(
-              message.channel.id,
-              message.author.id,
-              "I am having a problem seeing your roles. Are you set to Invisible on Discord?"
-            )
-          }
-          ranks.forEach(r => {
-            if (message.member.roles.has(r.role.id)) {
-              message.member.removeRole(r.role).catch(logger.error)
-              removed.push(r.name)
-            }
-          })
-          if (removed.length > 0) {
-            MessagingAPI.sendToChannelWithMention(
-              message.channel.id,
-              message.author.id,
-              "I have removed the following roles from you: `" +
-                removed.join("`, `") +
-                "`"
-            )
-          }
-          MessagingAPI.sendToChannelWithMention(
-            message.channel.id,
-            message.author.id,
-            `You have successfully unlinked your account. Follow instructions in <#${readme}> to verify and link another steam ID.`
-          )
-        } else {
-          MessagingAPI.sendToChannelWithMention(
-            message.channel.id,
-            message.author.id,
-            `You have not linked a steam id. Follow instructions in <#${readme}> to verify.`
-          )
-        }
-      })()
-      break
     case "adminrestartbot":
     case "restartbot":
     case "suicide":
@@ -1927,7 +1866,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
         }
         let updateRolePlayerDiscordId = parseDiscordId(parsedCommand.args[0])
 
-        User.findByDiscord(updateRolePlayerDiscordId).then(function(
+        UserAPI.findByDiscord(updateRolePlayerDiscordId).then(function(
           playerUser
         ) {
           if (playerUser === null) {
@@ -1967,17 +1906,16 @@ const switchCase = ({ parsedCommand, user, message }) => {
         let createLinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0])
         let forceSteamIdLink = parsedCommand.args[1]
 
-        User.findByDiscord(createLinkPlayerDiscordId).then(function(
+        UserAPI.findByDiscord(createLinkPlayerDiscordId).then(function(
           linkPlayerUser
         ) {
           if (linkPlayerUser === null) {
-            User.create({
+            UserAPI.create({
               discord: createLinkPlayerDiscordId,
               steam: forceSteamIdLink,
               validated: false
             })
-              .then(test => {
-                // logger.info(test.toJSON());
+              .then(() => {
                 MessagingAPI.sendToChannelWithMention(
                   message.channel.id,
                   message.author.id,
@@ -2025,7 +1963,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
         }
         let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0])
 
-        User.findByDiscord(unlinkPlayerDiscordId).then(function(
+        UserAPI.findByDiscord(unlinkPlayerDiscordId).then(function(
           unlinkPlayerUser
         ) {
           let oldSteamID = unlinkPlayerUser.steam
@@ -2074,8 +2012,23 @@ const switchCase = ({ parsedCommand, user, message }) => {
           return 0
         }
         let unlinkPlayerSteamId = parsedCommand.args[0]
+        VerifiedSteamAPI.findOneBySteam(unlinkPlayerSteamId).then(
+          verifiedSteam => {
+            if (verifiedSteam !== null) {
+              verifiedSteam
+                .destroy()
+                .then(() =>
+                  MessagingAPI.sendToChannelWithMention(
+                    message.channel.id,
+                    message.author.id,
+                    `Sir, I have removed verified steam id record for \`${unlinkPlayerSteamId}\``
+                  )
+                )
+            }
+          }
+        )
 
-        User.findAllBySteam(unlinkPlayerSteamId).then(function(
+        UserAPI.findAllBySteam(unlinkPlayerSteamId).then(function(
           unlinkPlayerUsers
         ) {
           unlinkPlayerUsers.forEach(unlinkPlayerUser => {
@@ -2121,38 +2074,58 @@ const switchCase = ({ parsedCommand, user, message }) => {
           return 0
         }
 
-        User.findByDiscord(infoPlayerDiscordId).then(function(infoPlayerUser) {
-          if (infoPlayerUser === null) {
-            // todo infoPlayerUser is null here
+        UserAPI.findUserAndVerifiedSteamsByDiscord(infoPlayerDiscordId).then(
+          function(infoPlayerUser) {
+            if (infoPlayerUser === null) {
+              MessagingAPI.sendToChannelWithMention(
+                message.channel.id,
+                message.author.id,
+                "Sir, I did not find any matches in database for <@" +
+                  infoPlayerDiscordId +
+                  ">"
+              )
+              return 0
+            }
+            if (infoPlayerUser.steam === null) {
+              MessagingAPI.sendToChannelWithMention(
+                message.channel.id,
+                message.author.id,
+                "Sir, I could not find a steam id for <@" +
+                  infoPlayerUser.discord +
+                  ">."
+              )
+              return 0
+            }
+            if (
+              infoPlayerUser.validated === false &&
+              infoPlayerUser.verifiedSteams.length === 0
+            ) {
+              MessagingAPI.sendToChannelWithMention(
+                message.channel.id,
+                message.author.id,
+                `Sir, <@${infoPlayerUser.discord}> is linked to steam id ${
+                  infoPlayerUser.steam
+                } (not verified).`
+              )
+              return 0
+            }
+
+            let verifiedSteams = infoPlayerUser.verifiedSteams
+              .map(verifiedSteam => {
+                let active =
+                  verifiedSteam.steam === infoPlayerUser.steam ? "(active)" : ""
+                return `\`${verifiedSteam.steam}${active}\``
+              })
+              .join(",")
             MessagingAPI.sendToChannelWithMention(
               message.channel.id,
               message.author.id,
-              "Sir, I did not find any matches in database for <@" +
-                infoPlayerUser.discord +
-                ">"
+              `Sir, <@${
+                infoPlayerUser.discord
+              }> is linked to steam id: ${verifiedSteams}.`
             )
-            return 0
           }
-          if (infoPlayerUser.steam === null) {
-            MessagingAPI.sendToChannelWithMention(
-              message.channel.id,
-              message.author.id,
-              "Sir, I could not find a steam id for <@" +
-                infoPlayerUser.discord +
-                ">. This user has tried to link a steam id and has probably unlinked it."
-            )
-            return 0
-          }
-          MessagingAPI.sendToChannelWithMention(
-            message.channel.id,
-            message.author.id,
-            "Sir, <@" +
-              infoPlayerUser.discord +
-              "> is linked to steam id: `" +
-              infoPlayerUser.steam +
-              "`."
-          )
-        })
+        )
       })()
       break
     case "admingetdiscord":
@@ -2185,7 +2158,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
           return 0
         }
 
-        User.findAllBySteam(steamId).then(players => {
+        UserAPI.findAllBySteam(steamId).then(players => {
           let playerDiscordIds = []
 
           // TODO: recheck ranks here
@@ -2227,7 +2200,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
         )
           return 0
         if (message.channel.type !== "dm") {
-          User.getVerificationStats().then(count => {
+          UserAPI.getVerificationStats().then(count => {
             MessagingAPI.sendToChannelWithMention(
               message.channel.id,
               message.author.id,
@@ -2257,7 +2230,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
       (function() {
         if (message.author.id !== "204094307689431043") return 0 // no permissions
 
-        Tournament.createTournament({
+        TournamentAPI.createTournament({
           name: "Team Liquid & qihl Auto Chess Masters",
           description:
             "- 32 Players, with only the highest ranking players who sign-up getting to compete.\n- 5 Round point-based format.\n- $400 prize pool: $200 for first place, $125 for second place, and $75 for third.",
@@ -2275,6 +2248,46 @@ const switchCase = ({ parsedCommand, user, message }) => {
         })
       })()
       break
+    case "admintournamentlist":
+      (function() {
+        if (
+          !message.member.roles.has(
+            message.guild.roles.find(r => r.name === adminRoleName).id
+          )
+        )
+          return 0
+        let counter = 0
+        TournamentAPI.createRegistration(48).then(registrations => {
+          registrations.forEach(registration => {
+            counter++
+            let discordUser = message.guild.members.find(
+              r => r.id === registration.discord
+            )
+            if (discordUser !== null) {
+              MessagingAPI.sendToChannel(
+                message.channel.id,
+                "`(" +
+                  counter +
+                  ") " +
+                  "MMR " +
+                  registration.score +
+                  " " +
+                  registration.region +
+                  " ` " +
+                  registration.country +
+                  " ` " +
+                  new Date(parseInt(registration.date)).toUTCString() +
+                  " | " +
+                  discordUser.user.username +
+                  "#" +
+                  discordUser.user.discriminator +
+                  "`"
+              )
+            }
+          })
+        })
+      })()
+      break
     case "register":
       (function() {
         if (message.channel.name === "tournament-signups") {
@@ -2289,7 +2302,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
             return 0
           }
 
-          Tournament.findRegistration({
+          TournamentAPI.findRegistration({
             fk_tournament: activeTournament,
             steam: user.steam
           }).then(result => {
@@ -2352,7 +2365,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
               return 0
             }
 
-            Tournament.createRegistration({
+            TournamentAPI.createRegistration({
               fk_tournament: activeTournament,
               discord: user.discord,
               steam: user.steam,
@@ -2362,7 +2375,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
               region: region,
               country: country
             }).then(registration => {
-              Tournament.getTournament(registration.fk_tournament).then(
+              TournamentAPI.getTournament(registration.fk_tournament).then(
                 tournament => {
                   MessagingAPI.sendToChannelWithMention(
                     message.channel.id,
@@ -2393,7 +2406,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
     case "unregister":
       (function() {
         if (message.channel.name === "tournament-signups") {
-          Tournament.findRegistration({
+          TournamentAPI.findRegistration({
             fk_tournament: activeTournament,
             steam: user.steam
           }).then(result => {
@@ -2424,7 +2437,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
 
         let discordUser = parseDiscordId(parsedCommand.args[0])
 
-        Tournament.findRegistration({ discord: discordUser }).then(
+        TournamentAPI.findRegistration({ discord: discordUser }).then(
           registration => {
             registration.destroy().then(deleted => {
               MessagingAPI.sendToChannelWithMention(
@@ -2455,7 +2468,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
               )
               return 0
             }
-            User.findByDiscord(getRankUserDiscordId).then(getRankUser => {
+            UserAPI.findByDiscord(getRankUserDiscordId).then(getRankUser => {
               if (getRankUser === null || getRankUser.steam === null) {
                 MessagingAPI.sendToChannelWithMention(
                   message.channel.id,
@@ -2520,6 +2533,11 @@ const switchCase = ({ parsedCommand, user, message }) => {
               if (rank.score !== null) {
                 MMRStr = " MMR is: `" + rank.score + "`."
               }
+
+              if (user.steam === publicSteamId) {
+                //todo remind about people they can just use !rank with no param
+              }
+
               MessagingAPI.sendToChannelWithMention(
                 message.channel.id,
                 message.author.id,
@@ -2625,7 +2643,7 @@ const switchCase = ({ parsedCommand, user, message }) => {
               )
               return 0
             }
-            User.findByDiscord(getSteamPersonaUserDiscordId).then(
+            UserAPI.findByDiscord(getSteamPersonaUserDiscordId).then(
               getSteamPersonaUser => {
                 getSteamPersonaNames([getSteamPersonaUser.steam]).then(
                   personas => {
