@@ -19,7 +19,13 @@ config.lobbies_file = "lobbies-data.json"
 config.lobbies_backup_cron = "*/5 * * * * *" // Every five seconds.
 config.message_flush_cron = "* * * * * *" // Every second.
 
-config.adminRoleName = "Staff"
+config.adminRoleName = "Staff";
+config.leagueRoles = ["Tester", "Beginner", "Intermediate", "Advanced", "Expert", "Master", "King", "Queen"];
+config.exemptLeagueRolePruning = [];
+config.leagueToLobbiesPrefix = {"Tester": "tester-lobbies", "Beginner": "beginner-lobbies", "Intermediate": "intermediate-lobbies", "Advanced": "advanced-lobbies", "Expert": "expert-lobbies", "Master": "master-lobbies", "King": "king-circlejerk", "Queen": "queen-circlejerk"};
+config.leagueRequirements = {"Beginner": 1, "Intermediate": 19, "Advanced": 24, "Expert": 28, "Master": 31, "Tester": 999};
+config.validRegions = ["NAW", "NAE", "EUW", "EUE", "RU", "SEA", "OCE", "SA"];
+config.botChannels = ["development", "chessbot-commands"];
 
 config.leagueRoles = [
   "Tester",
