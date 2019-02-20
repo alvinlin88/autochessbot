@@ -31,7 +31,6 @@ let botDownMessage = "Bot is restarting. Lobby commands are currently disabled. 
 let adminRoleName = config.adminRoleName;
 let leagueRoles = config.leagueRoles;
 let leagueToLobbiesPrefix = config.leagueToLobbiesPrefix;
-let lobbiesToLeague = config.lobbiesToLeague;
 let leagueRequirements = config.leagueRequirements;
 let validRegions = config.validRegions;
 let exemptLeagueRolePruning = config.exemptLeagueRolePruning;
@@ -44,6 +43,7 @@ let activeTournament = 1;
 
 let leagueLobbies = [];
 let leagueChannelToRegion = {};
+let lobbiesToLeague = {};
 leagueRoles.forEach(leagueRole => {
     leagueLobbies.push(leagueToLobbiesPrefix[leagueRole]);
     lobbiesToLeague[leagueToLobbiesPrefix[leagueRole]] = leagueRole;
