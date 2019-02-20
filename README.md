@@ -11,3 +11,33 @@ How to run locally
 - Start server: nodejs app.js (Node v10.15.1)
 - Make sure you have region roles and lobbies created on your discord according to your config.js file
 
+Set up your server with the proper channels and roles (or else the bot will throw errors when it tries to grab channel ID's by name.)
+
+TODO: Add missing steps to setup Bot/Discord Server?
+
+
+Let's Encrypt
+=============
+```
+sudo wget -r --no-parent -A 'epel-release-*.rpm' http://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/
+sudo rpm -Uvh dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-*.rpm
+sudo yum-config-manager --enable epel*
+sudo yum repolist all
+sudo yum install -y certbot python2-certbot-nginx
+sudo certbot
+```
+Follow instructions to generate a certificate for the subdomain. Have certbot install the cert or you can install it yourself.
+Use proxy pass for `location /` for example:
+```
+location / {
+    proxy_set_header        Host $host;
+    proxy_set_header        X-Real-IP $remote_addr;
+    proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header        X-Forwarded-Proto $scheme;
+
+    proxy_pass              http://localhost:8080;
+    proxy_read_timeout      90;
+
+    proxy_redirect          http://localhost:8080 https://autochessbot.vinthian.com;
+}
+```
