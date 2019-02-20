@@ -18,12 +18,10 @@ config.lobbies_file = "lobbies-data.json";
 config.lobbies_backup_cron = "*/5 * * * * *"; // Every five seconds.
 
 config.adminRoleName = "Staff";
-config.leagueRoles = ["Tester", "Beginner", "Intermediate", "Advanced", "Expert", "Master"];
+config.leagueRoles = ["Tester", "Beginner", "Intermediate", "Advanced", "Expert", "Master", "King", "Queen"];
 config.exemptLeagueRolePruning = [];
-config.leagueToLobbiesPrefix = {"Tester": "tester-lobbies", "Beginner": "beginner-lobbies", "Intermediate": "intermediate-lobbies", "Advanced": "advanced-lobbies", "Expert": "expert-lobbies", "Master": "master-lobbies"};
-config.lobbiesToLeague = {"tester-lobbies": "Tester", "beginner-lobbies": "Beginner", "intermediate-lobbies": "Intermediate", "advanced-lobbies": "Advanced", "expert-lobbies": "Expert", "master-lobbies": "Master"}; // TODO: refactor.. being lazy
+config.leagueToLobbiesPrefix = {"Tester": "tester-lobbies", "Beginner": "beginner-lobbies", "Intermediate": "intermediate-lobbies", "Advanced": "advanced-lobbies", "Expert": "expert-lobbies", "Master": "master-lobbies", "King": "king-circlejerk", "Queen": "queen-circlejerk"};
 config.leagueRequirements = {"Beginner": 1, "Intermediate": 19, "Advanced": 24, "Expert": 28, "Master": 31, "Tester": 999};
-config.leagueChannels = {"beginner-lobbies": "<#542420779493490692>", "intermediate-lobbies-na": "<#543096210999869440>", "intermediate-lobbies-eu": "<#543096484091133953>", "intermediate-lobbies-sea": "<#543097896812150794>", "intermediate-lobbies-oce": "<#543097855972474891>", "intermediate-lobbies-sa": "<#543097809717428254>", "intermediate-lobbies-ru": "<#543167378792644666>", "intermediate-lobbies": "<#539360159554863114>", "advanced-lobbies": "<#539572170251173898>", "expert-lobbies": "<#542533721773965312>", "master-lobbies": "<#542927566479163420>"};
 config.validRegions = ["NAW", "NAE", "EUW", "EUE", "RU", "SEA", "OCE", "SA"];
 config.botChannels = ["development", "chessbot-commands"];
 
