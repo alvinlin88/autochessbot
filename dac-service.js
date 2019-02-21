@@ -3,7 +3,7 @@ const request = require("request");
 
 class DacService {
     constructor() {
-        this.DACSwitch = 1;
+        this.DACSwitch = 2;
         // TODO: Circuit breaker
         this.lastDACASuccess = Date.now();
         this.lastDACBSuccess = Date.now();
