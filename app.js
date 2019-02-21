@@ -1413,7 +1413,7 @@ discordClient.on('message', message => {
 
                         let verifiedSteams = infoPlayerUser.verifiedSteams.map(verifiedSteam => {
                             let active = (verifiedSteam.steam === infoPlayerUser.steam) ? "(active)" : "";
-                            return `\`${verifiedSteam.steam}${active}\``
+                            return `\`${verifiedSteam.steam}${active}\`linked at ${verifiedSteam.createdAt.toLocaleString("en-us")}(PST)`;
                         }).join(',');
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id,
                             `Sir, <@${infoPlayerUser.discord}> is linked to steam id: ${verifiedSteams}.`);
