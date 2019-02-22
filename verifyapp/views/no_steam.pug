@@ -1,9 +1,23 @@
 html
     head
         title= "No Steam"
+        link(rel="stylesheet", href="/assets/style.css")
     body
-        h1 You must link a steam account in discord before you can verify
-        p Go to user-> settings -> connections to link a steam account
-        h2 If you've already added connection, are you sure you're logged in to the right discord account?
-        h2 You're currently logged in as #{username}
-        img(src=avatar, height=64, width=64)
+        div.main
+            div.profile.block
+                h2.profile-status You are logged in as:
+                div.profile-data
+                    img.profile-image(src=avatar)
+                    div.profile-info
+                        span.profile-name #{username}
+                        span.profile-tag #{tag}
+            div.error.block
+                h2 Error
+                p Your Discord is not connected to Steam.
+                p To connect it, go to #[span.code User Settings => Connections] in Discord.
+            div.info.block
+                h3 If you are sure you've connected Steam to Discord, you are probably logged in to the wrong Discord account in this browser.
+                p Follow the steps below:
+                ol.steps
+                    li Go to #[a(href="https://discordapp.com/activity" target="_blank") Discord Browser Version] and log in to the correct account.
+                    li Go to #[a(href="http://autochessbot.vinthian.com" target="_blank") this page] and try again.

@@ -106,6 +106,14 @@ function getUserNameWithTag(user_response) {
   return `${user_response.username}#${user_response.discriminator}`
 }
 
+function getUserName(user_response) {
+  return user_response.username
+}
+
+function getUserTag(user_response) {
+  return "#" + user_response.discriminator
+}
+
 app.get("/callback", (req, res, err) => {
   let code = req.query.code
 
@@ -154,7 +162,8 @@ app.get("/callback", (req, res, err) => {
               json: true,
               qs: {
                 key: config.steam_token,
-                steamids: steamIDs.join(",")
+                username: getUserName(user_response),
+                tag: getUserTag(user_response)
               }
             })
           } else {
