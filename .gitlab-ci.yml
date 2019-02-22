@@ -12,11 +12,11 @@ install_dependencies:
   stage: build
   script:
     - npm install
-    - cp config-example.js config.js
+    - cp config-example.js app/config.js
   artifacts:
     paths:
       - node_modules/
-      - config.js
+      - app/config.js
 
 test_with_lab:
   stage: test
