@@ -5,6 +5,7 @@ const RolesAPI = require("./helpers/RolesAPI")
 const ChannelsAPI = require("./helpers/ChannelsAPI")
 const MessagesAPI = require("./helpers/MessagesAPI")
 const { getCommand } = require("./commands")
+const theBigOldSwitch = require("./theBigOldSwitch")
 
 const PREFIX = "!cb"
 
@@ -87,72 +88,78 @@ const handleMessage = async message => {
     return
   }
 
-  const isAdmin = RolesAPI.messageAuthorHasRole(message, adminRoleName)
-
-  if (
-    message.channel.type !== "dm" &&
-    !isAdmin &&
-    !["lobbies", "commands", "tournament"].includes(
-      ChannelsAPI.getScopeNameFromChannel(message.channel.name)
-    )
-  )
-    return reject({
-      message,
-      text:
-        "You cannot use bot commands in <#" +
-        message.channel.id +
-        "> channel. Try <#542465986859761676>."
-    })
-
   const command = getCommand(parsedCommand.command)
 
-  if (!isAdmin) {
-    // Reject when command.isAdmin
-    if (command.isAdmin)
+  if (command) {
+    const isAdmin = RolesAPI.messageAuthorHasRole(message, adminRoleName)
+
+    if (
+      message.channel.type !== "dm" &&
+      !isAdmin &&
+      !["lobbies", "commands", "tournament"].includes(
+        ChannelsAPI.getScopeNameFromChannel(message.channel.name)
+      )
+    )
       return reject({
         message,
-        text: "You cannot use this command."
+        text:
+          "You cannot use bot commands in <#" +
+          message.channel.id +
+          "> channel. Try <#542465986859761676>."
       })
-  }
 
-  // Compare the channel with the scopes
-  let isMatched = false
-  for (let scope of command.scopes) {
-    if (ChannelsAPI.getScopeChannels(scope).includes(message.channel.name)) {
-      isMatched = true
-      break
+    const command = getCommand(parsedCommand.command)
+
+    if (!isAdmin) {
+      // Reject when command.isAdmin
+      if (command.isAdmin)
+        return reject({
+          message,
+          text: "You cannot use this command."
+        })
     }
-  }
-  if (!isAdmin && !isMatched)
-    return reject({
+
+    // Compare the channel with the scopes
+    let isMatched = false
+    for (let scope of command.scopes) {
+      if (ChannelsAPI.getScopeChannels(scope).includes(message.channel.name)) {
+        isMatched = true
+        break
+      }
+    }
+    if (!isAdmin && !isMatched)
+      return reject({
+        message,
+        text: "You cannot use this command in that channel."
+      })
+
+    // Even the staff cannot use command in any channel when it's isOnlyLobby
+    if (
+      command.isOnlyLobby &&
+      ChannelsAPI.getScopeNameFromChannel(message.channel.name) !== "lobbies"
+    )
+      return reject({
+        message,
+        text: "You cannot use lobby command in that channel."
+      })
+
+    let user
+    try {
+      user = await UserAPI.findByDiscord(message.author.id)
+    } catch (err) {
+      logger.error(err)
+      return
+    }
+
+    // Execute the command
+    command.function({
+      user,
       message,
-      text: "You cannot use this command in that channel."
+      parsedCommand
     })
-
-  // Even the staff cannot use command in any channel when it's isOnlyLobby
-  if (
-    command.isOnlyLobby &&
-    ChannelsAPI.getScopeNameFromChannel(message.channel.name) !== "lobbies"
-  )
-    return reject({
-      message,
-      text: "You cannot use lobby command in that channel."
-    })
-
-  let user
-  try {
-    user = await UserAPI.findByDiscord(message.author.id)
-  } catch (err) {
-    logger.error(err)
-    return
+  } else {
+    theBigOldSwitch({ message, parsedCommand })
   }
-
-  // Execute the command
-  command.function({
-    user,
-    message,
-    parsedCommand
-  })
 }
 
 module.exports = handleMessage
