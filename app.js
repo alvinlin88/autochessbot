@@ -1437,20 +1437,16 @@ discordClient.on('message', message => {
                         return 0;
                     }
 
-                    User.findAllBySteam(steamId).then(players => {
-                        let playerDiscordIds = [];
-
-                        // TODO: recheck ranks here
-                        players.forEach(player => {
-                            playerDiscordIds.push("<@" + player.discord + "> `<@" + player.discord + ">`");
-                        });
-
-                        if (playerDiscordIds.length >= 1) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I found these users for `" + steamId + "`: " + playerDiscordIds.join(", ") + ".");
+                    VerifiedSteam.findOneBySteam(steamId).then(verifiedSteam => {
+                        if (verifiedSteam === null) {
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I did not find any matching users in database for steamId `" + steamId + "`.");
                         } else {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I did not find any matches in database for `" + steamId + "`.");
+                            User.findById(verifiedSteam.userId).then(user => {
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id,
+                                    `Sir, I found these users for \`${steamId}\`: <@${user.discord}> .`);
+                            });
                         }
-                    });
+                    }).catch(logger.error);
                 })();
                 break;
             case "verificationstats":
