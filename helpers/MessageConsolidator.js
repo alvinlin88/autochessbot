@@ -1,6 +1,6 @@
 const logger = require("./logger");
 const config = require("../config");
-const CronJob = require("cron").CronJob;
+const { CronJob } = require("cron");
 
 const MessageConsolidator = () => {
   const messageQueues = [];
