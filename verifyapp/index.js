@@ -117,10 +117,6 @@ function getAvatarUrl(user_response) {
   }.png`
 }
 
-function getUserNameWithTag(user_response) {
-  return `${user_response.username}#${user_response.discriminator}`
-}
-
 function getUserName(user_response) {
   return user_response.username
 }
@@ -199,7 +195,8 @@ app.get("/callback", (req, res, err) => {
       ) {
         res.render("no_steam", {
           avatar: getAvatarUrl(user_response),
-          username: getUserNameWithTag(user_response)
+          username: getUserName(user_response),
+          tag: getUserTag(user_response)
         })
       } else {
         let data = {
