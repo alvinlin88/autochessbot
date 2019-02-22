@@ -1,6 +1,17 @@
 html
     head
-        title= "Success"
+        title= "Select Steam account"
+        link(rel="stylesheet", href="/assets/style.css")
     body
-        h1 You have successfully linked to steamID: #{steamID}
-        h1 Don't forget to type !rank or !updateroles in #chessbot-commands to get access to lobbies based on your rank.
+        div.main
+            div.profile.block
+                h2.profile-status You are logged in as:
+                div.profile-data
+                    img.profile-image(src=avatar)
+                    div.profile-info
+                        span.profile-name #{username}
+                        span.profile-tag #{tag}
+            div.info.block
+                h3 Success!
+                p You have successfully linked to steamID: #[span.code #{steamID}]
+                p Type #[span.code !updateroles] in #[span.code #chessbot-commands] to get access to lobbies based on your rank.

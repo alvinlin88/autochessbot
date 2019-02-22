@@ -1,12 +1,24 @@
 html
     head
-        title= "Select the steam id you'd like to link to your discord account."
+        title= "Select Steam account"
+        link(rel="stylesheet", href="/assets/style.css")
     body
-    h1 You're linking your steam id to #{username}
-    img(src=avatar, height=64, width=64)
-    h3 If you have multiple discord accounts, make sure you've logged on to the correct one.
-    ul
-        each connection in connections
-            li
-                img(src=connection.avatarmedium)
-                a(href='/confirm?steamID=' + connection.steamid) Click here to Link #{connection.steamid} #{connection.personaname}
+        div.main
+            div.profile.block
+                h2.profile-status You are logged in as:
+                div.profile-data
+                    img.profile-image(src=avatar)
+                    div.profile-info
+                        span.profile-name #{username}
+                        span.profile-tag #{tag}
+            div.info.block
+                h3 If you have multiple discord accounts, make sure you've logged on to the correct one.
+            div.info.block.p-0
+                h3.p-2.m-0 Select Steam account:
+                each connection in connections
+                    a.connection-data(href='/confirm?steamID=' + connection.steamid)
+                        img.connection-image(src=connection.avatarmedium)
+                        div.connection-info
+                            span.connection-name #{connection.personaname}
+                            span.connection-id Steam64ID: #{connection.steamid}
+                        

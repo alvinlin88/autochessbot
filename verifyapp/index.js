@@ -51,9 +51,15 @@ app.get("/confirm", function(req, res) {
       .then(verifiedSteam => {
         if (verifiedSteam === null) {
           // The steam is not known to us
-          UserAPI.upsertUserWithVerifiedSteam(data.id, steamID).then(() =>
-            res.render("select_success", { steamID: steamID })
-          )
+          User.upsertUserWithVerifiedSteam(data.id, steamID).then(() => res.render(
+            "select_success",
+            {
+              avatar: data.avatar,
+              username: data.username,
+              tag: data.tag,
+              steamID: steamID
+            }
+          ))
         } else {
           return UserAPI.findById(verifiedSteam.userId).then(user => {
             if (user.discord === data.id) {
@@ -63,7 +69,15 @@ app.get("/confirm", function(req, res) {
                   steam: verifiedSteam.steam,
                   validated: true
                 })
-                .then(() => res.render("select_success", { steamID: steamID }))
+                .then(() => res.render(
+                  "select_success",
+                  {
+                    avatar: data.avatar,
+                    username: data.username,
+                    tag: data.tag,
+                    steamID: steamID
+                  }
+                ))
             } else {
               // The steam was verified by another user.
               res.render("error", {
@@ -190,7 +204,8 @@ app.get("/callback", (req, res, err) => {
       } else {
         let data = {
           avatar: getAvatarUrl(user_response),
-          username: getUserNameWithTag(user_response),
+          username: getUserName(user_response),
+          tag: getUserTag(user_response),
           id: user_response.id,
           connections: steam_response.response.players
         }

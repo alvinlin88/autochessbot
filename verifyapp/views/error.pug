@@ -1,7 +1,11 @@
 html
     head
         title= "Error"
+        link(rel="stylesheet", href="/assets/style.css")
     body
-        h1 Something went wrong.
-        if message
-            h2 #{message}
+        div.main
+            div.error.block
+                h2 Error
+                p Something went wrong.
+                if message
+                    p #{message}
