@@ -32,7 +32,6 @@ let botDownMessage = "Bot is restarting. Lobby commands are currently disabled. 
 let adminRoleName = config.adminRoleName;
 let leagueRoles = config.leagueRoles;
 let leagueToLobbiesPrefix = config.leagueToLobbiesPrefix;
-let lobbiesToLeague = config.lobbiesToLeague;
 let leagueRequirements = config.leagueRequirements;
 let validRegions = config.validRegions;
 let exemptLeagueRolePruning = config.exemptLeagueRolePruning;
@@ -45,6 +44,7 @@ let activeTournament = 1;
 
 let leagueLobbies = [];
 let leagueChannelToRegion = {};
+let lobbiesToLeague = {};
 leagueRoles.forEach(leagueRole => {
     leagueLobbies.push(leagueToLobbiesPrefix[leagueRole]);
     lobbiesToLeague[leagueToLobbiesPrefix[leagueRole]] = leagueRole;
@@ -1413,7 +1413,7 @@ discordClient.on('message', message => {
 
                         let verifiedSteams = infoPlayerUser.verifiedSteams.map(verifiedSteam => {
                             let active = (verifiedSteam.steam === infoPlayerUser.steam) ? "(active)" : "";
-                            return `\`${verifiedSteam.steam}${active}\``
+                            return `\`${verifiedSteam.steam}${active}\` linked at ${verifiedSteam.createdAt.toLocaleString("en-us")}(UTC)`;
                         }).join(',');
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id,
                             `Sir, <@${infoPlayerUser.discord}> is linked to steam id: ${verifiedSteams}.`);
@@ -1437,20 +1437,16 @@ discordClient.on('message', message => {
                         return 0;
                     }
 
-                    User.findAllBySteam(steamId).then(players => {
-                        let playerDiscordIds = [];
-
-                        // TODO: recheck ranks here
-                        players.forEach(player => {
-                            playerDiscordIds.push("<@" + player.discord + "> `<@" + player.discord + ">`");
-                        });
-
-                        if (playerDiscordIds.length >= 1) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I found these users for `" + steamId + "`: " + playerDiscordIds.join(", ") + ".");
+                    VerifiedSteam.findOneBySteam(steamId).then(verifiedSteam => {
+                        if (verifiedSteam === null) {
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I did not find any matching users in database for steamId `" + steamId + "`.");
                         } else {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I did not find any matches in database for `" + steamId + "`.");
+                            User.findById(verifiedSteam.userId).then(user => {
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id,
+                                    `Sir, I found these users for \`${steamId}\`: <@${user.discord}> .`);
+                            });
                         }
-                    });
+                    }).catch(logger.error);
                 })();
                 break;
             case "verificationstats":
@@ -1497,7 +1493,7 @@ discordClient.on('message', message => {
                 (function () {
                     if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
                     let counter = 0;
-                    Tournament.findAllTopRegistrations(48).then(registrations => {
+                    Tournament.findAllTopRegistrations(64).then(registrations => {
                         registrations.forEach(registration => {
                             counter++;
                             let discordUser = message.guild.members.find(r => r.id === registration.discord);
