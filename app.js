@@ -5,51 +5,11 @@ const express = require("express")
 const bodyParser = require("body-parser")
 const app = express()
 app.use(bodyParser.json())
+const LobbiesAPI = require("./helpers/LobbiesAPI")
 const handleMessage = require("./handleMessage")
 
-// function submitTournamentSignup(
-//   message,
-//   discord,
-//   discordname,
-//   steam,
-//   steamname,
-//   rank,
-//   mmr,
-//   datetime
-// ) {
-//   return new Promise(function(resolve, reject) {
-//     let data = qs.stringify({
-//       discord: discord,
-//       discordname: discordname,
-//       steam: steam,
-//       steamname: steamname,
-//       rank: rank,
-//       mmr: mmr,
-//       datetime: datetime
-//     })
-//     request(
-//       "https://script.google.com/macros/s/AKfycbxa3sVhst5AaKfdsDXYuTei71oa9HBkNlOwtOP3Ge9e7cuRYW3M/exec",
-//       {
-//         method: "POST",
-//         followAllRedirects: true,
-//         json: true,
-//         headers: {
-//           "Content-Length": data.length,
-//           "Content-Type": "application/x-www-form-urlencoded"
-//         },
-//         body: data
-//       },
-//       (err, res, body) => {
-//         if (err) {
-//           reject(err)
-//         }
-//         if (res.statusCode === 200) {
-//           resolve()
-//         }
-//       }
-//     )
-//   })
-// }
+LobbiesAPI.restoreLobbies()
+LobbiesAPI.startBackupJob()
 
 client.on("ready", () => {
   logger.info(`Logged in as ${client.user.tag}!`)
