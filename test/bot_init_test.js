@@ -1,16 +1,15 @@
 const { expect } = require("chai")
 
 const LobbiesAPIClass = require("../helpers/LobbiesAPI/LobbiesAPIClass")
-const config = require("../config")
+const LeaguesAPI = require("../helpers/LeaguesAPI")
 
 describe("BotInitializationTest", function() {
   it("should init lobbies", function() {
     const LobbiesAPI = new LobbiesAPIClass()
     LobbiesAPI.restoreLobbies()
-    config.leagueRoles.forEach(leagueRole => {
-      let lobbiesInChannel = LobbiesAPI.getLobbiesInChannel(
-        config.leagueToLobbiesPrefix[leagueRole]
-      )
+    LeaguesAPI.getLeagues().forEach(league => {
+      const basename = LeaguesAPI.getBasenameFromLeague(league)
+      const lobbiesInChannel = LobbiesAPI.getLobbiesInChannel(basename)
       expect(lobbiesInChannel).to.not.be.null
     })
   })
