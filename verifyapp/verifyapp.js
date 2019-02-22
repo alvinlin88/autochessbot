@@ -51,7 +51,15 @@ app.get("/confirm", function (req, res) {
             .then(verifiedSteam => {
                 if (verifiedSteam === null) {
                     // The steam is not known to us
-                    User.upsertUserWithVerifiedSteam(data.id, steamID).then(() => res.render("select_success", {steamID: steamID}));
+                    User.upsertUserWithVerifiedSteam(data.id, steamID).then(() => res.render(
+                      "select_success",
+                      {
+                        avatar: data.avatar,
+                        username: data.username,
+                        tag: data.tag,
+                        steamID: steamID
+                      }
+                    ));
                 } else {
                     return User.findById(verifiedSteam.userId).then(
                         user => {
@@ -60,7 +68,15 @@ app.get("/confirm", function (req, res) {
                                 return user.update({
                                     steam: verifiedSteam.steam,
                                     validated: true
-                                }).then(() => res.render("select_success", {steamID: steamID}));
+                                }).then(() => res.render(
+                                  "select_success",
+                                  {
+                                    avatar: data.avatar,
+                                    username: data.username,
+                                    tag: data.tag,
+                                    steamID: steamID
+                                  }
+                                ));
                             } else {
                                 // The steam was verified by another user.
                                 res.render("error", {message: 'The steam id was verified by another user. If you own the other discord account, post in #help-desk and a staff member can help you'});
@@ -176,7 +192,8 @@ app.get("/callback", (req, res, err) => {
 
             let data = {
                 avatar: getAvatarUrl(user_response),
-                username: getUserNameWithTag(user_response),
+                username: getUserName(user_response),
+                tag: getUserTag(user_response),
                 id: user_response.id,
                 connections: steam_response.response.players,
             };
