@@ -1,4 +1,4 @@
-const config = require("./config")
+const config = require("../config")
 const client = require("./helpers/client")
 const MessagesAPI = require("./helpers/MessagesAPI")
 const RanksAPI = require("./helpers/RanksAPI")

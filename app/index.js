@@ -1,5 +1,5 @@
 const client = require("./helpers/client")
-const config = require("./config")
+const config = require("../config")
 const logger = require("./helpers/logger")
 const express = require("express")
 const bodyParser = require("body-parser")

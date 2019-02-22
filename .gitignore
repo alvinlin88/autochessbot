@@ -152,6 +152,6 @@ typings/
 db.sqlite
 
 # The lobbies backup file
-app/lobbies-data.json
-app/config.js
+lobbies-data.json
+config.js
 verifyapp/config.js

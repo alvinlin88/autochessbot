@@ -1,7 +1,7 @@
 const logger = require("../helpers/logger")
 const MessagesAPI = require("../helpers/MessagesAPI")
 const RanksAPI = require("../helpers/RanksAPI")
-const { leagueRoles, leagueRequirements } = require("../config")
+const { leagueRoles, leagueRequirements } = require("../../config")
 
 const processRolesUpdate = (
   message,

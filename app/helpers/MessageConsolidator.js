@@ -1,5 +1,5 @@
 const logger = require("./logger.js")
-const config = require("../config")
+const config = require("../../config")
 const { CronJob } = require("cron")
 
 const MessageConsolidator = () => {

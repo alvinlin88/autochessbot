@@ -1,6 +1,6 @@
 const request = require("request")
 const logger = require("../logger")
-const { steam_token } = require("../../config")
+const { steam_token } = require("../../../config")
 
 const getSteamPersonaNames = steamIds => {
   return new Promise(function(resolve, reject) {

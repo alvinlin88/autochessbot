@@ -1,6 +1,6 @@
 const Sequelize = require("sequelize")
 const logger = require("../helpers/logger")
-const config = require("../config")
+const config = require("../../config")
 const dbInstance = new Sequelize("autochess", "postgres", "postgres", {
   host: "localhost",
   dialect: "sqlite",

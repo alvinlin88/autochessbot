@@ -1,6 +1,6 @@
 const fs = require("fs")
 const LeaguesAPI = require("../LeaguesAPI")
-const config = require("../../config")
+const config = require("../../../config")
 const { CronJob } = require("cron")
 const logger = require("../logger.js")
 

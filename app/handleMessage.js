@@ -1,4 +1,4 @@
-const { adminRoleName } = require("./config")
+const { adminRoleName } = require("../config")
 const logger = require("./helpers/logger")
 const UserAPI = require("./helpers/UserAPI")
 const RolesAPI = require("./helpers/RolesAPI")
