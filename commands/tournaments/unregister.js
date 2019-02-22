@@ -1,0 +1,62 @@
+const client = require("../../helpers/client")
+const logger = require("../../helpers/logger.js")
+const MessagingAPI = require("../../helpers/MessagingAPI")
+const RanksAPI = require("../../helpers/RanksAPI")
+const LobbiesAPI = require("../../helpers/LobbiesAPI")
+const {
+  leagueLobbies,
+  leagueChannelToRegion
+} = require("../../constants/leagues")
+const {
+  lobbiesToLeague,
+  adminRoleName,
+  leagueRoles,
+  leagueRequirements,
+  validRegions,
+  exemptLeagueRolePruning
+} = require("../../config")
+const randtoken = require("rand-token")
+const UserAPI = require("../../helpers/UserAPI")
+const VerifiedSteamAPI = require("../../helpers/VerifiedSteamAPI")
+const TournamentAPI = require("../../helpers/TournamentAPI")
+const parseDiscordId = require("../../helpers/discord/parseDiscordID")
+const getSteamPersonaNames = require("../../helpers/steam/getSteamPersonaNames")
+
+let botDownMessage =
+  "Bot is restarting. Lobby commands are currently disabled. Be back in a second!"
+let disableLobbyCommands = false
+let disableLobbyHost = false
+let activeTournament = 1
+
+const unregister = ({ parsedCommand, user, message }) => {
+  if (message.channel.name === "tournament-signups") {
+    TournamentAPI.findRegistration({
+      fk_tournament: activeTournament,
+      steam: user.steam
+    }).then(result => {
+      if (result !== null) {
+        result.destroy().then(success => {
+          MessagingAPI.sendToChannelWithMention(
+            message.channel.id,
+            message.author.id,
+            "I have unregistered you for the current tournament."
+          )
+          return 0
+        })
+      } else {
+        MessagingAPI.sendToChannelWithMention(
+          message.channel.id,
+          message.author.id,
+          "You have not registered for the current tournament yet."
+        )
+        return 0
+      }
+    })
+  }
+}
+
+module.exports = {
+  function: unregister,
+  isAdmin: false,
+  scopes: ["tournament"]
+}
