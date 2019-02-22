@@ -1,4 +1,5 @@
 const fs = require("fs")
+const LeaguesAPI = require("../LeaguesAPI")
 const config = require("../../config")
 const { CronJob } = require("cron")
 const logger = require("../logger.js")
@@ -18,28 +19,21 @@ class LobbiesAPIClass {
   }
 
   initialize() {
-    config.leagueRoles.forEach(leagueRole => {
-      this.lobbies[config.leagueToLobbiesPrefix[leagueRole]] = {}
-      config.validRegions.forEach(leagueRegion => {
-        this.lobbies[
-          config.leagueToLobbiesPrefix[leagueRole] +
-            "-" +
-            leagueRegion.toLowerCase()
-        ] = {}
-      })
+    LeaguesAPI.getAllLeaguesChannels().forEach(channel => {
+      this.lobbies[channel] = {}
     })
   }
 
-  getLobbiesInChannel(leagueChannel) {
-    return this.lobbies[leagueChannel]
+  getLobbiesInChannel(channel) {
+    return this.lobbies[channel]
   }
 
   // This version is guarded with existence check
-  getLobbyForHostSafe(leagueChannel, hostUserSteam) {
+  getLobbyForHostSafe(channel, hostUserSteam) {
     let result = null
-    for (let hostId in this.lobbies[leagueChannel]) {
-      if (this.lobbies[leagueChannel].hasOwnProperty(hostId)) {
-        let lobby = this.lobbies[leagueChannel][hostId]
+    for (let hostId in this.lobbies[channel]) {
+      if (this.lobbies[channel].hasOwnProperty(hostId)) {
+        let lobby = this.lobbies[channel][hostId]
 
         if (lobby["host"] === hostUserSteam) {
           result = lobby
@@ -49,24 +43,24 @@ class LobbiesAPIClass {
     return result
   }
 
-  hasHostedLobbyInChannel(leagueChannel, hostUserSteam) {
-    return this.lobbies[leagueChannel].hasOwnProperty(hostUserSteam)
+  hasHostedLobbyInChannel(channel, hostUserSteam) {
+    return this.lobbies[channel].hasOwnProperty(hostUserSteam)
   }
 
   // isn't this always the case?
-  isHostOfHostedLobby(leagueChannel, hostUserSteam) {
-    return this.lobbies[leagueChannel][hostUserSteam]["host"] === hostUserSteam
+  isHostOfHostedLobby(channel, hostUserSteam) {
+    return this.lobbies[channel][hostUserSteam]["host"] === hostUserSteam
   }
 
-  getLobbyForHost(leagueChannel, hostUserSteam) {
-    return this.lobbies[leagueChannel][hostUserSteam]
+  getLobbyForHost(channel, hostUserSteam) {
+    return this.lobbies[channel][hostUserSteam]
   }
 
-  getLobbyForPlayer(leagueChannel, player) {
+  getLobbyForPlayer(channel, player) {
     let result = null
-    for (let hostId in this.lobbies[leagueChannel]) {
-      if (this.lobbies[leagueChannel].hasOwnProperty(hostId)) {
-        let lobby = this.lobbies[leagueChannel][hostId]
+    for (let hostId in this.lobbies[channel]) {
+      if (this.lobbies[channel].hasOwnProperty(hostId)) {
+        let lobby = this.lobbies[channel][hostId]
 
         lobby["players"].forEach(p => {
           if (p === player) {
@@ -106,13 +100,13 @@ class LobbiesAPIClass {
     })
   }
 
-  deleteLobby(leagueChannel, hostUserSteam) {
-    delete this.lobbies[leagueChannel][hostUserSteam]
+  deleteLobby(channel, hostUserSteam) {
+    delete this.lobbies[channel][hostUserSteam]
   }
 
   // returns true if the player was in the lobby and now removed, false otherwise.
-  removePlayerFromLobby(leagueChannel, hostUserSteam, playerUserSteam) {
-    let lobby = this.lobbies[leagueChannel][hostUserSteam]
+  removePlayerFromLobby(channel, hostUserSteam, playerUserSteam) {
+    let lobby = this.lobbies[channel][hostUserSteam]
     let index = lobby.players.indexOf(playerUserSteam)
 
     if (index > -1) {
@@ -123,7 +117,7 @@ class LobbiesAPIClass {
     return false
   }
 
-  createLobby(leagueChannel, hostUserSteam, region, rankRequirement, token) {
+  createLobby(channel, hostUserSteam, region, rankRequirement, token) {
     let newLobby = {
       host: hostUserSteam,
       password: region.toLowerCase() + "_" + token.toLowerCase(),
@@ -133,16 +127,16 @@ class LobbiesAPIClass {
       starttime: Date.now(),
       lastactivity: Date.now()
     }
-    this.lobbies[leagueChannel][hostUserSteam] = newLobby
+    this.lobbies[channel][hostUserSteam] = newLobby
     return newLobby
   }
 
-  resetLobbies(leagueChannel) {
-    this.lobbies[leagueChannel] = {}
+  resetLobbies(channel) {
+    this.lobbies[channel] = {}
   }
 
-  removeLobbies(leagueChannel) {
-    delete this.lobbies[leagueChannel]
+  removeLobbies(channel) {
+    delete this.lobbies[channel]
   }
 
   startBackupJob() {
