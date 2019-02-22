@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -34,7 +34,7 @@ const list = ({
   leagueChannelRegion
 }) => {
   if (disableLobbyCommands === true) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       botDownMessage
@@ -47,7 +47,7 @@ const list = ({
 
   if (listratelimit.hasOwnProperty(leagueChannel)) {
     if (Date.now() - listratelimit[leagueChannel] < 15000) {
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         message.author.id,
         "<#" +
           message.channel.id +
@@ -57,7 +57,7 @@ const list = ({
           message.channel.id +
           ">."
       )
-      MessagingAPI.deleteMessage(message)
+      MessagesAPI.deleteMessage(message)
       // rate limited
       return 0
     }
@@ -73,7 +73,7 @@ const list = ({
 
   listratelimit[leagueChannel] = Date.now()
 
-  MessagingAPI.sendToChannel(
+  MessagesAPI.sendToChannel(
     message.channel.id,
     "**__LOBBY LIST__ - Use `!lobby` to display players in your own lobby**"
   )
@@ -127,7 +127,7 @@ const list = ({
               ) {
                 LobbiesAPI.deleteLobby(leagueChannel, lobby.host)
                 dontPrint = true
-                MessagingAPI.sendToChannel(
+                MessagesAPI.sendToChannel(
                   message.channel.id,
                   "_*** @" +
                     lobby.region +
@@ -135,7 +135,7 @@ const list = ({
                     hostDiscordId +
                     "> lobby has been removed because of no activity (joins/leaves) for more than 15 minutes._"
                 )
-                MessagingAPI.sendDM(
+                MessagesAPI.sendDM(
                   hostDiscordId,
                   "**Your lobby in <#" +
                     message.channel.id +
@@ -150,7 +150,7 @@ const list = ({
               ) {
                 LobbiesAPI.deleteLobby(leagueChannel, lobby.host)
                 dontPrint = true
-                MessagingAPI.sendToChannel(
+                MessagesAPI.sendToChannel(
                   message.channel.id,
                   "_*** @" +
                     lobby.region +
@@ -158,7 +158,7 @@ const list = ({
                     hostDiscordId +
                     "> lobby has been removed because it is full and has had no activity (joins/leaves) for more than 5 minutes._"
                 )
-                MessagingAPI.sendDM(
+                MessagesAPI.sendDM(
                   hostDiscordId,
                   "**Your lobby in <#" +
                     message.channel.id +
@@ -176,7 +176,7 @@ const list = ({
             ) {
               LobbiesAPI.deleteLobby(leagueChannel, lobby.host)
               dontPrint = true
-              MessagingAPI.sendToChannel(
+              MessagesAPI.sendToChannel(
                 message.channel.id,
                 "_*** @" +
                   lobby.region +
@@ -184,7 +184,7 @@ const list = ({
                   hostDiscordId +
                   "> lobby has been removed because it has not started after 60 minutes._"
               )
-              MessagingAPI.sendDM(
+              MessagesAPI.sendDM(
                 hostDiscordId,
                 "**Your lobby in <#" +
                   message.channel.id +
@@ -204,7 +204,7 @@ const list = ({
 
             if (!dontPrint) {
               if (printFullList === true) {
-                MessagingAPI.sendToChannel(
+                MessagesAPI.sendToChannel(
                   message.channel.id,
                   fullStr +
                     "=== **@" +
@@ -224,7 +224,7 @@ const list = ({
                     fullStr2
                 )
               } else {
-                MessagingAPI.sendToChannel(
+                MessagesAPI.sendToChannel(
                   message.channel.id,
                   fullStr +
                     "=== **@" +
@@ -252,7 +252,7 @@ const list = ({
   }
   if (numPrinted === 0) {
     if (leagueChannelRegion !== null) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "There are no lobbies currently. Use `!host` or `!host " +
@@ -261,7 +261,7 @@ const list = ({
       )
       return 0
     } else {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "There are no lobbies for that region currently. Use `!host [region]` to host one!"

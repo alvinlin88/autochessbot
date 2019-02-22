@@ -1,5 +1,5 @@
 const logger = require("../helpers/logger")
-const MessagingAPI = require("../helpers/MessagingAPI")
+const MessagesAPI = require("../helpers/MessagesAPI")
 const RanksAPI = require("../helpers/RanksAPI")
 const { leagueRoles, leagueRequirements } = require("../config")
 
@@ -13,7 +13,7 @@ const processRolesUpdate = (
   if (user !== null && user.steam !== null) {
     RanksAPI.getRankFromSteamID(user.steam).then(rank => {
       if (rank === null) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "I am having problems verifying your rank."
@@ -24,7 +24,7 @@ const processRolesUpdate = (
         return 0 // can't update roles in DM.
       }
       if (message.guild === null) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#542465986859761676>."
@@ -51,7 +51,7 @@ const processRolesUpdate = (
       let discordUser = message.guild.members.get(user.discord)
 
       if (discordUser === null) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "I am having a problem seeing your roles. Are you set to Invisible on Discord?"
@@ -73,7 +73,7 @@ const processRolesUpdate = (
 
         let rankStr = RanksAPI.getRankString(rank.mmr_level)
         if (rankStr === "ERROR") {
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             "I had a problem getting your rank, did you use the right steam id? See <#542454956825903104> for more information. Use `!unlink` to start over."
@@ -95,7 +95,7 @@ const processRolesUpdate = (
 
         // always show and whisper about demotions in case they cannot see the channel anymore
         if (removed.length > 0) {
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             messagePrefix +
@@ -108,7 +108,7 @@ const processRolesUpdate = (
               removed.join("`, `") +
               "` (sorry!)"
           )
-          MessagingAPI.sendDM(
+          MessagesAPI.sendDM(
             message.author.id,
             messagePrefix +
               " rank is " +
@@ -124,7 +124,7 @@ const processRolesUpdate = (
 
         if (notifyOnChange) {
           if (added.length > 0) {
-            MessagingAPI.sendToChannelWithMention(
+            MessagesAPI.sendToChannelWithMention(
               message.channel.id,
               message.author.id,
               messagePrefix +
@@ -141,7 +141,7 @@ const processRolesUpdate = (
         }
         if (notifyNoChange) {
           if (added.length === 0 && removed.length === 0) {
-            MessagingAPI.sendToChannelWithMention(
+            MessagesAPI.sendToChannelWithMention(
               message.channel.id,
               message.author.id,
               messagePrefix +
@@ -156,7 +156,7 @@ const processRolesUpdate = (
       }
 
       if (shouldDeleteMessage) {
-        MessagingAPI.deleteMessage(message)
+        MessagesAPI.deleteMessage(message)
       }
       return 0
     })

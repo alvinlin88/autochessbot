@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const getd = ({ parsedCommand, user, message }) => {
     return 0
 
   if (parsedCommand.args.length !== 1) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, the command is `!admingetdiscord [steam]`"
@@ -43,7 +43,7 @@ const getd = ({ parsedCommand, user, message }) => {
   const steamId = parsedCommand.args[0]
 
   if (!parseInt(steamId)) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, that is an invalid steam id"
@@ -62,7 +62,7 @@ const getd = ({ parsedCommand, user, message }) => {
     })
 
     if (playerDiscordIds.length >= 1) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Sir, I found these users for `" +
@@ -72,7 +72,7 @@ const getd = ({ parsedCommand, user, message }) => {
           "."
       )
     } else {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Sir, I did not find any matches in database for `" + steamId + "`."

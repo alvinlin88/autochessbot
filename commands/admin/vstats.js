@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const vstats = ({ parsedCommand, user, message }) => {
     return 0
   if (message.channel.type !== "dm") {
     UserAPI.getVerificationStats().then(count => {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         `Sir, ${count} users have verified their steam accounts.`

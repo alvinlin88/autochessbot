@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -31,7 +31,7 @@ const getp = ({ parsedCommand, user, message }) => {
 
     if (getSteamPersonaUserDiscordId !== null) {
       if (!message.guild.member(getSteamPersonaUserDiscordId)) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "Could not find that user on this server."
@@ -41,7 +41,7 @@ const getp = ({ parsedCommand, user, message }) => {
       UserAPI.findByDiscord(getSteamPersonaUserDiscordId).then(
         getSteamPersonaUser => {
           getSteamPersonaNames([getSteamPersonaUser.steam]).then(personas => {
-            MessagingAPI.sendToChannelWithMention(
+            MessagesAPI.sendToChannelWithMention(
               message.channel.id,
               message.author.id,
               "<@" +
@@ -54,7 +54,7 @@ const getp = ({ parsedCommand, user, message }) => {
         }
       )
     } else {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Invalid arguments."

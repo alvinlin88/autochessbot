@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const lobby = ({
   leagueChannelRegion
 }) => {
   if (disableLobbyCommands === true) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       botDownMessage
@@ -41,21 +41,21 @@ const lobby = ({
     return 0
   }
   if (parsedCommand.args.length === 0) {
-    // MessagingAPI.sendToChannelWithMention(message.channel.id, message.author.id, "You need to specify a host.");
+    // MessagesAPI.sendToChannelWithMention(message.channel.id, message.author.id, "You need to specify a host.");
     // return 0;
     parsedCommand.args[0] = "<@" + message.author.id + ">"
   }
   let lobbyHostDiscordId = parseDiscordId(parsedCommand.args[0])
 
   // if (!message.guild.member(lobbyHostDiscordId)) {
-  //     MessagingAPI.sendToChannelWithMention(message.channel.id, message.author.id, "Could not find that user on this server.");
+  //     MessagesAPI.sendToChannelWithMention(message.channel.id, message.author.id, "Could not find that user on this server.");
   //     return 0;
   // }
   UserAPI.findByDiscord(lobbyHostDiscordId).then(hostUser => {
     let lobby = LobbiesAPI.getLobbyForPlayer(leagueChannel, hostUser.steam)
 
     if (lobby === null) {
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         message.author.id,
         "<#" +
           message.channel.id +
@@ -63,7 +63,7 @@ const lobby = ({
           message.content +
           "\": That user is not (or you are not) hosting any lobbies."
       )
-      MessagingAPI.deleteMessage(message)
+      MessagesAPI.deleteMessage(message)
       return 0
     }
 
@@ -105,7 +105,7 @@ const lobby = ({
               lastActivityStr = " (" + +"m last activity)"
             }
           }
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             "=== **@" +
@@ -124,7 +124,7 @@ const lobby = ({
               lastActivityStr
           )
           // also whisper
-          MessagingAPI.sendDM(
+          MessagesAPI.sendDM(
             message.author.id,
             "=== **@" +
               lobby.region +
@@ -141,7 +141,7 @@ const lobby = ({
               "m)" +
               lastActivityStr
           )
-          MessagingAPI.deleteMessage(message)
+          MessagesAPI.deleteMessage(message)
         })
       })
     }

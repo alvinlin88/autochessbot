@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const adminunlinksteam = ({ parsedCommand, user, message }) => {
     return 0
 
   if (parsedCommand.args.length !== 1) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, the command is `!adminunlink [steamid]`"
@@ -41,7 +41,7 @@ const adminunlinksteam = ({ parsedCommand, user, message }) => {
     return 0
   }
   if (!parseInt(parsedCommand.args[0])) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, that is an invalid steam id"
@@ -54,7 +54,7 @@ const adminunlinksteam = ({ parsedCommand, user, message }) => {
       verifiedSteam
         .destroy()
         .then(() =>
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             `Sir, I have removed verified steam id record for \`${unlinkPlayerSteamId}\``
@@ -65,7 +65,7 @@ const adminunlinksteam = ({ parsedCommand, user, message }) => {
 
   UserAPI.findAllBySteam(unlinkPlayerSteamId).then(function(unlinkPlayerUsers) {
     unlinkPlayerUsers.forEach(unlinkPlayerUser => {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id."

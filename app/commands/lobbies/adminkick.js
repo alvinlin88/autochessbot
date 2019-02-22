@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const {
@@ -38,7 +38,7 @@ const adminkick = ({
     return 0
 
   if (parsedCommand.args.length !== 2) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, the command is `!adminkick [@host] [@player]`."
@@ -49,14 +49,14 @@ const adminkick = ({
   let playerDiscordIdKick = parseDiscordId(parsedCommand.args[1])
 
   if (hostDiscordIdKick === null) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, that host id is invalid."
     )
   }
   if (playerDiscordIdKick === null) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, that player id is invalid."
@@ -70,7 +70,7 @@ const adminkick = ({
         hostUser.steam
       )
       if (hostLobby === null) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "Sir, that person is not hosting a lobby currently."
@@ -78,7 +78,7 @@ const adminkick = ({
         return 0
       }
       if (hostUser.steam === playerUser.steam) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "Sir, you can not kick the host from their own lobby. Use `!admincancel [@host]` instead."
@@ -92,7 +92,7 @@ const adminkick = ({
         playerUser.steam
       )
       let kickUserName = message.client.users.find("id", playerUser.discord)
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "kicked " +
@@ -106,7 +106,7 @@ const adminkick = ({
             .length +
           "/8)`"
       )
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         playerUser.discord,
         "<#" +
           message.channel.id +

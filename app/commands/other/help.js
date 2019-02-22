@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -27,7 +27,7 @@ let disableLobbyHost = false
 let activeTournament = 1
 
 const help = ({ parsedCommand, user, message }) => {
-  MessagingAPI.sendToChannelWithMention(
+  MessagesAPI.sendToChannelWithMention(
     message.channel.id,
     message.author.id,
     "See <#542454956825903104> for more information."

@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const gets = ({ parsedCommand, user, message }) => {
     return 0
 
   if (parsedCommand.args.length !== 1) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, the command is `!admingetsteam [@discord]`"
@@ -43,7 +43,7 @@ const gets = ({ parsedCommand, user, message }) => {
   let infoPlayerDiscordId = parseDiscordId(parsedCommand.args[0])
 
   if (infoPlayerDiscordId === null) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, that is an invalid Discord ID. Make sure it is a mention (blue text)."
@@ -55,7 +55,7 @@ const gets = ({ parsedCommand, user, message }) => {
     infoPlayerUser
   ) {
     if (infoPlayerUser === null) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Sir, I did not find any matches in database for <@" +
@@ -65,7 +65,7 @@ const gets = ({ parsedCommand, user, message }) => {
       return 0
     }
     if (infoPlayerUser.steam === null) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Sir, I could not find a steam id for <@" +
@@ -78,7 +78,7 @@ const gets = ({ parsedCommand, user, message }) => {
       infoPlayerUser.validated === false &&
       infoPlayerUser.verifiedSteams.length === 0
     ) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         `Sir, <@${infoPlayerUser.discord}> is linked to steam id ${
@@ -95,7 +95,7 @@ const gets = ({ parsedCommand, user, message }) => {
         return `\`${verifiedSteam.steam}${active}\``
       })
       .join(",")
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       `Sir, <@${

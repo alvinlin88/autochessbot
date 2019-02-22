@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const join = ({
   leagueChannelRegion
 }) => {
   if (disableLobbyCommands === true) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       botDownMessage
@@ -44,7 +44,7 @@ const join = ({
   let playerLobbyJoin = LobbiesAPI.getLobbyForPlayer(leagueChannel, user.steam)
 
   if (playerLobbyJoin !== null) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "<#" +
         message.channel.id +
@@ -52,12 +52,12 @@ const join = ({
         message.content +
         "\": You are already in a lobby! Use `!leave` to leave."
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
   if (parsedCommand.args.length === 0) {
     if (leagueChannelRegion === null) {
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         message.author.id,
         "<#" +
           message.channel.id +
@@ -65,7 +65,7 @@ const join = ({
           message.content +
           "\": Need to specify a host or region to join."
       )
-      MessagingAPI.deleteMessage(message)
+      MessagesAPI.deleteMessage(message)
       return 0
     } else {
       parsedCommand.args[0] = leagueChannelRegion
@@ -74,7 +74,7 @@ const join = ({
 
   RanksAPI.getRankFromSteamID(user.steam).then(rank => {
     if (rank === null) {
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         message.author.id,
         "<#" +
           message.channel.id +
@@ -82,7 +82,7 @@ const join = ({
           message.content +
           "\": I am having problems verifying your rank."
       )
-      MessagingAPI.deleteMessage(message)
+      MessagesAPI.deleteMessage(message)
       return 0
     }
     let resultLobbyHostId = null
@@ -95,7 +95,7 @@ const join = ({
 
       if (Object.keys(lobbiesInLeagueChannel).length === 0) {
         if (leagueChannelRegion !== null) {
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             "There are no lobbies currently. Use `!host` or `!host " +
@@ -104,7 +104,7 @@ const join = ({
           )
           return 0
         } else {
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             "There are no lobbies for that region currently. Use `!host " +
@@ -143,7 +143,7 @@ const join = ({
       }
 
       if (lobbiesFull === Object.keys(lobbiesInLeagueChannel).length) {
-        MessagingAPI.sendDM(
+        MessagesAPI.sendDM(
           message.author.id,
           "<#" +
             message.channel.id +
@@ -151,12 +151,12 @@ const join = ({
             message.content +
             "\": All lobbies full. Use `!host [region]` to host another lobby."
         )
-        MessagingAPI.deleteMessage(message)
+        MessagesAPI.deleteMessage(message)
         return 0
       }
 
       if (resultLobbyHostId === null) {
-        MessagingAPI.sendDM(
+        MessagesAPI.sendDM(
           message.author.id,
           "<#" +
             message.channel.id +
@@ -164,7 +164,7 @@ const join = ({
             message.content +
             "\": Host does not exist or you can not join any lobbies (Maybe they are all full? Use `!host [region]` to host a new lobby). Make sure you have the required rank or a lobby for that region exists. Use `!join [@host]` or `!join [region]`."
         )
-        MessagingAPI.deleteMessage(message)
+        MessagesAPI.deleteMessage(message)
         return 0
       }
     }
@@ -179,7 +179,7 @@ const join = ({
 
     userPromise.then(function(hostUser) {
       if (hostUser === null) {
-        MessagingAPI.sendDM(
+        MessagesAPI.sendDM(
           message.author.id,
           "<#" +
             message.channel.id +
@@ -187,11 +187,11 @@ const join = ({
             message.content +
             "\": Host not found in database."
         )
-        MessagingAPI.deleteMessage(message)
+        MessagesAPI.deleteMessage(message)
         return 0
       }
       if (!LobbiesAPI.hasHostedLobbyInChannel(leagueChannel, hostUser.steam)) {
-        MessagingAPI.sendDM(
+        MessagesAPI.sendDM(
           message.author.id,
           "<#" +
             message.channel.id +
@@ -199,14 +199,14 @@ const join = ({
             message.content +
             "\": Host not found. Use `!list` to see lobbies or `!host [region]` to start one!"
         )
-        MessagingAPI.deleteMessage(message)
+        MessagesAPI.deleteMessage(message)
         return 0
       }
 
       let lobby = LobbiesAPI.getLobbyForHostSafe(leagueChannel, hostUser.steam)
 
       if (lobby.players.length === 8) {
-        MessagingAPI.sendDM(
+        MessagesAPI.sendDM(
           message.author.id,
           "<#" +
             message.channel.id +
@@ -214,7 +214,7 @@ const join = ({
             message.content +
             "\": That Lobby is full. Use `!host [region]` to start another one."
         )
-        MessagingAPI.deleteMessage(message)
+        MessagesAPI.deleteMessage(message)
         return 0
       }
 
@@ -222,7 +222,7 @@ const join = ({
       if (rank.score === null) delete rankUpdate["score"]
       user.update(rankUpdate)
       if (rank.mmr_level < leagueRequirements[leagueRole]) {
-        MessagingAPI.sendDM(
+        MessagesAPI.sendDM(
           message.author.id,
           "<#" +
             message.channel.id +
@@ -234,11 +234,11 @@ const join = ({
             RanksAPI.getRankString(leagueRequirements[leagueRole]) +
             ")"
         )
-        MessagingAPI.deleteMessage(message)
+        MessagesAPI.deleteMessage(message)
         return 0
       }
       if (rank.mmr_level < lobby["rankRequirement"]) {
-        MessagingAPI.sendDM(
+        MessagesAPI.sendDM(
           message.author.id,
           "<#" +
             message.channel.id +
@@ -251,7 +251,7 @@ const join = ({
             ")",
           true
         )
-        MessagingAPI.deleteMessage(message)
+        MessagesAPI.deleteMessage(message)
         return 0
       }
 
@@ -259,7 +259,7 @@ const join = ({
       lobby.lastactivity = Date.now()
 
       getSteamPersonaNames([user.steam]).then(personaNames => {
-        MessagingAPI.sendToChannel(
+        MessagesAPI.sendToChannel(
           message.channel.id,
           "<@" +
             message.author.id +
@@ -275,7 +275,7 @@ const join = ({
             lobby.players.length +
             "/8)`"
         )
-        MessagingAPI.sendDM(
+        MessagesAPI.sendDM(
           hostUser.discord,
           "<@" +
             message.author.id +
@@ -291,7 +291,7 @@ const join = ({
             lobby.players.length +
             "/8)`"
         )
-        MessagingAPI.sendDM(
+        MessagesAPI.sendDM(
           message.author.id,
           "<#" +
             message.channel.id +
@@ -306,7 +306,7 @@ const join = ({
             ">."
         )
         if (lobby.players.length === 8) {
-          MessagingAPI.sendToChannel(
+          MessagesAPI.sendToChannel(
             message.channel.id,
             "**@" +
               lobby["region"] +
@@ -315,7 +315,7 @@ const join = ({
               "> can start the game with `!start`.**",
             false
           )
-          MessagingAPI.sendDM(
+          MessagesAPI.sendDM(
             hostUser.discord,
             "**@" +
               lobby["region"] +
@@ -324,7 +324,7 @@ const join = ({
               ">.** \n(Only start the game if you have verified everyone in the game lobby. Use `!lobby` to see players.)"
           )
         }
-        MessagingAPI.deleteMessage(message)
+        MessagesAPI.deleteMessage(message)
       })
     })
   })

@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const {
@@ -36,7 +36,7 @@ const admincreatelink = ({ parsedCommand, user, message }) => {
     return 0
 
   if (parsedCommand.args.length < 1) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, the command is `!adminlink [@discord] [[steamid]]`"
@@ -56,7 +56,7 @@ const admincreatelink = ({ parsedCommand, user, message }) => {
         validated: false
       })
         .then(() => {
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             "Sir, I have linked <@" +
@@ -70,7 +70,7 @@ const admincreatelink = ({ parsedCommand, user, message }) => {
           logger.error("error " + msg)
         })
     } else {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Sir, <@" +

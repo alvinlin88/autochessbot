@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -41,7 +41,7 @@ const adminupdateroles = ({
     return 0
 
   if (message.channel.type === "dm") {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, I can not update roles in direct messages. Please try in a channel on the server."
@@ -49,7 +49,7 @@ const adminupdateroles = ({
     return 0
   }
   if (parsedCommand.args.length < 1) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, the command is `!adminlink [@discord] [[steamid]]`"
@@ -60,7 +60,7 @@ const adminupdateroles = ({
 
   UserAPI.findByDiscord(updateRolePlayerDiscordId).then(function(playerUser) {
     if (playerUser === null) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Sir, I could not find that user."
@@ -68,7 +68,7 @@ const adminupdateroles = ({
       return 0
     }
     processRolesUpdate(message, playerUser, true, true)
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, trying to update roles for <@" + playerUser.discord + ">."

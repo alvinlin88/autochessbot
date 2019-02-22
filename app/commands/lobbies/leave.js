@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const leave = ({
   leagueChannelRegion
 }) => {
   if (disableLobbyCommands === true) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       botDownMessage
@@ -44,7 +44,7 @@ const leave = ({
   let playerLobbyLeave = LobbiesAPI.getLobbyForPlayer(leagueChannel, user.steam)
 
   if (playerLobbyLeave === null) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "<#" +
         message.channel.id +
@@ -52,11 +52,11 @@ const leave = ({
         message.content +
         "\": You are not in any lobbies."
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
   if (playerLobbyLeave.host === user.steam) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "<#" +
         message.channel.id +
@@ -64,7 +64,7 @@ const leave = ({
         message.content +
         "\": Hosts should use `!cancel` instead of `!leave`."
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
 
@@ -82,7 +82,7 @@ const leave = ({
           leagueChannel,
           hostUser.steam
         ).players.length
-        MessagingAPI.sendToChannel(
+        MessagesAPI.sendToChannel(
           message.channel.id,
           "<@" +
             message.author.id +
@@ -96,7 +96,7 @@ const leave = ({
             numPlayersLeft +
             "/8)`"
         )
-        MessagingAPI.sendDM(
+        MessagesAPI.sendDM(
           hostUser.discord,
           "<@" +
             message.author.id +
@@ -110,7 +110,7 @@ const leave = ({
             numPlayersLeft +
             "/8)`"
         )
-        MessagingAPI.deleteMessage(message)
+        MessagesAPI.deleteMessage(message)
       })
     }
   })

@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const kick = ({
   leagueChannelRegion
 }) => {
   if (disableLobbyCommands === true) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       botDownMessage
@@ -44,7 +44,7 @@ const kick = ({
   let hostLobby = LobbiesAPI.getLobbyForHostSafe(leagueChannel, user.steam)
 
   if (hostLobby === null) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "<#" +
         message.channel.id +
@@ -54,11 +54,11 @@ const kick = ({
         message.channel.id +
         ">"
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
   if (parsedCommand.args.length < 1) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "<#" +
         message.channel.id +
@@ -66,13 +66,13 @@ const kick = ({
         message.content +
         "\": You need to specify a player to kick: `!kick @quest`"
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
   let kickedPlayerDiscordId = parseDiscordId(parsedCommand.args[0])
 
   if (!message.guild.member(kickedPlayerDiscordId)) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "<#" +
         message.channel.id +
@@ -80,12 +80,12 @@ const kick = ({
         message.content +
         "\": Could not find that user on this server."
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
   UserAPI.findByDiscord(kickedPlayerDiscordId).then(function(kickedPlayerUser) {
     if (kickedPlayerUser === null) {
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         message.author.id,
         "<#" +
           message.channel.id +
@@ -93,11 +93,11 @@ const kick = ({
           message.content +
           "\": User not in database. Make sure to use mentions in command: `!kick @username`"
       )
-      MessagingAPI.deleteMessage(message)
+      MessagesAPI.deleteMessage(message)
       return 0
     }
     if (hostLobby.players.length === 1) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "You can not kick the last player."
@@ -105,7 +105,7 @@ const kick = ({
       return 0
     }
     if (hostLobby.host === kickedPlayerUser.steam) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "You can not kick yourself. (Use !cancel to cancel a lobby you have hosted)"
@@ -113,7 +113,7 @@ const kick = ({
       return 0
     }
     if (!hostLobby.players.includes(kickedPlayerUser.steam)) {
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         message.author.id,
         "<#" +
           message.channel.id +
@@ -121,7 +121,7 @@ const kick = ({
           message.content +
           "\": User not in lobby."
       )
-      MessagingAPI.deleteMessage(message)
+      MessagesAPI.deleteMessage(message)
       return 0
     }
 
@@ -133,7 +133,7 @@ const kick = ({
       )
     ) {
       let kickUserName = message.client.users.find("id", kickedPlayerDiscordId)
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "kicked " +
@@ -147,7 +147,7 @@ const kick = ({
             .length +
           "/8)`"
       )
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         kickedPlayerDiscordId,
         "<@" +
           user.discord +

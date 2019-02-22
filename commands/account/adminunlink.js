@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const adminunlink = ({ parsedCommand, user, message }) => {
     return 0
 
   if (parsedCommand.args.length !== 1) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, the command is `!adminunlink [@discord]`"
@@ -46,7 +46,7 @@ const adminunlink = ({ parsedCommand, user, message }) => {
     let oldSteamID = unlinkPlayerUser.steam
     unlinkPlayerUser.update({ steam: null, validated: false }).then(
       function(result) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "Sir, I have unlinked <@" +

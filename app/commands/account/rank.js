@@ -1,5 +1,5 @@
 const client = require("../../helpers/client")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const {
   leagueLobbies
@@ -14,7 +14,7 @@ const rank = ({ parsedCommand, user, message }) => {
 
     if (getRankUserDiscordId !== null) {
       if (!message.guild.member(getRankUserDiscordId)) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "Could not find that user on this server."
@@ -23,7 +23,7 @@ const rank = ({ parsedCommand, user, message }) => {
       }
       UserAPI.findByDiscord(getRankUserDiscordId).then(getRankUser => {
         if (getRankUser === null || getRankUser.steam === null) {
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             "That user has not linked a steam id yet."
@@ -32,7 +32,7 @@ const rank = ({ parsedCommand, user, message }) => {
         }
         RanksAPI.getRankFromSteamID(getRankUser.steam).then(rank => {
           if (rank === null) {
-            MessagingAPI.sendToChannelWithMention(
+            MessagesAPI.sendToChannelWithMention(
               message.channel.id,
               message.author.id,
               "I am having problems verifying your rank."
@@ -51,7 +51,7 @@ const rank = ({ parsedCommand, user, message }) => {
                 client.channels.find(r => r.name === "readme").id
               }> to verify] `
 
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             verificationStatus +
@@ -64,7 +64,7 @@ const rank = ({ parsedCommand, user, message }) => {
           )
 
           if (leagueLobbies.includes(message.channel.name)) {
-            MessagingAPI.deleteMessage(message)
+            MessagesAPI.deleteMessage(message)
           }
           return 0
         })
@@ -74,7 +74,7 @@ const rank = ({ parsedCommand, user, message }) => {
 
       RanksAPI.getRankFromSteamID(publicSteamId).then(rank => {
         if (rank === null) {
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             "I am having problems verifying your rank."
@@ -91,7 +91,7 @@ const rank = ({ parsedCommand, user, message }) => {
           //todo remind about people they can just use !rank with no param
         }
 
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "Current rank for " +
@@ -103,12 +103,12 @@ const rank = ({ parsedCommand, user, message }) => {
         )
 
         if (leagueLobbies.includes(message.channel.name)) {
-          MessagingAPI.deleteMessage(message)
+          MessagesAPI.deleteMessage(message)
         }
         return 0
       })
     } else {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Invalid arguments."
@@ -118,7 +118,7 @@ const rank = ({ parsedCommand, user, message }) => {
     if (user !== null && user.steam !== null && user.steamLinkToken === null) {
       RanksAPI.getRankFromSteamID(user.steam).then(rank => {
         if (rank === null) {
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             "I am having problems verifying your rank."
@@ -138,7 +138,7 @@ const rank = ({ parsedCommand, user, message }) => {
               client.channels.find(r => r.name === "readme").id
             }> to verify] `
 
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           verificationStatus +
@@ -158,7 +158,7 @@ const rank = ({ parsedCommand, user, message }) => {
         })
       })
     } else {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         `You have not linked a steam id. Follow instructions in <#${

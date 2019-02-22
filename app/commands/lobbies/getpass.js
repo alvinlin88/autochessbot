@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const {
@@ -36,7 +36,7 @@ const getpass = ({
   leagueChannelRegion
 }) => {
   if (disableLobbyCommands === true) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       botDownMessage
@@ -50,7 +50,7 @@ const getpass = ({
   )
 
   if (playerSendPassLobby === null) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "<#" +
         message.channel.id +
@@ -58,13 +58,13 @@ const getpass = ({
         message.content +
         "\": You are not in any lobbies."
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
 
   UserAPI.findOneBySteam(playerSendPassLobby.host).then(function(hostUser) {
     if (hostUser === null) {
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         message.author.id,
         "<#" +
           message.channel.id +
@@ -72,11 +72,11 @@ const getpass = ({
           message.content +
           "\": Host not found in database."
       )
-      MessagingAPI.deleteMessage(message)
+      MessagesAPI.deleteMessage(message)
       return 0
     }
     if (!LobbiesAPI.hasHostedLobbyInChannel(leagueChannel, hostUser.steam)) {
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         message.author.id,
         "<#" +
           message.channel.id +
@@ -84,12 +84,12 @@ const getpass = ({
           message.content +
           "\": Host not found. Use `!list` to see lobbies or `!host [region]` to start one!"
       )
-      MessagingAPI.deleteMessage(message)
+      MessagesAPI.deleteMessage(message)
       return 0
     }
 
     let lobby = LobbiesAPI.getLobbyForHostSafe(leagueChannel, hostUser.steam)
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "<#" +
         message.channel.id +
@@ -105,7 +105,7 @@ const getpass = ({
         hostUser.discord +
         ">."
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
   })
 }
 

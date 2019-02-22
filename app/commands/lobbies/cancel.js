@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const {
@@ -36,7 +36,7 @@ const cancel = ({
   leagueChannelRegion
 }) => {
   if (disableLobbyCommands === true) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       botDownMessage
@@ -47,7 +47,7 @@ const cancel = ({
   let hostLobbyEnd = LobbiesAPI.getLobbyForHostSafe(leagueChannel, user.steam)
 
   if (hostLobbyEnd === null) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "<#" +
         message.channel.id +
@@ -57,14 +57,14 @@ const cancel = ({
         message.channel.id +
         ">"
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
   let regionEnd = hostLobbyEnd["region"]
 
   if (LobbiesAPI.isHostOfHostedLobby(leagueChannel, user.steam)) {
     LobbiesAPI.deleteLobby(leagueChannel, user.steam)
-    MessagingAPI.sendToChannel(
+    MessagesAPI.sendToChannel(
       message.channel.id,
       "<@" + user.discord + "> @" + regionEnd + " region **lobby cancelled**."
     )

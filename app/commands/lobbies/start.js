@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const start = ({
   leagueChannelRegion
 }) => {
   if (disableLobbyCommands === true) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       botDownMessage
@@ -45,11 +45,11 @@ const start = ({
   let lobby = LobbiesAPI.getLobbyForHostSafe(leagueChannel, user.steam)
 
   if (lobby === undefined || lobby === null) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "You are not hosting any lobbies in <#" + message.channel.id + ">"
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
 
@@ -58,7 +58,7 @@ const start = ({
     let force = parsedCommand.args[0]
 
     if (force !== "force") {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Invalid arguments"
@@ -66,7 +66,7 @@ const start = ({
       return 0
     }
     if (lobby.players.length < 2) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "You need at least 2 players to force start a lobby. `(" +
@@ -108,7 +108,7 @@ const start = ({
 
         LobbiesAPI.deleteLobby(leagueChannel, user.steam)
 
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "**@" +
@@ -149,7 +149,7 @@ const start = ({
             }
           })
 
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             "**@" +
@@ -161,7 +161,7 @@ const start = ({
         })
       })
     } else {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Not enough players to start yet. `(" + lobby.players.length + "/8)`"

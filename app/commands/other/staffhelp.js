@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const {
@@ -31,30 +31,30 @@ let activeTournament = 1
 
 const staffhelp = ({ parsedCommand, user, message }) => {
   if (parsedCommand.args.length === 0) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "Sir, the command is !staffhelp [@discord] [topic] [[language]]."
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
   let staffHelpUserDiscordId = parseDiscordId(parsedCommand.args[0])
   if (staffHelpUserDiscordId === null) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "Sir, that is an invalid Discord ID.  Make sure it is a mention (blue text)."
     )
-    MessagingAPI.deleteMessage(message)
+    MessagesAPI.deleteMessage(message)
     return 0
   }
 
   if (staffHelpUserDiscordId !== null) {
     if (!message.guild.member(staffHelpUserDiscordId)) {
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         message.author.id,
         "Sir, I could not find that user on this server."
       )
-      MessagingAPI.deleteMessage(message)
+      MessagesAPI.deleteMessage(message)
       return 0
     }
   }
@@ -75,12 +75,12 @@ const staffhelp = ({ parsedCommand, user, message }) => {
       }[lang]
       break
     default:
-      MessagingAPI.sendDM(message.author.id, "Could not find that help topic.")
-      MessagingAPI.deleteMessage(message)
+      MessagesAPI.sendDM(message.author.id, "Could not find that help topic.")
+      MessagesAPI.deleteMessage(message)
       return 0
   }
 
-  MessagingAPI.sendToChannelWithMention(
+  MessagesAPI.sendToChannelWithMention(
     message.channel.id,
     staffHelpUserDiscordId,
     helptext

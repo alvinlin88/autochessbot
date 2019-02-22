@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
@@ -33,7 +33,7 @@ const host = ({
   leagueChannelRegion
 }) => {
   if (disableLobbyCommands === true) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       botDownMessage
@@ -41,7 +41,7 @@ const host = ({
     return 0
   }
   if (disableLobbyHost === true) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Lobby hosting disabled. Bot is going down for maintenance."
@@ -51,7 +51,7 @@ const host = ({
   let hostLobbyExist = LobbiesAPI.getLobbyForHostSafe(leagueChannel, user.steam)
 
   if (hostLobbyExist !== null) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "You are already hosting a lobby. Type `!lobby` to see players."
@@ -62,7 +62,7 @@ const host = ({
     if (leagueChannelRegion !== null) {
       parsedCommand.args[0] = leagueChannelRegion
     } else {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Invalid arguments. Try `!host [" +
@@ -76,7 +76,7 @@ const host = ({
   let region = parsedCommand.args[0].toUpperCase()
 
   if (leagueChannelRegion !== null && leagueChannelRegion !== region) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "You can only host " +
@@ -94,7 +94,7 @@ const host = ({
     rankRequirement = RanksAPI.parseRank(parsedCommand.args[1])
 
     if (rankRequirement === null) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Invalid rank requirement. Example: `!host " +
@@ -104,7 +104,7 @@ const host = ({
       return 0
     }
   } else if (parsedCommand.args.length > 2) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Invalid arguments. Must be `!host [" +
@@ -115,7 +115,7 @@ const host = ({
   }
 
   if (!validRegions.includes(region)) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Invalid arguments. Must be `!host [" +
@@ -128,7 +128,7 @@ const host = ({
   // create lobby
   RanksAPI.getRankFromSteamID(user.steam).then(rank => {
     if (rank === null) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "I am having problems verifying your rank."
@@ -140,7 +140,7 @@ const host = ({
     user.update(rankUpdate)
     let minHostRankRestrictions = rank.mmr_level - 2
     if (rank.mmr_level < leagueRequirements[leagueRole]) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "You are not high enough rank to host this lobby. (Your rank: " +
@@ -152,7 +152,7 @@ const host = ({
       return 0
     }
     if (rank.mmr_level < rankRequirement) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "You are not high enough rank to host this lobby. (Your rank: " +
@@ -167,7 +167,7 @@ const host = ({
       rankRequirement > minHostRankRestrictions &&
       minHostRankRestrictions > leagueRequirements[leagueRole]
     ) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "You are not high enough rank to host this lobby. The highest rank restriction you can make is 2 ranks below your current rank. (Your rank: " +
@@ -190,7 +190,7 @@ const host = ({
 
     // let currentLobby = getLobbyForPlayer(leagueChannel, user.steam);
 
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "**=== <@&" +
@@ -206,7 +206,7 @@ const host = ({
         " required to join] \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords here.",
       false
     )
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "<#" +
         message.channel.id +

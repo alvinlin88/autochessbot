@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const {
@@ -38,7 +38,7 @@ const admincancel = ({
     return 0
 
   if (parsedCommand.args.length !== 1) {
-    MessagingAPI.sendToChannelWithMention(
+    MessagesAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
       "Sir, the command is `!admincancel [@host]`"
@@ -52,7 +52,7 @@ const admincancel = ({
       hostUser.steam
     )
     if (hostLobbyEnd === null) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Sir, <@" + hostUser.discord + "> is not hosting any lobby."
@@ -61,7 +61,7 @@ const admincancel = ({
       let regionEnd = hostLobbyEnd["region"]
 
       LobbiesAPI.deleteLobby(leagueChannel, hostUser.steam)
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "Sir, I cancelled <@" +
@@ -70,7 +70,7 @@ const admincancel = ({
           regionEnd +
           "."
       )
-      MessagingAPI.sendDM(
+      MessagesAPI.sendDM(
         hostUser.discord,
         "**Your lobby in <#" +
           message.channel.id +

@@ -1,7 +1,7 @@
 const client = require("../client")
 const request = require("request")
 const logger = require("../logger")
-const MessagingAPI = require("../MessagingAPI")
+const MessagesAPI = require("../MessagesAPI")
 
 let DACSwitch = 1
 // TODO: Circuit breaker
@@ -104,7 +104,7 @@ const getRankFromSteamID = (steamId) => {
       })
     } else {
       logger.error("Error getting any results from DAC Servers! :(")
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         client.channels.find(r => r.name === "chessbot-warnings").id,
         "Error getting any results from DAC Servers! :("
       )

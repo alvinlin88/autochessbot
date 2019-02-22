@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const {
@@ -36,7 +36,7 @@ const unregister = ({ parsedCommand, user, message }) => {
     }).then(result => {
       if (result !== null) {
         result.destroy().then(success => {
-          MessagingAPI.sendToChannelWithMention(
+          MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
             "I have unregistered you for the current tournament."
@@ -44,7 +44,7 @@ const unregister = ({ parsedCommand, user, message }) => {
           return 0
         })
       } else {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "You have not registered for the current tournament yet."

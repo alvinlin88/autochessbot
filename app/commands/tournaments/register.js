@@ -1,6 +1,6 @@
 const client = require("../../helpers/client")
 const logger = require("../../helpers/logger.js")
-const MessagingAPI = require("../../helpers/MessagingAPI")
+const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
 const {
@@ -31,7 +31,7 @@ let activeTournament = 1
 const register = ({ parsedCommand, user, message }) => {
   if (message.channel.name === "tournament-signups") {
     if (user.validated !== true) {
-      MessagingAPI.sendToChannelWithMention(
+      MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
         "You must have a verified account in order to register for tournaments. See <#" +
@@ -46,7 +46,7 @@ const register = ({ parsedCommand, user, message }) => {
       steam: user.steam
     }).then(result => {
       if (result !== null) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "That steam id has already been registered in this tournament. Information:\nDate: `" +
@@ -68,7 +68,7 @@ const register = ({ parsedCommand, user, message }) => {
       }
 
       if (parsedCommand.args.length < 2) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "Invalid arguments. Must be `!register [" +
@@ -81,7 +81,7 @@ const register = ({ parsedCommand, user, message }) => {
       let region = parsedCommand.args[0].toUpperCase()
 
       if (!validRegions.includes(region)) {
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "Invalid arguments. Must be `!register [" +
@@ -94,7 +94,7 @@ const register = ({ parsedCommand, user, message }) => {
       let country = parsedCommand.args[1].toUpperCase()
       if (country.length !== 4) {
         // emoji utf-8 character for flag
-        MessagingAPI.sendToChannelWithMention(
+        MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
           "Invalid arguments. Must be `!register [" +
@@ -116,7 +116,7 @@ const register = ({ parsedCommand, user, message }) => {
       }).then(registration => {
         TournamentAPI.getTournament(registration.fk_tournament).then(
           tournament => {
-            MessagingAPI.sendToChannelWithMention(
+            MessagesAPI.sendToChannelWithMention(
               message.channel.id,
               message.author.id,
               "Successfully registered you for the " +

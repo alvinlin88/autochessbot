@@ -1,9 +1,9 @@
-const { adminRoleName, botChannels } = require("./config")
+const { adminRoleName } = require("./config")
 const logger = require("./helpers/logger")
 const UserAPI = require("./helpers/UserAPI")
 const RolesAPI = require("./helpers/RolesAPI")
 const ChannelsAPI = require("./helpers/ChannelsAPI")
-const MessagingAPI = require("./helpers/MessagingAPI")
+const MessagesAPI = require("./helpers/MessagesAPI")
 const { getCommand } = require("./commands")
 
 const PREFIX = "!cb"
@@ -12,12 +12,12 @@ const reject = ({ message, text, isPublic }) => {
   const author = message.author.id
   const channel = message.channel.id
 
-  MessagingAPI.deleteMessage(message)
+  MessagesAPI.deleteMessage(message)
 
   if (isPublic) {
-    MessagingAPI.sendToChannelWithMention(channel, author, text)
+    MessagesAPI.sendToChannelWithMention(channel, author, text)
   } else {
-    MessagingAPI.sendDM(author, text)
+    MessagesAPI.sendDM(author, text)
   }
 }
 
@@ -67,7 +67,7 @@ const handleMessage = async message => {
     (message.member === null || message.guild === null)
 
   if (isUserInvisible) {
-    MessagingAPI.sendDM(
+    MessagesAPI.sendDM(
       message.author.id,
       "Error! Are you set to invisible mode?"
     )
@@ -146,7 +146,7 @@ const handleMessage = async message => {
     logger.error(err)
     return
   }
-  
+
   // Execute the command
   command.function({
     user,
