@@ -110,10 +110,6 @@ function getAvatarUrl(user_response) {
     return `https://cdn.discordapp.com/avatars/${user_response.id}/${user_response.avatar}.png`;
 }
 
-function getUserNameWithTag(user_response) {
-    return `${user_response.username}#${user_response.discriminator}`;
-}
-
 function getUserName(user_response) {
   return user_response.username;
 }
