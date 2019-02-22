@@ -11,51 +11,31 @@ const {
   leagueRequirements,
   validRegions,
   exemptLeagueRolePruning
-} = require("../../app/config")
+} = require("../../config")
 const randtoken = require("rand-token")
 const UserAPI = require("../../helpers/UserAPI")
 const VerifiedSteamAPI = require("../../helpers/VerifiedSteamAPI")
 const TournamentAPI = require("../../helpers/TournamentAPI")
 const parseDiscordId = require("../../helpers/discord/parseDiscordID")
 const getSteamPersonaNames = require("../../helpers/steam/getSteamPersonaNames")
+const processRolesUpdate = require("../../helpers/processRolesUpdate")
 
 let botDownMessage =
   "Bot is restarting. Lobby commands are currently disabled. Be back in a second!"
 let disableLobbyCommands = false
 let disableLobbyHost = false
+let activeTournament = 1
 
-const enablebot = ({
-  parsedCommand,
-  user,
-  message,
-  leagueRole,
-  leagueChannel,
-  leagueChannelRegion
-}) => {
-  if (message.author.id !== "204094307689431043") {
-    return 0 // no permissions
-  }
-  if (disableLobbyCommands === true) {
-    disableLobbyCommands = false
-
-    LobbiesAPI.restoreLobbiesSafe()
-    MessagingAPI.sendToChannelWithMention(
-      message.channel.id,
-      message.author.id,
-      "Sir, Lobby data loaded. Lobby commands enabled."
-    )
-    return 0
-  } else {
-    MessagingAPI.sendToChannelWithMention(
-      message.channel.id,
-      message.author.id,
-      "Sir, I am not disabled."
-    )
-  }
+const help = ({ parsedCommand, user, message }) => {
+  MessagingAPI.sendToChannelWithMention(
+    message.channel.id,
+    message.author.id,
+    "See <#542454956825903104> for more information."
+  )
 }
 
 module.exports = {
-  function: enablebot,
-  isAdmin: true,
+  function: help,
+  isAdmin: false,
   scopes: ["all"]
 }

@@ -40,7 +40,8 @@
     "mocha": "^5.2.0"
   },
   "scripts": {
-    "test": "mocha"
+    "start": "node app",
+    "test": "mocha \"./app/**/*.test.js\""
   },
   "repository": {
     "type": "git",

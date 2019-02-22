@@ -11,7 +11,7 @@ const {
   leagueRequirements,
   validRegions,
   exemptLeagueRolePruning
-} = require("../../app/config")
+} = require("../../config")
 const randtoken = require("rand-token")
 const UserAPI = require("../../helpers/UserAPI")
 const VerifiedSteamAPI = require("../../helpers/VerifiedSteamAPI")
@@ -24,47 +24,38 @@ let botDownMessage =
 let disableLobbyCommands = false
 let disableLobbyHost = false
 
-const adminunlink = ({ parsedCommand, user, message }) => {
-  if (
-    !message.member.roles.has(
-      message.guild.roles.find(r => r.name === adminRoleName).id
-    )
-  )
-    return 0
+const enablebot = ({
+  parsedCommand,
+  user,
+  message,
+  leagueRole,
+  leagueChannel,
+  leagueChannelRegion
+}) => {
+  if (message.author.id !== "204094307689431043") {
+    return 0 // no permissions
+  }
+  if (disableLobbyCommands === true) {
+    disableLobbyCommands = false
 
-  if (parsedCommand.args.length !== 1) {
+    LobbiesAPI.restoreLobbiesSafe()
     MessagingAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
-      "Sir, the command is `!adminunlink [@discord]`"
+      "Sir, Lobby data loaded. Lobby commands enabled."
     )
     return 0
-  }
-  let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0])
-
-  UserAPI.findByDiscord(unlinkPlayerDiscordId).then(function(unlinkPlayerUser) {
-    let oldSteamID = unlinkPlayerUser.steam
-    unlinkPlayerUser.update({ steam: null, validated: false }).then(
-      function(result) {
-        MessagingAPI.sendToChannelWithMention(
-          message.channel.id,
-          message.author.id,
-          "Sir, I have unlinked <@" +
-            unlinkPlayerUser.discord +
-            ">'s steam id. `" +
-            oldSteamID +
-            "`"
-        )
-      },
-      function(error) {
-        logger.error(error)
-      }
+  } else {
+    MessagingAPI.sendToChannelWithMention(
+      message.channel.id,
+      message.author.id,
+      "Sir, I am not disabled."
     )
-  })
+  }
 }
 
 module.exports = {
-  function: adminunlink,
+  function: enablebot,
   isAdmin: true,
   scopes: ["all"]
 }

@@ -11,20 +11,28 @@ const {
   leagueRequirements,
   validRegions,
   exemptLeagueRolePruning
-} = require("../../app/config")
+} = require("../../config")
 const randtoken = require("rand-token")
 const UserAPI = require("../../helpers/UserAPI")
 const VerifiedSteamAPI = require("../../helpers/VerifiedSteamAPI")
 const TournamentAPI = require("../../helpers/TournamentAPI")
 const parseDiscordId = require("../../helpers/discord/parseDiscordID")
 const getSteamPersonaNames = require("../../helpers/steam/getSteamPersonaNames")
+const processRolesUpdate = require("../../helpers/processRolesUpdate")
 
 let botDownMessage =
   "Bot is restarting. Lobby commands are currently disabled. Be back in a second!"
 let disableLobbyCommands = false
 let disableLobbyHost = false
 
-const adminunlink = ({ parsedCommand, user, message }) => {
+const adminupdateroles = ({
+  parsedCommand,
+  user,
+  message,
+  leagueRole,
+  leagueChannel,
+  leagueChannelRegion
+}) => {
   if (
     !message.member.roles.has(
       message.guild.roles.find(r => r.name === adminRoleName).id
@@ -32,39 +40,44 @@ const adminunlink = ({ parsedCommand, user, message }) => {
   )
     return 0
 
-  if (parsedCommand.args.length !== 1) {
+  if (message.channel.type === "dm") {
     MessagingAPI.sendToChannelWithMention(
       message.channel.id,
       message.author.id,
-      "Sir, the command is `!adminunlink [@discord]`"
+      "Sir, I can not update roles in direct messages. Please try in a channel on the server."
     )
     return 0
   }
-  let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0])
+  if (parsedCommand.args.length < 1) {
+    MessagingAPI.sendToChannelWithMention(
+      message.channel.id,
+      message.author.id,
+      "Sir, the command is `!adminlink [@discord] [[steamid]]`"
+    )
+    return 0
+  }
+  let updateRolePlayerDiscordId = parseDiscordId(parsedCommand.args[0])
 
-  UserAPI.findByDiscord(unlinkPlayerDiscordId).then(function(unlinkPlayerUser) {
-    let oldSteamID = unlinkPlayerUser.steam
-    unlinkPlayerUser.update({ steam: null, validated: false }).then(
-      function(result) {
-        MessagingAPI.sendToChannelWithMention(
-          message.channel.id,
-          message.author.id,
-          "Sir, I have unlinked <@" +
-            unlinkPlayerUser.discord +
-            ">'s steam id. `" +
-            oldSteamID +
-            "`"
-        )
-      },
-      function(error) {
-        logger.error(error)
-      }
+  UserAPI.findByDiscord(updateRolePlayerDiscordId).then(function(playerUser) {
+    if (playerUser === null) {
+      MessagingAPI.sendToChannelWithMention(
+        message.channel.id,
+        message.author.id,
+        "Sir, I could not find that user."
+      )
+      return 0
+    }
+    processRolesUpdate(message, playerUser, true, true)
+    MessagingAPI.sendToChannelWithMention(
+      message.channel.id,
+      message.author.id,
+      "Sir, trying to update roles for <@" + playerUser.discord + ">."
     )
   })
 }
 
 module.exports = {
-  function: adminunlink,
+  function: adminupdateroles,
   isAdmin: true,
   scopes: ["all"]
 }

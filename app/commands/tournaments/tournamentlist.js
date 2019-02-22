@@ -11,7 +11,7 @@ const {
   leagueRequirements,
   validRegions,
   exemptLeagueRolePruning
-} = require("../../app/config")
+} = require("../../config")
 const randtoken = require("rand-token")
 const UserAPI = require("../../helpers/UserAPI")
 const VerifiedSteamAPI = require("../../helpers/VerifiedSteamAPI")
@@ -23,48 +23,49 @@ let botDownMessage =
   "Bot is restarting. Lobby commands are currently disabled. Be back in a second!"
 let disableLobbyCommands = false
 let disableLobbyHost = false
+let activeTournament = 1
 
-const adminunlink = ({ parsedCommand, user, message }) => {
+const tournamentlist = ({ parsedCommand, user, message }) => {
   if (
     !message.member.roles.has(
       message.guild.roles.find(r => r.name === adminRoleName).id
     )
   )
     return 0
-
-  if (parsedCommand.args.length !== 1) {
-    MessagingAPI.sendToChannelWithMention(
-      message.channel.id,
-      message.author.id,
-      "Sir, the command is `!adminunlink [@discord]`"
-    )
-    return 0
-  }
-  let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0])
-
-  UserAPI.findByDiscord(unlinkPlayerDiscordId).then(function(unlinkPlayerUser) {
-    let oldSteamID = unlinkPlayerUser.steam
-    unlinkPlayerUser.update({ steam: null, validated: false }).then(
-      function(result) {
-        MessagingAPI.sendToChannelWithMention(
+  let counter = 0
+  TournamentAPI.createRegistration(48).then(registrations => {
+    registrations.forEach(registration => {
+      counter++
+      let discordUser = message.guild.members.find(
+        r => r.id === registration.discord
+      )
+      if (discordUser !== null) {
+        MessagingAPI.sendToChannel(
           message.channel.id,
-          message.author.id,
-          "Sir, I have unlinked <@" +
-            unlinkPlayerUser.discord +
-            ">'s steam id. `" +
-            oldSteamID +
+          "`(" +
+            counter +
+            ") " +
+            "MMR " +
+            registration.score +
+            " " +
+            registration.region +
+            " ` " +
+            registration.country +
+            " ` " +
+            new Date(parseInt(registration.date)).toUTCString() +
+            " | " +
+            discordUser.user.username +
+            "#" +
+            discordUser.user.discriminator +
             "`"
         )
-      },
-      function(error) {
-        logger.error(error)
       }
-    )
+    })
   })
 }
 
 module.exports = {
-  function: adminunlink,
+  function: tournamentlist,
   isAdmin: true,
   scopes: ["all"]
 }

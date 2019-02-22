@@ -11,7 +11,7 @@ const {
   leagueRequirements,
   validRegions,
   exemptLeagueRolePruning
-} = require("../../config")
+} = require("../../app/config")
 const randtoken = require("rand-token")
 const UserAPI = require("../../helpers/UserAPI")
 const VerifiedSteamAPI = require("../../helpers/VerifiedSteamAPI")

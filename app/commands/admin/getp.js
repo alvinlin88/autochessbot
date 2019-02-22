@@ -11,7 +11,7 @@ const {
   leagueRequirements,
   validRegions,
   exemptLeagueRolePruning
-} = require("../../app/config")
+} = require("../../config")
 const randtoken = require("rand-token")
 const UserAPI = require("../../helpers/UserAPI")
 const VerifiedSteamAPI = require("../../helpers/VerifiedSteamAPI")
@@ -23,48 +23,48 @@ let botDownMessage =
   "Bot is restarting. Lobby commands are currently disabled. Be back in a second!"
 let disableLobbyCommands = false
 let disableLobbyHost = false
+let activeTournament = 1
 
-const adminunlink = ({ parsedCommand, user, message }) => {
-  if (
-    !message.member.roles.has(
-      message.guild.roles.find(r => r.name === adminRoleName).id
-    )
-  )
-    return 0
+const getp = ({ parsedCommand, user, message }) => {
+  if (parsedCommand.args.length === 1) {
+    let getSteamPersonaUserDiscordId = parseDiscordId(parsedCommand.args[0])
 
-  if (parsedCommand.args.length !== 1) {
-    MessagingAPI.sendToChannelWithMention(
-      message.channel.id,
-      message.author.id,
-      "Sir, the command is `!adminunlink [@discord]`"
-    )
-    return 0
-  }
-  let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0])
-
-  UserAPI.findByDiscord(unlinkPlayerDiscordId).then(function(unlinkPlayerUser) {
-    let oldSteamID = unlinkPlayerUser.steam
-    unlinkPlayerUser.update({ steam: null, validated: false }).then(
-      function(result) {
+    if (getSteamPersonaUserDiscordId !== null) {
+      if (!message.guild.member(getSteamPersonaUserDiscordId)) {
         MessagingAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
-          "Sir, I have unlinked <@" +
-            unlinkPlayerUser.discord +
-            ">'s steam id. `" +
-            oldSteamID +
-            "`"
+          "Could not find that user on this server."
         )
-      },
-      function(error) {
-        logger.error(error)
+        return 0
       }
-    )
-  })
+      UserAPI.findByDiscord(getSteamPersonaUserDiscordId).then(
+        getSteamPersonaUser => {
+          getSteamPersonaNames([getSteamPersonaUser.steam]).then(personas => {
+            MessagingAPI.sendToChannelWithMention(
+              message.channel.id,
+              message.author.id,
+              "<@" +
+                getSteamPersonaUser.discord +
+                "> Steam Name is \"" +
+                personas[getSteamPersonaUser.steam] +
+                "\""
+            )
+          })
+        }
+      )
+    } else {
+      MessagingAPI.sendToChannelWithMention(
+        message.channel.id,
+        message.author.id,
+        "Invalid arguments."
+      )
+    }
+  }
 }
 
 module.exports = {
-  function: adminunlink,
+  function: getp,
   isAdmin: true,
   scopes: ["all"]
 }

@@ -11,7 +11,7 @@ const {
   leagueRequirements,
   validRegions,
   exemptLeagueRolePruning
-} = require("../../app/config")
+} = require("../../config")
 const randtoken = require("rand-token")
 const UserAPI = require("../../helpers/UserAPI")
 const VerifiedSteamAPI = require("../../helpers/VerifiedSteamAPI")
@@ -23,48 +23,30 @@ let botDownMessage =
   "Bot is restarting. Lobby commands are currently disabled. Be back in a second!"
 let disableLobbyCommands = false
 let disableLobbyHost = false
+let activeTournament = 1
 
-const adminunlink = ({ parsedCommand, user, message }) => {
-  if (
-    !message.member.roles.has(
-      message.guild.roles.find(r => r.name === adminRoleName).id
-    )
-  )
-    return 0
+const adminunregister = ({ parsedCommand, user, message }) => {
+  if (message.author.id !== "204094307689431043") return 0 // no permissions
 
-  if (parsedCommand.args.length !== 1) {
-    MessagingAPI.sendToChannelWithMention(
-      message.channel.id,
-      message.author.id,
-      "Sir, the command is `!adminunlink [@discord]`"
-    )
-    return 0
-  }
-  let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0])
+  let discordUser = parseDiscordId(parsedCommand.args[0])
 
-  UserAPI.findByDiscord(unlinkPlayerDiscordId).then(function(unlinkPlayerUser) {
-    let oldSteamID = unlinkPlayerUser.steam
-    unlinkPlayerUser.update({ steam: null, validated: false }).then(
-      function(result) {
+  TournamentAPI.findRegistration({ discord: discordUser }).then(
+    registration => {
+      registration.destroy().then(deleted => {
         MessagingAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
-          "Sir, I have unlinked <@" +
-            unlinkPlayerUser.discord +
-            ">'s steam id. `" +
-            oldSteamID +
-            "`"
+          "Sir, I deleted that tournament registration by <@" +
+            deleted.discord +
+            ">"
         )
-      },
-      function(error) {
-        logger.error(error)
-      }
-    )
-  })
+      })
+    }
+  )
 }
 
 module.exports = {
-  function: adminunlink,
+  function: adminunregister,
   isAdmin: true,
-  scopes: ["all"]
+  scopes: ["tournament"]
 }
