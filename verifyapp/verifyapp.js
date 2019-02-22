@@ -12,6 +12,7 @@ app.use(cookieParser());
 app.set('view engine', 'pug');
 app.set('views', __dirname + '/views');
 app.use(session({secret: 'tony numba wan', resave: false, saveUninitialized: false}));
+app.use('/assets', express.static(__dirname + "/assets"))
 
 const config = require("./config");
 const CLIENT_ID = config.discord_client_id;
