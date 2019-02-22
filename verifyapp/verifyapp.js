@@ -97,6 +97,14 @@ function getUserNameWithTag(user_response) {
     return `${user_response.username}#${user_response.discriminator}`;
 }
 
+function getUserName(user_response) {
+  return user_response.username;
+}
+
+function getUserTag(user_response) {
+  return "#" + user_response.discriminator;
+}
+
 app.get("/callback", (req, res, err) => {
     let code = req.query.code;
 
@@ -160,7 +168,8 @@ app.get("/callback", (req, res, err) => {
             steam_response.response.players.length === 0) {
             res.render('no_steam', {
                 avatar: getAvatarUrl(user_response),
-                username: getUserNameWithTag(user_response)
+                username: getUserName(user_response),
+                tag: getUserTag(user_response)
             });
         } else {
 
@@ -180,7 +189,7 @@ app.get("/callback", (req, res, err) => {
     });
 });
 
-app.listen("80", (err) => {
+app.listen("8080", (err) => {
     if (err) {
         return console.log("err!", err)
     }

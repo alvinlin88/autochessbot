@@ -1,0 +1,96 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial,
+    sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+  padding: 40px 0;
+  margin: 0;
+}
+
+.main {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.block {
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 3px;
+  background-color: #fff;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.27);
+}
+
+.error.block {
+  background: #ffb7b7;
+}
+
+.block > :first-child {
+  margin-top: 0;
+}
+
+.block > :last-child {
+  margin-bottom: 0;
+}
+
+span.code {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+  display: inline-block;
+  padding: 1px 4px;
+  font-size: 14px;
+}
+
+.profile {
+  border-radius: 0;
+  color: #fff;
+  height: 50px;
+  background-color: #25272b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-status {
+  margin: 0;
+  font-size: 16px;
+  line-height: 16px;
+  font-weight: 400;
+}
+
+.profile-data {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+img.profile-image {
+  margin-right: 5px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+}
+
+span.profile-name {
+  display: block;
+  font-size: 14px;
+  line-height: 14px;
+}
+
+span.profile-tag {
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 10px;
+  opacity: 0.4;
+}
