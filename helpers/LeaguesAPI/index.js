@@ -2,6 +2,8 @@ const { leagues, regions, requirements } = require("../../leagues-config")
 
 const leaguesChannels = []
 
+const basenames = {}
+
 const leaguesToChannels = {}
 const channelsToLeagues = {}
 
@@ -9,6 +11,7 @@ leagues.forEach(league => {
   leaguesToChannels[league] = []
 
   const basename = league + "-lobbies"
+  basenames[league] = basename
   leaguesChannels.push(basename)
 
   leaguesToChannels[league].push(basename)
@@ -37,6 +40,8 @@ const getRequirements = () => requirements
 
 const getAllLeaguesChannels = () => leaguesChannels
 
+const getBasenameFromLeague = league => get(basenames, league)
+
 const getChannelsFromLeague = league => get(leaguesToChannels, league)
 const getLeagueFromChannel = channel => get(channelsToLeagues, channel)
 
@@ -50,6 +55,8 @@ module.exports = {
   getRequirements,
 
   getAllLeaguesChannels,
+
+  getBasenameFromLeague,
 
   getChannelsFromLeague,
   getLeagueFromChannel,
