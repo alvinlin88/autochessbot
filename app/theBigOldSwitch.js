@@ -2709,7 +2709,7 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
           )
             return 0
           let counter = 0
-          TournamentAPI.findAllTopRegistrations(48).then(registrations => {
+          TournamentAPI.findAllTopRegistrations(64).then(registrations => {
             registrations.forEach(registration => {
               counter++
               let discordUser = message.guild.members.find(
