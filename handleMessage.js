@@ -1,13 +1,27 @@
 const { adminRoleName, botChannels } = require("./config")
 const logger = require("./helpers/logger")
 const UserAPI = require("./helpers/UserAPI")
-const { leagueLobbies } = require("./constants/leagues")
+const RolesAPI = require("./helpers/RolesAPI")
+const ChannelsAPI = require("./helpers/ChannelsAPI")
 const MessagingAPI = require("./helpers/MessagingAPI")
-const switchCase = require("./switchCase")
+const { getCommand } = require("./commands")
 
 const PREFIX = "!cb"
 
-function getParsedCommand(message) {
+const reject = ({ message, text, isPublic }) => {
+  const author = message.author.id
+  const channel = message.channel.id
+
+  MessagingAPI.deleteMessage(message)
+
+  if (isPublic) {
+    MessagingAPI.sendToChannelWithMention(channel, author, text)
+  } else {
+    MessagingAPI.sendDM(author, text)
+  }
+}
+
+const parseCommand = message => {
   // For "!cb" prefix
   if (message.content.substring(0, PREFIX.length) === PREFIX) {
     const args = message.content
@@ -36,22 +50,15 @@ function getParsedCommand(message) {
 
 const handleMessage = async message => {
   // ignore bot messages
-  if (message.author.bot) {
-    return
-  }
+  if (message.author.bot) return
 
   // private message
-  if (message.channel.type === "dm") {
-    // nothing
-  }
+  // if (message.channel.type === "dm") {}
 
-  const parsedCommand = getParsedCommand(message)
+  const parsedCommand = parseCommand(message)
 
   // Non-bot message
-  if (!parsedCommand) {
-    // logger.debug("Non-bot message: " + message.content);
-    return
-  }
+  if (!parsedCommand) return
 
   logger.info(" *** Received command: " + message.content)
 
@@ -80,34 +87,72 @@ const handleMessage = async message => {
     return
   }
 
+  const isAdmin = RolesAPI.messageAuthorHasRole(message, adminRoleName)
+
   if (
     message.channel.type !== "dm" &&
-    message.member.roles.has(
-      message.guild.roles.find(r => r.name === adminRoleName).id
+    !isAdmin &&
+    !["lobbies", "commands", "tournament"].includes(
+      ChannelsAPI.getScopeNameFromChannel(message.channel.name)
     )
-  ) {
-    // if we can see user roles (not a DM) and user is staff, continue
-  } else if (
-    message.channel.type !== "dm" &&
-    !leagueLobbies.includes(message.channel.name) &&
-    !botChannels.includes(message.channel.name)
-  ) {
-    // otherwise if command was not typed in a whitelisted channel
-    MessagingAPI.sendDM(
-      message.author.id,
-      "<#" +
+  )
+    return reject({
+      message,
+      text:
+        "You cannot use bot commands in <#" +
         message.channel.id +
-        "> You cannot use bot commands in this channel. Try <#542465986859761676>."
-    )
+        "> channel. Try <#542465986859761676>."
+    })
 
-    MessagingAPI.deleteMessage(message)
+  const command = getCommand(parsedCommand.command)
 
-    return
+  if (!isAdmin) {
+    // Reject when command.isAdmin
+    if (command.isAdmin)
+      return reject({
+        message,
+        text: "You cannot use this command."
+      })
   }
 
-  let user = await UserAPI.findByDiscord(message.author.id)
+  // Compare the channel with the scopes
+  let isMatched = false
+  for (let scope of command.scopes) {
+    if (ChannelsAPI.getScopeChannels(scope).includes(message.channel.name)) {
+      isMatched = true
+      break
+    }
+  }
+  if (!isAdmin && !isMatched)
+    return reject({
+      message,
+      text: "You cannot use this command in that channel."
+    })
 
-  switchCase({ parsedCommand, user, message })
+  // Even the staff cannot use command in any channel when it's isOnlyLobby
+  if (
+    command.isOnlyLobby &&
+    ChannelsAPI.getScopeNameFromChannel(message.channel.name) !== "lobbies"
+  )
+    return reject({
+      message,
+      text: "You cannot use lobby command in that channel."
+    })
+
+  let user
+  try {
+    user = await UserAPI.findByDiscord(message.author.id)
+  } catch (err) {
+    logger.error(err)
+    return
+  }
+  
+  // Execute the command
+  command.function({
+    user,
+    message,
+    parsedCommand
+  })
 }
 
 module.exports = handleMessage
