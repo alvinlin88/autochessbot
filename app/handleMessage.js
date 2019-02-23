@@ -91,7 +91,7 @@ const handleMessage = async message => {
   const command = getCommand(parsedCommand.command)
 
   if (command) {
-    const isAdmin = RolesAPI.messageAuthorHasRole(message, adminRoleName)
+    const isAdmin = RolesAPI.checkRole(message.member, adminRoleName)
 
     if (!isAdmin) {
       // Reject when command.isAdmin

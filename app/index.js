@@ -6,6 +6,7 @@ const bodyParser = require("body-parser")
 const app = express()
 app.use(bodyParser.json())
 const LobbiesAPI = require("./helpers/LobbiesAPI")
+const RolesAPI = require("./helpers/RolesAPI")
 const handleMessage = require("./handleMessage")
 
 LobbiesAPI.restoreLobbies()
@@ -14,6 +15,9 @@ LobbiesAPI.startBackupJob()
 client.on("ready", () => {
   logger.info(`Logged in as ${client.user.tag}!`)
   try {
+    RolesAPI.setupRoles(
+      client.guilds.find(g => g.id === config.server_id).roles
+    )
     client.channels
       .get(client.channels.find(r => r.name === "staff-bot").id)
       .send("I am back!")
