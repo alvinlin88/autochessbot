@@ -33,7 +33,22 @@ const getScopeNameFromChannel = channel => {
   return channelsToScopes[channel]
 }
 
+const isChannelInScopes = ({ channel, scopes, isStrict, isAdmin }) => {
+  const channelScope = getScopeNameFromChannel(channel)
+
+  const isInScopes =
+    scopes.includes(channelScope) ||
+    (channelScope !== "other" && scopes.includes("all"))
+
+  if (isStrict) return isInScopes
+
+  if (isAdmin && !isInScopes) return true
+
+  return isInScopes
+}
+
 module.exports = {
   getScopeChannels,
-  getScopeNameFromChannel
+  getScopeNameFromChannel,
+  isChannelInScopes
 }

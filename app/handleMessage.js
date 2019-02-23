@@ -93,54 +93,26 @@ const handleMessage = async message => {
   if (command) {
     const isAdmin = RolesAPI.messageAuthorHasRole(message, adminRoleName)
 
-    if (
-      message.channel.type !== "dm" &&
-      !isAdmin &&
-      !["lobbies", "commands", "tournament"].includes(
-        ChannelsAPI.getScopeNameFromChannel(message.channel.name)
-      )
-    )
-      return reject({
-        message,
-        text:
-          "You cannot use bot commands in <#" +
-          message.channel.id +
-          "> channel. Try <#542465986859761676>."
-      })
-
-    const command = getCommand(parsedCommand.command)
-
     if (!isAdmin) {
       // Reject when command.isAdmin
-      if (command.isAdmin)
+      if (command.forAdmins)
         return reject({
           message,
-          text: "You cannot use this command."
+          text: "You do not have enough permissions to use this command."
         })
     }
 
-    // Compare the channel with the scopes
-    let isMatched = false
-    for (let scope of command.scopes) {
-      if (ChannelsAPI.getScopeChannels(scope).includes(message.channel.name)) {
-        isMatched = true
-        break
-      }
-    }
-    if (!isAdmin && !isMatched)
-      return reject({
-        message,
-        text: "You cannot use this command in that channel."
-      })
-
-    // Even the staff cannot use command in any channel when it's isOnlyLobby
     if (
-      command.isOnlyLobby &&
-      ChannelsAPI.getScopeNameFromChannel(message.channel.name) !== "lobbies"
+      !ChannelsAPI.isChannelInScopes({
+        channel: message.channel.name,
+        scopes: command.scopes,
+        isStrict: command.isStrict,
+        isAdmin
+      })
     )
       return reject({
         message,
-        text: "You cannot use lobby command in that channel."
+        text: "You cannot use this command in that channel."
       })
 
     let user
