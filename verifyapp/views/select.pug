@@ -7,7 +7,7 @@ html
         title= "Select Steam account"
         link(rel='shortcut icon', type='image/x-icon', href='/assets/favicon.ico')
         link(rel="stylesheet", href="/assets/style.css")
-    body
+    body.loading
         div.main
             div.profile.block
                 h2.profile-status You are logged in as:
@@ -19,11 +19,17 @@ html
             div.info.block.profile-note
                 h3.profile-note-title If you have multiple discord accounts, make sure you've logged on to the correct one.
                 img.profile-note-arrow(src="/assets/arrow.svg")
-            div.info.block.p-0
-                h3.p-2.m-0 Select Steam account:
-                each connection in connections
-                    a.connection-data(href='/confirm?steamID=' + connection.steamid)
-                        img.connection-image(src=connection.avatarmedium)
-                        div.connection-info
-                            span.connection-name #{connection.personaname}
-                            span.connection-id Steam64ID: #{connection.steamid}
+            div.info.block.connections
+                div.connections-timer
+                    span.connections-timer-counter 10
+                    span.connections-timer-description Ensure that you are using the correct discord account.
+                    span.connections-timer-description Your account information is located above.
+                div.connections-content.blurred
+                    h3.connections-title Select Steam account:
+                    each connection in connections
+                        a.connection-data(href='/confirm?steamID=' + connection.steamid)
+                            img.connection-image(src=connection.avatarmedium)
+                            div.connection-info
+                                span.connection-name #{connection.personaname}
+                                span.connection-id Steam64ID: #{connection.steamid}
+        script(src="/scripts/timer.js")
