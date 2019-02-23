@@ -766,14 +766,14 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
               }
               if (
                 rankRequirement > minHostRankRestrictions &&
-                minHostRankRestrictions > leagueRequirements[leagueRole]
+                rankRequirement > leagueRequirements[leagueRole]
               ) {
                 MessagesAPI.sendToChannelWithMention(
                   message.channel.id,
                   message.author.id,
                   "You are not high enough rank to host this lobby. The highest rank restriction you can make is 2 ranks below your current rank. (Your rank: " +
                     getRankString(rank.mmr_level) +
-                    ", maximum rank restriction: " +
+                    ", highest allowed rank restriction: " +
                     getRankString(minHostRankRestrictions) +
                     ")"
                 )
