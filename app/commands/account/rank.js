@@ -208,6 +208,6 @@ const rank = async ({ parsedCommand, user, message }) => {
 
 module.exports = {
   function: rank,
-  isAdmin: false,
+  aliases: ["getrank"],
   scopes: ["all"]
 }

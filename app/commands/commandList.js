@@ -1,10 +1,10 @@
-module.exports = {
+const commandList = {
   // account commands
   // admincreatelink: require("./account/admincreatelink"),
   // adminunlink: require("./account/adminunlink"),
   // adminunlinksteam: require("./account/adminunlinksteam"),
   // adminupdateroles: require("./account/adminupdateroles"),
-  // rank: require("./account/rank"),
+  rank: require("./account/rank"),
   // updateroles: require("./account/updateroles"),
 
   // admin commands
@@ -47,3 +47,21 @@ module.exports = {
   // tournamentlist: require("./tournaments/tournamentlist"),
   // unregister: require("./tournaments/unregister")
 }
+
+const temp = {}
+
+for (let commandName in commandList) {
+  const aliases = commandList[commandName].aliases
+
+  if (!aliases) continue
+
+  aliases.forEach(alias => {
+    temp[alias] = commandList[commandName]
+  })
+}
+
+for (let commandName in temp) {
+  commandList[commandName] = temp[commandName]
+}
+
+module.exports = commandList
