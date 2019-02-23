@@ -1,49 +1,128 @@
 const client = require("../../helpers/client")
 const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
-const { leagueLobbies } = require("../../constants/leagues")
+const LeaguesAPI = require("../../helpers/LeaguesAPI")
 const UserAPI = require("../../helpers/UserAPI")
 const parseDiscordId = require("../../helpers/discord/parseDiscordID")
 const processRolesUpdate = require("../../helpers/processRolesUpdate")
 
-const rank = ({ parsedCommand, user, message }) => {
-  if (parsedCommand.args.length === 1) {
-    let getRankUserDiscordId = parseDiscordId(parsedCommand.args[0])
+const getNormalizedArg = arg => {
+  const discordId = parseDiscordId(arg)
 
-    if (getRankUserDiscordId !== null) {
-      if (!message.guild.member(getRankUserDiscordId)) {
-        MessagesAPI.sendToChannelWithMention(
+  if (discordId !== null)
+    return {
+      type: "discord",
+      normalizedArg: discordId
+    }
+
+  const steamId = parseInt(arg)
+
+  if (steamId)
+    return {
+      type: "steam",
+      normalizedArg: steamId
+    }
+
+  return {
+    type: "unknown"
+  }
+}
+
+const rank = async ({ parsedCommand, user, message }) => {
+  if (parsedCommand.args.length === 0) {
+    if (!user || !user.steam || !user.steamLinkToken)
+      return MessagesAPI.sendToChannelWithMention(
+        message.channel.id,
+        message.author.id,
+        `You have not linked a steam id. Follow instructions in <#${
+          client.channels.find(r => r.name === "readme").id
+        }> to verify.`
+      )
+
+    try {
+      const rank = await RanksAPI.getRankFromSteamID(user.steam)
+
+      if (rank === null)
+        return MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
-          "Could not find that user on this server."
+          "I am having problems verifying your rank."
         )
-        return 0
+
+      let MMRStr = ""
+      if (rank.score !== null) {
+        MMRStr = " MMR is: `" + rank.score + "`. "
       }
-      UserAPI.findByDiscord(getRankUserDiscordId).then(getRankUser => {
-        if (getRankUser === null || getRankUser.steam === null) {
-          MessagesAPI.sendToChannelWithMention(
+
+      let verificationStatus = user.validated
+        ? "[✅ Verified] "
+        : `[❌ Follow instructions in <#${
+          client.channels.find(r => r.name === "readme").id
+        }> to verify] `
+
+      MessagesAPI.sendToChannelWithMention(
+        message.channel.id,
+        message.author.id,
+        verificationStatus +
+          "Your current rank is: " +
+          RanksAPI.getRankString(rank.mmr_level) +
+          "." +
+          MMRStr
+      )
+
+      let updatedRank = { rank: rank.mmr_level, score: rank.score }
+      if (rank.score === null) delete updatedRank["score"]
+      const nothing = await user.update(updatedRank)
+
+      if (LeaguesAPI.getAllLeaguesChannels().includes(message.channel.name)) {
+        processRolesUpdate(message, nothing, false, false, true)
+      } else {
+        processRolesUpdate(message, nothing, false, false, false)
+      }
+    } catch (err) {
+      return MessagesAPI.sendToChannelWithMention(
+        message.channel.id,
+        message.author.id,
+        "I am having problems getting data from DAC servers."
+      )
+    }
+  } else if (parsedCommand.args.length === 1) {
+    const { type, normalizedArg } = getNormalizedArg(parsedCommand.args[0])
+
+    switch (type) {
+      case "discord": {
+        if (!message.guild.member(user))
+          return MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
-            "That user has not linked a steam id yet."
+            "Could not find that user on this server."
           )
-          return 0
-        }
-        RanksAPI.getRankFromSteamID(getRankUser.steam).then(rank => {
-          if (rank === null) {
-            MessagesAPI.sendToChannelWithMention(
+
+        try {
+          const userData = await UserAPI.findByDiscord(user)
+
+          if (!userData || !userData.steam)
+            return MessagesAPI.sendToChannelWithMention(
+              message.channel.id,
+              message.author.id,
+              "That user has not linked a steam id yet."
+            )
+
+          const rank = await RanksAPI.getRankFromSteamID(userData.steam)
+
+          if (rank === null)
+            return MessagesAPI.sendToChannelWithMention(
               message.channel.id,
               message.author.id,
               "I am having problems verifying your rank."
             )
-            return 0
-          }
 
           let MMRStr = ""
           if (rank.score !== null) {
             MMRStr = " MMR is: `" + rank.score + "`."
           }
           let verificationStatus =
-            getRankUser.validated === true
+            userData.validated === true
               ? "[✅ Verified] "
               : `[❌ Follow instructions in <#${
                 client.channels.find(r => r.name === "readme").id
@@ -54,38 +133,43 @@ const rank = ({ parsedCommand, user, message }) => {
             message.author.id,
             verificationStatus +
               "Current rank for <@" +
-              getRankUser.discord +
+              userData.discord +
               "> is: " +
               RanksAPI.getRankString(rank.mmr_level) +
               "." +
               MMRStr
           )
 
-          if (leagueLobbies.includes(message.channel.name)) {
+          if (
+            LeaguesAPI.getAllLeaguesChannels().includes(message.channel.name)
+          ) {
             MessagesAPI.deleteMessage(message)
           }
-          return 0
-        })
-      })
-    } else if (parseInt(parsedCommand.args[0])) {
-      let publicSteamId = parsedCommand.args[0]
-
-      RanksAPI.getRankFromSteamID(publicSteamId).then(rank => {
-        if (rank === null) {
-          MessagesAPI.sendToChannelWithMention(
+          return
+        } catch (err) {
+          return MessagesAPI.sendToChannelWithMention(
             message.channel.id,
             message.author.id,
-            "I am having problems verifying your rank."
+            "Something went wrong."
           )
-          return 0
         }
+      }
+      case "steam": {
+        const rank = await RanksAPI.getRankFromSteamID(normalizedArg)
+
+        if (!rank)
+          return MessagesAPI.sendToChannelWithMention(
+            message.channel.id,
+            message.author.id,
+            "I am having problems verifying the rank for " + normalizedArg + "."
+          )
 
         let MMRStr = ""
         if (rank.score !== null) {
           MMRStr = " MMR is: `" + rank.score + "`."
         }
 
-        if (user.steam === publicSteamId) {
+        if (user.steam === normalizedArg) {
           //todo remind about people they can just use !rank with no param
         }
 
@@ -93,77 +177,32 @@ const rank = ({ parsedCommand, user, message }) => {
           message.channel.id,
           message.author.id,
           "Current rank for " +
-            publicSteamId +
+            normalizedArg +
             " is: " +
             RanksAPI.getRankString(rank.mmr_level) +
             "." +
             MMRStr
         )
 
-        if (leagueLobbies.includes(message.channel.name)) {
+        if (LeaguesAPI.getAllLeaguesChannels().includes(message.channel.name)) {
           MessagesAPI.deleteMessage(message)
         }
-        return 0
-      })
-    } else {
-      MessagesAPI.sendToChannelWithMention(
-        message.channel.id,
-        message.author.id,
-        "Invalid arguments."
-      )
-    }
-  } else {
-    if (user !== null && user.steam !== null && user.steamLinkToken === null) {
-      RanksAPI.getRankFromSteamID(user.steam).then(rank => {
-        if (rank === null) {
-          MessagesAPI.sendToChannelWithMention(
-            message.channel.id,
-            message.author.id,
-            "I am having problems verifying your rank."
-          )
-          return 0
-        }
-
-        let MMRStr = ""
-        if (rank.score !== null) {
-          MMRStr = " MMR is: `" + rank.score + "`. "
-        }
-
-        let verificationStatus =
-          user.validated === true
-            ? "[✅ Verified] "
-            : `[❌ Follow instructions in <#${
-              client.channels.find(r => r.name === "readme").id
-            }> to verify] `
-
-        MessagesAPI.sendToChannelWithMention(
+        return
+      }
+      default: {
+        return MessagesAPI.sendToChannelWithMention(
           message.channel.id,
           message.author.id,
-          verificationStatus +
-            "Your current rank is: " +
-            RanksAPI.getRankString(rank.mmr_level) +
-            "." +
-            MMRStr
+          "Invalid arguments."
         )
-        let rankUpdate = { rank: rank.mmr_level, score: rank.score }
-        if (rank.score === null) delete rankUpdate["score"]
-        user.update(rankUpdate).then(nothing => {
-          if (leagueLobbies.includes(message.channel.name)) {
-            processRolesUpdate(message, nothing, false, false, true)
-          } else {
-            processRolesUpdate(message, nothing, false, false, false)
-          }
-        })
-      })
-    } else {
-      MessagesAPI.sendToChannelWithMention(
-        message.channel.id,
-        message.author.id,
-        `You have not linked a steam id. Follow instructions in <#${
-          client.channels.find(r => r.name === "readme").id
-        }> to verify.`
-      )
+      }
     }
+  } else {
+    return MessagesAPI.sendToChannelWithMention(
+      message.channel.id,
+      message.author.id,
+      "Invalid arguments."
+    )
   }
 }
 
