@@ -40,7 +40,8 @@
     "mocha": "^5.2.0"
   },
   "scripts": {
-    "start": "node app",
+    "app": "node app",
+    "verifyapp": "node verifyapp",
     "test": "mocha \"./app/**/*.test.js\""
   },
   "repository": {
