@@ -1,6 +1,10 @@
 html
     head
-        title= "Select Steam account"
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        meta(http-equiv="X-UA-Compatible", content="ie=edge")
+        title= "Success"
+        link(rel='shortcut icon', type='image/x-icon', href='/assets/favicon.ico')
         link(rel="stylesheet", href="/assets/style.css")
     body
         div.main
@@ -13,5 +17,5 @@ html
                         span.profile-tag #{tag}
             div.info.block
                 h3 Success!
-                p You have successfully linked to steamID: #[span.code #{steamID}]
+                p You have successfully linked to steamID: #[span.code #{steamID}].
                 p Type #[span.code !updateroles] in #[span.code #chessbot-commands] to get access to lobbies based on your rank.

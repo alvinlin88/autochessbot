@@ -1,6 +1,11 @@
+<!DOCTYPE html>
 html
     head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        meta(http-equiv="X-UA-Compatible", content="ie=edge")
         title= "Select Steam account"
+        link(rel='shortcut icon', type='image/x-icon', href='/assets/favicon.ico')
         link(rel="stylesheet", href="/assets/style.css")
     body
         div.main
@@ -11,8 +16,9 @@ html
                     div.profile-info
                         span.profile-name #{username}
                         span.profile-tag #{tag}
-            div.info.block
-                h3 If you have multiple discord accounts, make sure you've logged on to the correct one.
+            div.info.block.profile-note
+                h3.profile-note-title If you have multiple discord accounts, make sure you've logged on to the correct one.
+                img.profile-note-arrow(src="/assets/arrow.svg")
             div.info.block.p-0
                 h3.p-2.m-0 Select Steam account:
                 each connection in connections
@@ -21,4 +27,3 @@ html
                         div.connection-info
                             span.connection-name #{connection.personaname}
                             span.connection-id Steam64ID: #{connection.steamid}
-                        
