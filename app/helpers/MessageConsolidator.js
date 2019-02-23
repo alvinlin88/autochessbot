@@ -56,15 +56,16 @@ const MessageConsolidator = () => {
     }
   }
 
-  new CronJob(
+  const cronJob = new CronJob(
     config.message_flush_cron,
     processQueue,
     null,
-    true,
+    false,
     "America/Los_Angeles"
   )
 
   return {
+    start: () => cronJob.start(),
     enqueueMessage
   }
 }

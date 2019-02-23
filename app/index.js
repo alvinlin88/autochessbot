@@ -5,10 +5,12 @@ const express = require("express")
 const bodyParser = require("body-parser")
 const app = express()
 app.use(bodyParser.json())
+const mc = require("./helpers/MessageConsolidator")
 const LobbiesAPI = require("./helpers/LobbiesAPI")
 const RolesAPI = require("./helpers/RolesAPI")
 const handleMessage = require("./handleMessage")
 
+mc.start()
 LobbiesAPI.restoreLobbies()
 LobbiesAPI.startBackupJob()
 
