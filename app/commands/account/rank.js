@@ -30,7 +30,7 @@ const getNormalizedArg = arg => {
 
 const rank = async ({ parsedCommand, user, message }) => {
   if (parsedCommand.args.length === 0) {
-    if (!user || !user.steam || !user.steamLinkToken)
+    if (!user || !user.steam || user.steamLinkToken)
       return MessagesAPI.sendToChannelWithMention(
         message.channel.id,
         message.author.id,
