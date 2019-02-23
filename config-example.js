@@ -1,5 +1,6 @@
 var config = {}
 
+config.server_id = ""
 config.steam_name = "ChessBotTest"
 config.steam_user = ""
 config.steam_pass = ""
