@@ -119,28 +119,6 @@ span.profile-tag {
   opacity: 0.4;
 }
 
-.profile-note {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-
-.profile-note-title {
-  margin: 0;
-}
-
-.profile-note-arrow {
-  -webkit-transform: scaleX(-1) rotate(-80deg);
-  -ms-transform: scaleX(-1) rotate(-80deg);
-  transform: scaleX(-1) rotate(-80deg);
-  -webkit-box-align: start;
-  -ms-flex-align: start;
-  align-items: flex-start;
-}
-
 .p-0 {
   padding: 0;
 }
