@@ -1,5 +1,5 @@
 module.exports = {
-  // // account commands
+  // account commands
   // admincreatelink: require("./account/admincreatelink"),
   // adminunlink: require("./account/adminunlink"),
   // adminunlinksteam: require("./account/adminunlinksteam"),
@@ -7,7 +7,7 @@ module.exports = {
   // rank: require("./account/rank"),
   // updateroles: require("./account/updateroles"),
 
-  // // admin commands
+  // admin commands
   // disablebot: require("./admin/disablebot"),
   // enablebot: require("./admin/enablebot"),
   // getd: require("./admin/getd"),
@@ -16,7 +16,7 @@ module.exports = {
   // restartbot: require("./admin/restartbot"),
   // vstats: require("./admin/vstats"),
 
-  // // lobbies commands
+  // lobbies commands
   // addlobby: require("./lobbies/addlobby"),
   // admincancel: require("./lobbies/admincancel"),
   // adminkick: require("./lobbies/adminkick"),
@@ -35,11 +35,11 @@ module.exports = {
   // start: require("./lobbies/start"),
   // togglehost: require("./lobbies/togglehost"),
 
-  // // other commands
+  // other commands
   // help: require("./other/help"),
   // staffhelp: require("./other/staffhelp"),
 
-  // // tournaments commands
+  // tournaments commands
   // adminunregister: require("./tournaments/adminunregister"),
   // createtournament: require("./tournaments/createtournament"),
   // register: require("./tournaments/register"),

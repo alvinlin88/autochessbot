@@ -3,7 +3,10 @@ const logger = require("../../helpers/logger.js")
 const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
-const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
+const {
+  leagueLobbies,
+  leagueChannelToRegion
+} = require("../../constants/leagues")
 const {
   lobbiesToLeague,
   adminRoleName,
@@ -11,7 +14,7 @@ const {
   leagueRequirements,
   validRegions,
   exemptLeagueRolePruning
-} = require("../../../config")
+} = require("../../config")
 const randtoken = require("rand-token")
 const UserAPI = require("../../helpers/UserAPI")
 const VerifiedSteamAPI = require("../../helpers/VerifiedSteamAPI")

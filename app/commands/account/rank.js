@@ -1,9 +1,7 @@
 const client = require("../../helpers/client")
 const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
-const {
-  leagueLobbies
-} = require("../../constants/leagues")
+const { leagueLobbies } = require("../../constants/leagues")
 const UserAPI = require("../../helpers/UserAPI")
 const parseDiscordId = require("../../helpers/discord/parseDiscordID")
 const processRolesUpdate = require("../../helpers/processRolesUpdate")

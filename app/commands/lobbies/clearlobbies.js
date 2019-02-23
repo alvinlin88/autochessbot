@@ -3,7 +3,10 @@ const logger = require("../../helpers/logger.js")
 const MessagesAPI = require("../../helpers/MessagesAPI")
 const RanksAPI = require("../../helpers/RanksAPI")
 const LobbiesAPI = require("../../helpers/LobbiesAPI")
-const { leagueLobbies, leagueChannelToRegion } = require("../../constants/leagues")
+const {
+  leagueLobbies,
+  leagueChannelToRegion
+} = require("../../constants/leagues")
 const {
   lobbiesToLeague,
   adminRoleName,
