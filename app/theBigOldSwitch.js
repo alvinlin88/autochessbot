@@ -752,7 +752,10 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
                 )
                 return 0
               }
-              if (rank.mmr_level < rankRequirement) {
+              if (
+                rank.mmr_level < rankRequirement &&
+                rank.mmr_level !== leagueRequirements[leagueRole]
+              ) {
                 MessagesAPI.sendToChannelWithMention(
                   message.channel.id,
                   message.author.id,
@@ -766,7 +769,8 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
               }
               if (
                 rankRequirement > minHostRankRestrictions &&
-                rankRequirement > leagueRequirements[leagueRole]
+                rankRequirement > leagueRequirements[leagueRole] &&
+                rank.mmr_level !== leagueRequirements[leagueRole]
               ) {
                 MessagesAPI.sendToChannelWithMention(
                   message.channel.id,
@@ -1077,7 +1081,11 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
                               .length
                           ) {
                             // Join the highest rated lobby
-                            if (hostedLobby.rankRequirement > lobbiesInLeagueChannel[resultLobbyHostId].rankRequirement) {
+                            if (
+                              hostedLobby.rankRequirement >
+                              lobbiesInLeagueChannel[resultLobbyHostId]
+                                .rankRequirement
+                            ) {
                               resultLobbyHostId = hostedLobby.host
                             }
                           }
