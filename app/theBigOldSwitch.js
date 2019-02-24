@@ -852,74 +852,74 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
               return 0
             }
 
-            if (parsedCommand.args.length > 0) {
-              // TODO: DRY
-              let force = parsedCommand.args[0]
+            // if (parsedCommand.args.length > 0) {
+            //   // TODO: DRY
+            //   let force = parsedCommand.args[0]
 
-              if (force !== "force") {
-                MessagesAPI.sendToChannelWithMention(
-                  message.channel.id,
-                  message.author.id,
-                  "Invalid arguments"
-                )
-                return 0
-              }
-              if (lobby.players.length < 2) {
-                MessagesAPI.sendToChannelWithMention(
-                  message.channel.id,
-                  message.author.id,
-                  "You need at least 2 players to force start a lobby. `(" +
-                    lobby.players.length +
-                    "/8)`"
-                )
-                return 0
-              }
+            //   if (force !== "force") {
+            //     MessagesAPI.sendToChannelWithMention(
+            //       message.channel.id,
+            //       message.author.id,
+            //       "Invalid arguments"
+            //     )
+            //     return 0
+            //   }
+            //   if (lobby.players.length < 2) {
+            //     MessagesAPI.sendToChannelWithMention(
+            //       message.channel.id,
+            //       message.author.id,
+            //       "You need at least 2 players to force start a lobby. `(" +
+            //         lobby.players.length +
+            //         "/8)`"
+            //     )
+            //     return 0
+            //   }
 
-              UserAPI.findAllUsersWithSteamIdsIn(lobby.players).then(
-                players => {
-                  getSteamPersonaNames(lobby.players).then(personas => {
-                    let playerDiscordIds = []
-                    let hostUserDiscordId = null
+            //   UserAPI.findAllUsersWithSteamIdsIn(lobby.players).then(
+            //     players => {
+            //       getSteamPersonaNames(lobby.players).then(personas => {
+            //         let playerDiscordIds = []
+            //         let hostUserDiscordId = null
 
-                    players.forEach(player => {
-                      if (player.steam !== lobby.host) {
-                        playerDiscordIds.push(
-                          "<@" +
-                            player.discord +
-                            "> \"" +
-                            personas[player.steam] +
-                            "\" " +
-                            getRankString(player.rank) +
-                            ""
-                        )
-                      } else {
-                        playerDiscordIds.push(
-                          "<@" +
-                            player.discord +
-                            "> \"" +
-                            personas[player.steam] +
-                            "\" " +
-                            getRankString(player.rank) +
-                            " **[Host]**"
-                        )
-                        hostUserDiscordId = player.discord
-                      }
-                    })
+            //         players.forEach(player => {
+            //           if (player.steam !== lobby.host) {
+            //             playerDiscordIds.push(
+            //               "<@" +
+            //                 player.discord +
+            //                 "> \"" +
+            //                 personas[player.steam] +
+            //                 "\" " +
+            //                 getRankString(player.rank) +
+            //                 ""
+            //             )
+            //           } else {
+            //             playerDiscordIds.push(
+            //               "<@" +
+            //                 player.discord +
+            //                 "> \"" +
+            //                 personas[player.steam] +
+            //                 "\" " +
+            //                 getRankString(player.rank) +
+            //                 " **[Host]**"
+            //             )
+            //             hostUserDiscordId = player.discord
+            //           }
+            //         })
 
-                    LobbiesAPI.deleteLobby(leagueChannel, user.steam)
+            //         LobbiesAPI.deleteLobby(leagueChannel, user.steam)
 
-                    MessagesAPI.sendToChannelWithMention(
-                      message.channel.id,
-                      message.author.id,
-                      "**@" +
-                        lobby.region +
-                        " region lobby started. Good luck!** " +
-                        playerDiscordIds.join(" | ")
-                    )
-                  })
-                }
-              )
-            } else {
+            //         MessagesAPI.sendToChannelWithMention(
+            //           message.channel.id,
+            //           message.author.id,
+            //           "**@" +
+            //             lobby.region +
+            //             " region lobby started. Good luck!** " +
+            //             playerDiscordIds.join(" | ")
+            //         )
+            //       })
+            //     }
+            //   )
+            // } else {
               if (lobby.players.length === 8) {
                 UserAPI.findAllUsersWithSteamIdsIn(lobby.players).then(
                   players => {
@@ -972,7 +972,7 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
                     "/8)`"
                 )
               }
-            }
+            // }
           })()
           break
         case "join":
