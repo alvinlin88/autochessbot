@@ -1861,7 +1861,7 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
                           lobby.region +
                           "** [" +
                           getRankString(lobby.rankRequirement) +
-                          " +] `(" +
+                          "+] `(" +
                           lobby.players.length +
                           "/8)` " +
                           hostDiscord +
