@@ -579,38 +579,38 @@ discordClient.on('message', message => {
                             return 0;
                         }
 
-                        if (parsedCommand.args.length > 0) { // TODO: DRY
-                            let force = parsedCommand.args[0];
-
-                            if (force !== "force") {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments");
-                                return 0;
-                            }
-                            if (lobby.players.length < 2) {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You need at least 2 players to force start a lobby. `(" + lobby.players.length + "/8)`");
-                                return 0;
-                            }
-
-                            User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
-                                getSteamPersonaNames(lobby.players).then(personas => {
-                                    let playerDiscordIds = [];
-                                    let hostUserDiscordId = null;
-
-                                    players.forEach(player => {
-                                        if (player.steam !== lobby.host) {
-                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + "");
-                                        } else {
-                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + " **[Host]**");
-                                            hostUserDiscordId = player.discord;
-                                        }
-                                    });
-
-                                    lobbies.deleteLobby(leagueChannel, user.steam);
-
-                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**@" + lobby.region + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
-                                });
-                            });
-                        } else {
+                        // if (parsedCommand.args.length > 0) { // TODO: DRY
+                        //     let force = parsedCommand.args[0];
+                        //
+                        //     if (force !== "force") {
+                        //         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments");
+                        //         return 0;
+                        //     }
+                        //     if (lobby.players.length < 2) {
+                        //         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You need at least 2 players to force start a lobby. `(" + lobby.players.length + "/8)`");
+                        //         return 0;
+                        //     }
+                        //
+                        //     User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
+                        //         getSteamPersonaNames(lobby.players).then(personas => {
+                        //             let playerDiscordIds = [];
+                        //             let hostUserDiscordId = null;
+                        //
+                        //             players.forEach(player => {
+                        //                 if (player.steam !== lobby.host) {
+                        //                     playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + "");
+                        //                 } else {
+                        //                     playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + " **[Host]**");
+                        //                     hostUserDiscordId = player.discord;
+                        //                 }
+                        //             });
+                        //
+                        //             lobbies.deleteLobby(leagueChannel, user.steam);
+                        //
+                        //             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**@" + lobby.region + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
+                        //         });
+                        //     });
+                        // } else {
                             if (lobby.players.length === 8) {
                                 User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                     getSteamPersonaNames(lobby.players).then(personas => {
@@ -633,7 +633,7 @@ discordClient.on('message', message => {
                             } else {
                                 discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Not enough players to start yet. `(" + lobby.players.length + "/8)`");
                             }
-                        }
+                        // }
                     })();
                     break;
                 case "join":
