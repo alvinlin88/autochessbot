@@ -920,58 +920,58 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
             //     }
             //   )
             // } else {
-              if (lobby.players.length === 8) {
-                UserAPI.findAllUsersWithSteamIdsIn(lobby.players).then(
-                  players => {
-                    getSteamPersonaNames(lobby.players).then(personas => {
-                      let playerDiscordIds = []
-                      let hostUserDiscordId = null
+            if (lobby.players.length === 8) {
+              UserAPI.findAllUsersWithSteamIdsIn(lobby.players).then(
+                players => {
+                  getSteamPersonaNames(lobby.players).then(personas => {
+                    let playerDiscordIds = []
+                    let hostUserDiscordId = null
 
-                      players.forEach(player => {
-                        if (player.steam !== lobby.host) {
-                          playerDiscordIds.push(
-                            "<@" +
-                              player.discord +
-                              "> \"" +
-                              personas[player.steam] +
-                              "\" " +
-                              getRankString(player.rank)
-                          )
-                        } else {
-                          playerDiscordIds.push(
-                            "<@" +
-                              player.discord +
-                              "> \"" +
-                              personas[player.steam] +
-                              "\" " +
-                              getRankString(player.rank) +
-                              " **[Host]**"
-                          )
-                          hostUserDiscordId = player.discord
-                        }
-                      })
-
-                      MessagesAPI.sendToChannelWithMention(
-                        message.channel.id,
-                        message.author.id,
-                        "**@" +
-                          lobby["region"] +
-                          " region lobby started. Good luck!** " +
-                          playerDiscordIds.join(" | ")
-                      )
-                      LobbiesAPI.deleteLobby(leagueChannel, user.steam)
+                    players.forEach(player => {
+                      if (player.steam !== lobby.host) {
+                        playerDiscordIds.push(
+                          "<@" +
+                            player.discord +
+                            "> \"" +
+                            personas[player.steam] +
+                            "\" " +
+                            getRankString(player.rank)
+                        )
+                      } else {
+                        playerDiscordIds.push(
+                          "<@" +
+                            player.discord +
+                            "> \"" +
+                            personas[player.steam] +
+                            "\" " +
+                            getRankString(player.rank) +
+                            " **[Host]**"
+                        )
+                        hostUserDiscordId = player.discord
+                      }
                     })
-                  }
-                )
-              } else {
-                MessagesAPI.sendToChannelWithMention(
-                  message.channel.id,
-                  message.author.id,
-                  "Not enough players to start yet. `(" +
-                    lobby.players.length +
-                    "/8)`"
-                )
-              }
+
+                    MessagesAPI.sendToChannelWithMention(
+                      message.channel.id,
+                      message.author.id,
+                      "**@" +
+                        lobby["region"] +
+                        " region lobby started. Good luck!** " +
+                        playerDiscordIds.join(" | ")
+                    )
+                    LobbiesAPI.deleteLobby(leagueChannel, user.steam)
+                  })
+                }
+              )
+            } else {
+              MessagesAPI.sendToChannelWithMention(
+                message.channel.id,
+                message.author.id,
+                "Not enough players to start yet. `(" +
+                  lobby.players.length +
+                  "/8)`"
+              )
+            }
             // }
           })()
           break
@@ -1268,7 +1268,7 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
                       lobby["region"] +
                       " region: `" +
                       lobby["password"] +
-                      "`. Please join this lobby in Dota 2 Custom Games. If you cannot find the lobby, try refreshing in your Dota 2 client or whisper the host on Discord to create it <@" +
+                      "`\nPlease join this lobby in Dota 2 Custom Games. If you can not find the lobby, try refreshing in your Dota 2 client or whisper the host on Discord to create it <@" +
                       hostUser.discord +
                       ">."
                   )
