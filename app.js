@@ -540,7 +540,7 @@ discordClient.on('message', message => {
                             if (rank.score === null) delete rankUpdate["score"];
                             user.update(rankUpdate);
                             let minHostRankRestrictions = rank.mmr_level - 2;
-                            if (rank.mmr_level < leagueRequirements[leagueRole]) {
+                            if (rank.mmr_level < leagueRequirements[leagueRole] && rank.mmr_level !== leagueRequirements[leagueRole]) {
                                 discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required rank: " + getRankString(leagueRequirements[leagueRole]) + ")");
                                 return 0;
                             }
