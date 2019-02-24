@@ -1076,7 +1076,10 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
                             lobbiesInLeagueChannel[resultLobbyHostId].players
                               .length
                           ) {
-                            resultLobbyHostId = hostedLobby.host
+                            // Join the highest rated lobby
+                            if (hostedLobby.rankRequirement > lobbiesInLeagueChannel[resultLobbyHostId].rankRequirement) {
+                              resultLobbyHostId = hostedLobby.host
+                            }
                           }
                         }
                       }
