@@ -1859,7 +1859,7 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
                         message.author.id,
                         "=== **@" +
                           lobby.region +
-                          " [**" +
+                          "** **[**" +
                           getRankString(lobby.rankRequirement) +
                           "**+]** `(" +
                           lobby.players.length +
