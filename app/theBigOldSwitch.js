@@ -740,7 +740,10 @@ const theBigOldSwitch = ({ message, parsedCommand }) => {
               if (rank.score === null) delete rankUpdate["score"]
               user.update(rankUpdate)
               let minHostRankRestrictions = rank.mmr_level - 2
-              if (rank.mmr_level < leagueRequirements[leagueRole]) {
+              if (
+                rank.mmr_level < leagueRequirements[leagueRole] &&
+                rank.mmr_level !== leagueRequirements[leagueRole]
+              ) {
                 MessagesAPI.sendToChannelWithMention(
                   message.channel.id,
                   message.author.id,
