@@ -45,8 +45,13 @@ const userUtil = {
                     })
                 }
             }
-        ).then( user =>
-            VerifiedSteam.create({steam: steam}).then(verifiedSteam =>
+        ).then(user =>
+            VerifiedSteam.findOne({where: {steam: steam}}).then(existing => {
+                if (existing === null) {
+                    return VerifiedSteam.create({steam: steam});
+                }
+                return existing;
+            }).then(verifiedSteam =>
                 user.addVerifiedSteam(verifiedSteam)
             ));
     },

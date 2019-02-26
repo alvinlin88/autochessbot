@@ -50,17 +50,20 @@ app.get("/confirm", function (req, res) {
 
         VerifiedSteam.findOneBySteam(steamID)
             .then(verifiedSteam => {
-                if (verifiedSteam === null) {
+                if (verifiedSteam === null || !verifiedSteam.hasOwnProperty("userId") || verifiedSteam.userId === null) {
                     // The steam is not known to us
-                    User.upsertUserWithVerifiedSteam(data.id, steamID).then(() => res.render(
-                      "select_success",
-                      {
-                        avatar: data.avatar,
-                        username: data.username,
-                        tag: data.tag,
-                        steamID: steamID
-                      }
+                    return User.upsertUserWithVerifiedSteam(data.id, steamID).then(() => res.render(
+                        "select_success",
+                        {
+                            avatar: data.avatar,
+                            username: data.username,
+                            tag: data.tag,
+                            steamID: steamID
+                        }
                     ));
+                } else if (verifiedSteam.banned === true) {
+                    res.render("error");
+                    return Promise.resolve(null);
                 } else {
                     return User.findById(verifiedSteam.userId).then(
                         user => {
@@ -70,13 +73,13 @@ app.get("/confirm", function (req, res) {
                                     steam: verifiedSteam.steam,
                                     validated: true
                                 }).then(() => res.render(
-                                  "select_success",
-                                  {
-                                    avatar: data.avatar,
-                                    username: data.username,
-                                    tag: data.tag,
-                                    steamID: steamID
-                                  }
+                                    "select_success",
+                                    {
+                                        avatar: data.avatar,
+                                        username: data.username,
+                                        tag: data.tag,
+                                        steamID: steamID
+                                    }
                                 ));
                             } else {
                                 // The steam was verified by another user.
@@ -112,11 +115,11 @@ function getAvatarUrl(user_response) {
 }
 
 function getUserName(user_response) {
-  return user_response.username;
+    return user_response.username;
 }
 
 function getUserTag(user_response) {
-  return "#" + user_response.discriminator;
+    return "#" + user_response.discriminator;
 }
 
 app.get("/callback", (req, res, err) => {

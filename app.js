@@ -1383,6 +1383,63 @@ discordClient.on('message', message => {
                     });
                 })();
                 break;
+            case "blacklist":
+                (function () {
+                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+
+                    if (parsedCommand.args.length !== 2) {
+                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!blacklist [steamid] [reason]`");
+                        return 0;
+                    }
+
+                    const steamId = parsedCommand.args[0];
+                    if (!parseInt(steamId)) {
+                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, 'Sir, that is an invalid steam id');
+                        return 0;
+                    }
+                    const reason = parsedCommand.args[1];
+                    VerifiedSteam.banSteam(steamId, reason, message.author.id).then(verifiedSteam => {
+                        if (verifiedSteam.hasOwnProperty("userId") && verifiedSteam.userId !== null) {
+                            User.findById(verifiedSteam.userId).then(bannedUser => {
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `I have blacklisted steam id \`${steamId}\`, don't forget to ban the linked user <@${bannedUser.discord}> as well!`);
+                            });
+                        } else {
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `I have blacklisted steam id \`${steamId}\``);
+                        }
+                        }
+                    );
+                    return 0;
+                })();
+                break;
+            case "unblacklist":
+                (function () {
+                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+
+                    if (parsedCommand.args.length !== 1) {
+                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!blacklist [steamid]`");
+                        return 0;
+                    }
+
+                    const steamId = parsedCommand.args[0];
+                    if (!parseInt(steamId)) {
+                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, 'Sir, that is an invalid steam id');
+                        return 0;
+                    }
+                    VerifiedSteam.unbanSteam(steamId, message.author.id).then(verifiedSteam => {
+                            if (verifiedSteam === null) {
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `Sir, \`${steamId}\` is not blacklisted.`);
+                            } else if (verifiedSteam.userId !== null) {
+                                User.findById(verifiedSteam.userId).then(bannedUser => {
+                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `I have removed steam id \`${steamId}\` from the blacklist, don't forget to unban the linked user <@${bannedUser.discord}> as well!`);
+                                });
+                            } else {
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `I have remove steam id \`${steamId}\` from the blacklist`);
+                            }
+                        }
+                    );
+                    return 0;
+                })();
+                break;
             case "admingetsteam":
             case "getsteam":
             case "gets":
@@ -1416,7 +1473,8 @@ discordClient.on('message', message => {
 
                         let verifiedSteams = infoPlayerUser.verifiedSteams.map(verifiedSteam => {
                             let active = (verifiedSteam.steam === infoPlayerUser.steam) ? "(active)" : "";
-                            return `\`${verifiedSteam.steam}${active}\` linked at ${verifiedSteam.createdAt.toLocaleString("en-us")}(UTC)`;
+                            let banInfo = verifiedSteam.banned === true ? `, banned by <@${verifiedSteam.bannedBy}> for \`${verifiedSteam.banReason}\`` : "";
+                            return `\`${verifiedSteam.steam}${active}\` linked at ${verifiedSteam.createdAt.toLocaleString("en-us")}(UTC)${banInfo}`;
                         }).join(',');
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id,
                             `Sir, <@${infoPlayerUser.discord}> is linked to steam id: ${verifiedSteams}.`);
@@ -1444,9 +1502,15 @@ discordClient.on('message', message => {
                         if (verifiedSteam === null) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I did not find any matching users in database for steamId `" + steamId + "`.");
                         } else {
+                            let banInfo = verifiedSteam.banned === true ? `, banned by <@${verifiedSteam.bannedBy}> for \`${verifiedSteam.banReason}\`` : "";
                             User.findById(verifiedSteam.userId).then(user => {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id,
-                                    `Sir, I found these users for \`${steamId}\`: <@${user.discord}> .`);
+                                if (user === null) {
+                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id,
+                                        `Sir, the steam is not linked to any user${banInfo}.`);
+                                } else {
+                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id,
+                                        `Sir, I found the user linked to \`${steamId}\`: <@${user.discord}>${banInfo}.`);
+                                }
                             });
                         }
                     }).catch(logger.error);

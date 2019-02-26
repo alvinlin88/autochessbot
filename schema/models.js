@@ -111,6 +111,30 @@ const models = {
                 type: Sequelize.TEXT,
                 unique: true,
                 allowNull: false,
+            },
+            banned: {
+                type: Sequelize.BOOLEAN,
+                allowNull: true,
+            },
+            banReason: {
+                type: Sequelize.TEXT,
+                allowNull: true,
+            },
+            bannedBy: {
+                type: Sequelize.TEXT,
+                allowNull: true,
+            },
+            bannedAt: {
+                type: Sequelize.DATE,
+                allowNull: true,
+            },
+            unbannedAt: {
+                type: Sequelize.DATE,
+                allowNull: true,
+            },
+            unbannedBy: {
+                type: Sequelize.TEXT,
+                allowNull: true,
             }
         }
     ),
