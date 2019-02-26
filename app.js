@@ -1387,7 +1387,7 @@ discordClient.on('message', message => {
                 (function () {
                     if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
 
-                    if (parsedCommand.args.length !== 2) {
+                    if (parsedCommand.args.length < 2) {
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!blacklist [steamid] [reason]`");
                         return 0;
                     }
@@ -1397,7 +1397,7 @@ discordClient.on('message', message => {
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, 'Sir, that is an invalid steam id');
                         return 0;
                     }
-                    const reason = parsedCommand.args[1];
+                    const reason = parsedCommand.args.slice(1).join(" ");
                     VerifiedSteam.banSteam(steamId, reason, message.author.id).then(verifiedSteam => {
                         if (verifiedSteam.hasOwnProperty("userId") && verifiedSteam.userId !== null) {
                             User.findById(verifiedSteam.userId).then(bannedUser => {
