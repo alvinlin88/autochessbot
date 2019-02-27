@@ -1676,6 +1676,10 @@ discordClient.on('message', message => {
             case "checkrank":
             case "rank":
                 (function () {
+                    if (!leagueLobbies.includes(message.channel.name)) {
+                        discordUtil.sendDM(message.author.id, "You can not use `!rank` in lobby channels.");
+                        return 0;
+                    }
                     if (parsedCommand.args.length === 1) {
                         let getRankUserDiscordId = parseDiscordId(parsedCommand.args[0]);
 
