@@ -877,11 +877,28 @@ discordClient.on('message', message => {
                             return 0;
                         }
 
+                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
+
+                        // if number of lobbies is large, cancel them faster
+                        let lobbyTimeout1 = 15; // timeout for no activity
+                        let lobbyTimeout2 = 60; // max time
+                        let lobbyListRateLimit = 15000;
+                        if (lobbiesInLeagueChannel.length > 5) {
+                            lobbyTimeout1 = 10;
+                            lobbyTimeout2 = 30;
+                            lobbyListRateLimit = 20000;
+                        }
+                        if (lobbiesInLeagueChannel.length > 10) {
+                            lobbyTimeout1 = 5;
+                            lobbyTimeout2 = 15;
+                            lobbyListRateLimit = 25000;
+                        }
+
                         // Get player info and print out current users in lobby.
                         let numPrinted = 0;
 
                         if (listratelimit.hasOwnProperty(leagueChannel)) {
-                            if (Date.now() - listratelimit[leagueChannel] < 15000) {
+                            if (Date.now() - listratelimit[leagueChannel] < lobbyListRateLimit) {
                                 discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": This command is currently rate limited in <#" + message.channel.id + ">.");
                                 discordUtil.deleteMessage(message);
                                 // rate limited
@@ -897,20 +914,6 @@ discordClient.on('message', message => {
                         listratelimit[leagueChannel] = Date.now();
 
                         discordUtil.sendChannel(message.channel.id, "**__LOBBY LIST__ - Use `!lobby` to display players in your own lobby**");
-
-                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
-
-                        // if number of lobbies is large, cancel them faster
-                        let lobbyTimeout1 = 15; // timeout for no activity
-                        let lobbyTimeout2 = 60; // max time
-                        if (lobbiesInLeagueChannel.length > 5) {
-                            lobbyTimeout1 = 10;
-                            lobbyTimeout2 = 30;
-                        }
-                        if (lobbiesInLeagueChannel.length > 10) {
-                            lobbyTimeout1 = 5;
-                            lobbyTimeout2 = 15;
-                        }
 
                         for (let hostId in lobbiesInLeagueChannel) {
                             if (lobbiesInLeagueChannel.hasOwnProperty(hostId)) {
