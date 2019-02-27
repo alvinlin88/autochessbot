@@ -1678,6 +1678,7 @@ discordClient.on('message', message => {
                 (function () {
                     if (leagueLobbies.includes(message.channel.name)) {
                         discordUtil.sendDM(message.author.id, "You can not use `!rank` in lobby channels.");
+                        discordUtil.deleteMessage(message);
                         return 0;
                     }
                     if (parsedCommand.args.length === 1) {
