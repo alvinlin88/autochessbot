@@ -919,15 +919,28 @@ discordClient.on('message', message => {
 
                                             let lastActivityStr = "";
                                             let dontPrint = false;
+
+                                            // if number of lobbies is large, cancel them faster
+                                            let lobbyTimeout1 = 15; // timeout for no activity
+                                            let lobbyTimeout2 = 60; // max time
+                                            if (lobbiesInLeagueChannel.length > 5) {
+                                                lobbyTimeout1 = 10;
+                                                lobbyTimeout2 = 30;
+                                            }
+                                            if (lobbiesInLeagueChannel.length > 10) {
+                                                lobbyTimeout1 = 5;
+                                                lobbyTimeout2 = 15;
+                                            }
+
                                             if (lobby.hasOwnProperty("lastactivity")) {
                                                 let lastActivity = Math.round((Date.now() - new Date(lobby.lastactivity)) / 1000 / 60);
                                                 if (lastActivity >= 2) {
                                                     lastActivityStr = " (" + lastActivity + "m last activity)";
                                                 }
-                                                if (!dontPrint && lastActivity > 15 && !exemptLeagueRolePruning.includes(leagueRole)) {
+                                                if (!dontPrint && lastActivity > lobbyTimeout1 && !exemptLeagueRolePruning.includes(leagueRole)) {
                                                     lobbies.deleteLobby(leagueChannel, lobby.host);
                                                     dontPrint = true;
-                                                    discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because of no activity (joins/leaves) for more than 15 minutes._");
+                                                    discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because of no activity (joins/leaves) for more than " + lobbyTimeout1 + " minutes._");
                                                     discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because of no activity (joins/leaves) for more than 15 minutes.**");
                                                 }
                                                 if (!dontPrint && lastActivity > 5 && lobby.players.length === 8 && !exemptLeagueRolePruning.includes(leagueRole)) {
@@ -938,11 +951,12 @@ discordClient.on('message', message => {
                                                 }
                                             }
                                             let lobbyTime = Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60);
-                                            if (!dontPrint && lobbyTime > 60 && !exemptLeagueRolePruning.includes(leagueRole)) {
+
+                                            if (!dontPrint && lobbyTime > lobbyTimeout2 && !exemptLeagueRolePruning.includes(leagueRole)) {
                                                 lobbies.deleteLobby(leagueChannel, lobby.host);
                                                 dontPrint = true;
-                                                discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because it has not started after 60 minutes._");
-                                                discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because it was not started after 60 minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**");
+                                                discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because it has not started after " + lobbyTimeout + " minutes._");
+                                                discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because it was not started after " + lobbyTimeout2 + " minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**");
                                             }
 
                                             let fullStr = "";
