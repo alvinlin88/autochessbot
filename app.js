@@ -899,6 +899,19 @@ discordClient.on('message', message => {
                         discordUtil.sendChannel(message.channel.id, "**__LOBBY LIST__ - Use `!lobby` to display players in your own lobby**");
 
                         let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
+
+                        // if number of lobbies is large, cancel them faster
+                        let lobbyTimeout1 = 15; // timeout for no activity
+                        let lobbyTimeout2 = 60; // max time
+                        if (lobbiesInLeagueChannel.length > 5) {
+                            lobbyTimeout1 = 10;
+                            lobbyTimeout2 = 30;
+                        }
+                        if (lobbiesInLeagueChannel.length > 10) {
+                            lobbyTimeout1 = 5;
+                            lobbyTimeout2 = 15;
+                        }
+
                         for (let hostId in lobbiesInLeagueChannel) {
                             if (lobbiesInLeagueChannel.hasOwnProperty(hostId)) {
                                 let lobby = lobbiesInLeagueChannel[hostId];
@@ -919,18 +932,6 @@ discordClient.on('message', message => {
 
                                             let lastActivityStr = "";
                                             let dontPrint = false;
-
-                                            // if number of lobbies is large, cancel them faster
-                                            let lobbyTimeout1 = 15; // timeout for no activity
-                                            let lobbyTimeout2 = 60; // max time
-                                            if (lobbiesInLeagueChannel.length > 5) {
-                                                lobbyTimeout1 = 10;
-                                                lobbyTimeout2 = 30;
-                                            }
-                                            if (lobbiesInLeagueChannel.length > 10) {
-                                                lobbyTimeout1 = 5;
-                                                lobbyTimeout2 = 15;
-                                            }
 
                                             if (lobby.hasOwnProperty("lastactivity")) {
                                                 let lastActivity = Math.round((Date.now() - new Date(lobby.lastactivity)) / 1000 / 60);
