@@ -511,22 +511,22 @@ discordClient.on('message', message => {
                         let rankRequirement;
                         if (leagueRequirements.hasOwnProperty(leagueRole)) {
                             rankRequirement = leagueRequirements[leagueRole];
-                        } else {
-                            rankRequirement = 1; // For lobbies that don't have a rank requirement set in the config
-                        }
 
-                        if (parsedCommand.args.length === 1) {
-                            rankRequirement = leagueRequirements[leagueRole];
-                        } else if (parsedCommand.args.length === 2) {
-                            rankRequirement = parseRank(parsedCommand.args[1]);
+                            if (parsedCommand.args.length === 1) {
+                                rankRequirement = leagueRequirements[leagueRole];
+                            } else if (parsedCommand.args.length === 2) {
+                                rankRequirement = parseRank(parsedCommand.args[1]);
 
-                            if (rankRequirement === null) {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid rank requirement. Example: `!host " + region.toLowerCase() + " bishop-1`. (no spaces in rank)");
+                                if (rankRequirement === null) {
+                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid rank requirement. Example: `!host " + region.toLowerCase() + " bishop-1`. (no spaces in rank)");
+                                    return 0;
+                                }
+                            } else if (parsedCommand.args.length > 2) {
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "]` [rank-1]`. Example: `!host na bishop-1`. (no spaces in rank)");
                                 return 0;
                             }
-                        } else if (parsedCommand.args.length > 2) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "]` [rank-1]`. Example: `!host na bishop-1`. (no spaces in rank)");
-                            return 0;
+                        } else {
+                            rankRequirement = 1; // For lobbies that don't have a rank requirement set in the config
                         }
 
                         if (!validRegions.includes(region)) {
