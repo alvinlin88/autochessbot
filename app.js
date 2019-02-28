@@ -56,6 +56,11 @@ leagueRoles.forEach(leagueRole => {
     });
 });
 
+let lobbyPasswordPrefixes = [];
+validRegions.forEach(region => {
+    lobbyPasswordPrefixes.push(region.toLowerCase() + "_");
+});
+
 function parseCommand(message) {
     if (message.content.substring(0, PREFIX.length) === PREFIX) {
         const args = message.content.slice(PREFIX.length).trim().split(/ +/g);
@@ -363,6 +368,19 @@ discordClient.on('message', message => {
     if (message.channel.type === "dm") {
         // nothing
     }
+
+    // delete and "warn" users about posting lobby passwords.
+    lobbyPasswordPrefixes.forEach(prefix => {
+        if (message.content.match(new RegExp("\\b" + prefix + "([a-zA-Z0-9]{5})\\b"))) {
+            let text = "Please _DO NOT_ post lobby passwords in any channels.";
+            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, text);
+            discordUtil.sendDM(message.author.id, text);
+            discordUtil.sendChannel(discordClient.channels.find(r => r.name === "chessbot-warnings").id, "<@" + message.author.id + "> posted a lobby password in <#" + message.channel.id + ">.\nMessage content: " + message.content);
+            discordUtil.deleteMessage(message);
+            return 0;
+        }
+    });
+
     if (!(message.content.substring(0, PREFIX.length) === PREFIX || message.content.substring(0, 1) === "!")) {
         // logger.debug("Non-bot message: " + message.content);
         return 0;
