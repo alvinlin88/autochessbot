@@ -106,6 +106,9 @@ module.exports = class Lobbies {
     removePlayerFromLobby(leagueChannel, hostUserSteam, playerUserSteam) {
         let lobby = this.lobbies[leagueChannel][hostUserSteam];
         let index = lobby.players.indexOf(playerUserSteam);
+        if (lobby.hasOwnProperty("leaves")) {
+            lobby.leaves = lobby.leaves + 1;
+        }
 
         if (index > -1) {
             lobby.players.splice(index, 1);
@@ -124,6 +127,7 @@ module.exports = class Lobbies {
             "rankRequirement": rankRequirement,
             "starttime": Date.now(),
             "lastactivity": Date.now(),
+            "leaves": 0,
         };
         this.lobbies[leagueChannel][hostUserSteam] = newLobby;
         return newLobby;

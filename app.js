@@ -936,6 +936,13 @@ discordClient.on('message', message => {
                                             let lastActivityStr = "";
                                             let dontPrint = false;
 
+                                            if (!dontPrint && lobby.hasOwnProperty("leaves") && lobby.leaves >= 10) {
+                                                lobbies.deleteLobby(leagueChannel, lobby.host);
+                                                dontPrint = true;
+                                                discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because too many players left it._");
+                                                discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because too many players left it.**");
+                                            }
+
                                             if (lobby.hasOwnProperty("lastactivity")) {
                                                 let lastActivity = Math.round((Date.now() - new Date(lobby.lastactivity)) / 1000 / 60);
                                                 if (lastActivity >= 2) {
