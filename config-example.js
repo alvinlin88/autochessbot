@@ -8,7 +8,7 @@ config.discord_token = "";
 config.steam_token = "";
 config.discord_client_id = "";
 config.discord_client_secret = "";
-config.verify_redirect_url = "";
+config.verify_redirect_url = "http://localhost:8080/callback";
 
 config.logfile = "autochess.log";
 config.logfile_error = "autochess_error.log";
