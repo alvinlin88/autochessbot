@@ -351,7 +351,7 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
 discordClient.on('ready', () => {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
-        discordClient.channels.get(discordClient.channels.find(r => r.name === "staff-bot").id).send("I am back!").then(logger.info).catch(logger.error);
+        discordUtil.sendChannel(discordClient.channels.find(r => r.name === "staff-bot").id, "I am back!");
     } catch(err) {
         logger.error(err);
     }
@@ -372,7 +372,7 @@ discordClient.on('message', message => {
     // delete and "warn" users about posting lobby passwords.
     lobbyPasswordPrefixes.forEach(prefix => {
         if (message.content.match(new RegExp("\\b" + prefix + "([a-zA-Z0-9]{5})\\b"))) {
-            let text = "Please _DO NOT_ post lobby passwords in any channels.";
+            let text = "Please _DO NOT_ post lobby passwords in any channel.";
             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, text);
             discordUtil.sendDM(message.author.id, text);
             discordUtil.sendChannel(discordClient.channels.find(r => r.name === "chessbot-warnings").id, "<@" + message.author.id + "> posted a lobby password in <#" + message.channel.id + ">.\nMessage content: " + message.content);
