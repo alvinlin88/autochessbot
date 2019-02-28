@@ -19,6 +19,7 @@ Set up your server with the proper channels and roles (or else the bot will thro
 - Check the port for verifyapp. Normally it's `8080`
 - Change `config.verify_redirect_url` to `http://localhost:<port>/callback`
 - Go to your the discord oauth page `https://discordapp.com/developers/applications/<client_id>/oauth` and add `http://localhost:<port>/callback` to `Redirects`
+- Start server: `node verifyapp.js` and test verification at `http://localhost:<port>`
 
 Let's Encrypt
 =============
