@@ -372,7 +372,7 @@ discordClient.on('message', message => {
     // delete and "warn" users about posting lobby passwords.
     lobbyPasswordPrefixes.forEach(prefix => {
         if (message.content.match(new RegExp("\\b" + prefix + "([a-zA-Z0-9]{5})\\b"))) {
-            let text = "Please _DO NOT_ post lobby passwords in any channel.";
+            let text = "Please _DO NOT_ post lobby passwords given out by ChessBot in any channel.";
             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, text);
             discordUtil.sendDM(message.author.id, text);
             discordUtil.sendChannel(discordClient.channels.find(r => r.name === "chessbot-warnings").id, "<@" + message.author.id + "> posted a lobby password in <#" + message.channel.id + ">.\nMessage content: " + message.content);
