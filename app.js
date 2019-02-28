@@ -508,8 +508,12 @@ discordClient.on('message', message => {
                             return 0;
                         }
 
-
-                        let rankRequirement = leagueRequirements[leagueRole];
+                        let rankRequirement;
+                        if (leagueRequirements.hasOwnProperty(leagueRole)) {
+                            rankRequirement = leagueRequirements[leagueRole];
+                        } else {
+                            rankRequirement = 0; // For lobbies that don't have a rank requirement set in the config
+                        }
 
                         if (parsedCommand.args.length === 1) {
                             rankRequirement = leagueRequirements[leagueRole];
