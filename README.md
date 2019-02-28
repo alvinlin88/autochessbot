@@ -16,6 +16,10 @@ Set up your server with the proper channels and roles (or else the bot will thro
 
 ## VERIFY APP
 
+- Similar to the bot app set up, you'll need to configure the following:
+  - `discord_client_id`
+  - `discord_client_secret`
+  - `steam_token` which is the steam api key, get one at `https://steamcommunity.com/dev/apikey`
 - Check the port for verifyapp. Normally it's `8080`
 - Change `config.verify_redirect_url` to `http://localhost:<port>/callback`
 - Go to your the discord oauth page `https://discordapp.com/developers/applications/<client_id>/oauth` and add `http://localhost:<port>/callback` to `Redirects`
