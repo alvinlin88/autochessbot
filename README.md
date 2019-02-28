@@ -1,5 +1,6 @@
 How to run locally
 ==================
+## BOT APP
 
 - Create a Discord Server
 - Set up Discord Application: https://discordapp.com/developers/applications/
@@ -13,8 +14,16 @@ How to run locally
 
 Set up your server with the proper channels and roles (or else the bot will throw errors when it tries to grab channel ID's by name.)
 
-TODO: Add missing steps to setup Bot/Discord Server?
+## VERIFY APP
 
+- Similar to the bot app set up, you'll need to configure the following:
+  - `discord_client_id`
+  - `discord_client_secret`
+  - `steam_token` which is the steam api key, get one at `https://steamcommunity.com/dev/apikey`
+- Check the port for verifyapp. Normally it's `8080`
+- Change `config.verify_redirect_url` to `http://localhost:<port>/callback`
+- Go to your the discord oauth page `https://discordapp.com/developers/applications/<client_id>/oauth` and add `http://localhost:<port>/callback` to `Redirects`
+- Start server: `node verifyapp.js` and test verification at `http://localhost:<port>`
 
 Let's Encrypt
 =============
