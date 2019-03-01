@@ -1439,34 +1439,6 @@ discordClient.on('message', message => {
                     });
                 })();
                 break;
-            case "blacklist":
-                (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
-
-                    if (parsedCommand.args.length < 2) {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!blacklist [steamid] [reason]`");
-                        return 0;
-                    }
-
-                    const steamId = parsedCommand.args[0];
-                    if (!parseInt(steamId)) {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, 'Sir, that is an invalid steam id');
-                        return 0;
-                    }
-                    const reason = parsedCommand.args.slice(1).join(" ");
-                    VerifiedSteam.banSteam(steamId, reason, message.author.id).then(verifiedSteam => {
-                        if (verifiedSteam.hasOwnProperty("userId") && verifiedSteam.userId !== null) {
-                            User.findById(verifiedSteam.userId).then(bannedUser => {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `I have blacklisted steam id \`${steamId}\`, don't forget to ban the linked user <@${bannedUser.discord}> as well!`);
-                            });
-                        } else {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `I have blacklisted steam id \`${steamId}\``);
-                        }
-                        }
-                    );
-                    return 0;
-                })();
-                break;
             case "unblacklist":
                 (function () {
                     if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
