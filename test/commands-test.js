@@ -43,8 +43,6 @@ describe('ArgumentParsingTest', function () {
     const testArg3 = new Arg({name: 'testArg2', multi:true, optional:true});
     const testArg4 = new Arg({name: 'testArg2', multi:true, optional:false});
 
-
-
     const noArgs = new Command({name: 'noArgs'});
     const oneRequired = new Command({name: 'oneRequired', args: [testArg1]});
     const twoRequired = new Command({name: 'twoRequired', args: [testArg1, testArg2]});
