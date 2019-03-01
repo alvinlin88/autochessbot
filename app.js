@@ -19,6 +19,7 @@ const request = require('request');
 const User = require('./schema/user.js');
 const VerifiedSteam = require('./schema/verified-steam.js');
 const Tournament = require('./schema/tournament.js');
+const {commands, commandsByName} = require('./command/all-commands.js');
 
 const Lobbies = require("./lobbies.js"),
     lobbies = new Lobbies();
@@ -403,6 +404,14 @@ discordClient.on('message', message => {
         // otherwise if command was not typed in a whitelisted channel
         discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> You cannot use bot commands in this channel. Try <#542465986859761676>.");
         discordUtil.deleteMessage(message);
+        return 0;
+    }
+
+    if (commandsByName.hasOwnProperty(parsedCommand.command)) {
+        commandsByName[parsedCommand.command]
+            .execute(message, parsedCommand.args)
+            .then(result => discordUtil.handle(message, result))
+            .catch(logger.error);
         return 0;
     }
 
