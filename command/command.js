@@ -19,11 +19,13 @@ class Arg {
         this.name = options.name;
         this.optional = options.optional === true;
         this.multi = options.multi === true;
+        this.text = options.text === true;
         if (typeof options.validate === 'function') {
             this.validate = options.validate;
         } else {
             this.validate = () => true;
         }
+        this.help = `[${this.optional ? '*' : ''}${this.name}${this.multi && !this.text ? '...' : ''}]`;
     }
 }
 
@@ -44,16 +46,16 @@ class Command {
             }
         }
         this.action = options.action;
-        this.help = ""; // todo construct help string.
+        this.help = `Usage: !${this.name} ${this.args.map(arg => arg.help).join(" ")}`.trim();
     }
 
     execute(message, inputArgs) {
         if (this.permission === 'admin') {
             if (!message.member.roles.has(message.guild.roles.find(r => r.name === config.adminRoleName).id)) {
-                return {
-                    type:'dm',
+                return Promise.resolve({
+                    type: 'dm',
                     reply: `You do not have permission to use admin command: ${this.name}`
-                };
+                });
             }
         }
 
@@ -62,7 +64,7 @@ class Command {
             return this.action(message, parsedArgs);
         } catch (e) {
             return Promise.resolve({
-                type:'dm',
+                type: 'dm',
                 reply: `Your command ${message.content} has error: ${e.message}\nUsage:${this.help}`
             });
         }
@@ -74,13 +76,13 @@ class Command {
 
         let current = 0;
         for (const arg of this.args) {
-            if (arg.multi) {
+            if (arg.multi || arg.text) {
                 const multiArgs = [];
                 if (!arg.optional && current >= inputArgs.length) {
                     // Require at least 1 value, reject if no args left
                     throw new Error("Not enough args");
                 } else {
-                    // multi is always the last arg, match all remaining args.
+                    // multi/text is always the last arg, match all remaining args.
                     for (; current < inputArgs.length; current++) {
                         if (arg.validate(inputArgs[current])) {
                             multiArgs.push(inputArgs[current]);
@@ -88,7 +90,8 @@ class Command {
                             throw new Error("Invalid args");
                         }
                     }
-                    parsedArgs[arg.name] = multiArgs;
+                    // Array for multi, and a single string for text
+                    parsedArgs[arg.name] = arg.multi ? multiArgs : multiArgs.join(" ");
                 }
             } else if (current < inputArgs.length) { // Match the args
                 if (arg.validate(inputArgs[current])) {
@@ -125,6 +128,14 @@ module.exports = {
 
         DISCORD: new Arg({
             name: 'discord'
-        })
+        }),
+
+        TEXT(name, optional = false) {
+            return new Arg({
+                name: name,
+                text: true,
+                optional: optional
+            });
+        }
     }
 };

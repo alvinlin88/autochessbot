@@ -28,7 +28,7 @@ module.exports = new Command({
     permission: 'admin',
     args: [
         Args.STEAM,
-        new Arg({name: 'reason', multi: true, optional: false})
+        Args.TEXT('reason')
     ],
     action: action
 });
