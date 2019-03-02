@@ -118,11 +118,17 @@ module.exports = class Lobbies {
         return false;
     }
 
-    createLobby(leagueChannel, hostUserSteam, region, rankRequirement, token) {
+    createLobby(leagueChannel, hostUserInfo, region, rankRequirement, token) {
+        let playersInfo = {};
+        playersInfo[hostUserInfo.steam] = {
+            discord: hostUserInfo.discord,
+            persona: hostUserInfo.persona,
+        };
         let newLobby = {
-            "host": hostUserSteam,
+            "host": hostUserInfo.steam,
             "password": region.toLowerCase() + "_" + token.toLowerCase(),
-            "players": [hostUserSteam],
+            "players": [hostUserInfo.steam],
+            "players_info": playersInfo,
             "region": region,
             "rankRequirement": rankRequirement,
             "starttime": Date.now(),

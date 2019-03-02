@@ -1,7 +1,8 @@
 const config = require("./config");
 
 const Discord = require('discord.js'),
-    discordClient = new Discord.Client();
+    discordClient = new Discord.Client(),
+    discordClient2 = new Discord.Client();
 const dacService = require('./dac-service.js');
 
 const mc = require('./message-consolidator');
@@ -317,18 +318,25 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
     }
 }
 
-discordClient.on('ready', () => {
+function handleReady() {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
         discordUtil.sendChannel(discordClient.channels.find(r => r.name === "staff-bot").id, "I am back!");
     } catch(err) {
         logger.error(err);
     }
-});
+}
+
+discordClient.on('ready', handleReady);
+discordClient2.on('ready', handleReady);
 
 discordClient.on('error', logger.error);
+discordClient2.on('error', logger.error);
 
-discordClient.on('message', message => {
+discordClient.on('message', handleMsg);
+discordClient2.on('message', handleMsg);
+
+function handleMsg(message) {
 
     if (message.author.bot === true) {
         return 0; // ignore bot messages
@@ -1889,6 +1897,10 @@ discordClient.on('message', message => {
             }
         }
     });
-});
+}
 
 discordClient.login(config.discord_token);
+// use a second bot
+if (config.discord_token_2 !== "") {
+    discordClient2.login(config.discord_token_2);
+}
