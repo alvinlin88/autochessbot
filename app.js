@@ -10,7 +10,8 @@ const mc = require('./message-consolidator');
 mc.startMessageFlushCron();
 
 const DiscordUtil = require('./discord-util.js'),
-    discordUtil = new DiscordUtil(discordClient);
+    discordUtil = new DiscordUtil(discordClient),
+    discordUtil2 = new DiscordUtil(discordClient2);
 
 const randtoken = require("rand-token");
 
@@ -333,10 +334,10 @@ discordClient2.on('ready', handleReady);
 discordClient.on('error', logger.error);
 discordClient2.on('error', logger.error);
 
-discordClient.on('message', handleMsg);
-discordClient2.on('message', handleMsg);
+discordClient.on('message', message => handleMsg(message, discordUtil));
+discordClient2.on('message', message => handleMsg(message, discordUtil2));
 
-function handleMsg(message) {
+function handleMsg(message, discordUtil) {
 
     if (message.author.bot === true) {
         return 0; // ignore bot messages
