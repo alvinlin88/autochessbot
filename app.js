@@ -1432,7 +1432,7 @@ discordClient.on('message', message => {
                     if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
 
                     if (parsedCommand.args.length !== 1) {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!blacklist [steamid]`");
+                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!unblacklist [steamid]`");
                         return 0;
                     }
 
@@ -1702,9 +1702,8 @@ discordClient.on('message', message => {
                                     if (rank.score !== null) {
                                         MMRStr =  " MMR is: `" + rank.score + "`.";
                                     }
-                                    let verificationStatus = getRankUser.validated === true ? "[✅ Verified] " : `[❌ Follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to verify] `;
 
-                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, verificationStatus + "Current rank for <@" + getRankUser.discord + "> is: " + getRankString(rank.mmr_level) + "." + MMRStr);
+                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Current rank for <@" + getRankUser.discord + "> is: " + getRankString(rank.mmr_level) + "." + MMRStr);
 
                                     if (leagueLobbies.includes(message.channel.name)) {
                                         discordUtil.deleteMessage(message);
@@ -1753,9 +1752,7 @@ discordClient.on('message', message => {
                                     MMRStr =  " MMR is: `" + rank.score + "`. ";
                                 }
 
-                                let verificationStatus = user.validated === true ? "[✅ Verified] " : `[❌ Follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to verify] `;
-
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, verificationStatus + "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
                                 let rankUpdate = {rank: rank.mmr_level, score: rank.score};
                                 if (rank.score === null) delete rankUpdate["score"];
                                 user.update(rankUpdate).then(nothing => {
