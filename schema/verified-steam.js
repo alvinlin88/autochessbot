@@ -2,6 +2,16 @@ const User = require('./models.js').User;
 const VerifiedSteam = require('./models.js').VerifiedSteam;
 
 const verifiedSteamUtil = {
+    create: function (verifiedSteamObj) {
+        return VerifiedSteam.create(verifiedSteamObj);
+    },
+
+    upsert: function (verifiedSteamObj) {
+        return this.findOneBySteam(verifiedSteamObj.steam).then(verifiedSteam => {
+            return verifiedSteam === null ? this.create(verifiedSteamObj) : verifiedSteam;
+        });
+    },
+
     findOneBySteam: function (steam) {
         return VerifiedSteam.findOne({where: {steam: steam}});
     },

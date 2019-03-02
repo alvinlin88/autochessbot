@@ -3,9 +3,8 @@ const VerifiedSteam = require('../../schema/verified-steam.js');
 const User = require('../../schema/user.js');
 
 function action(message, args) {
-    let reason = args.reason.join(" ");
     return VerifiedSteam
-        .banSteam(args.steam, reason, message.author.id)
+        .banSteam(args.steam, args.reason, message.author.id)
         .then(verifiedSteam => {
                 if (verifiedSteam.hasOwnProperty('userId') && verifiedSteam.userId !== null) {
                     return User.findById(verifiedSteam.userId).then(bannedUser => ({

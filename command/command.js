@@ -46,7 +46,7 @@ class Command {
             }
         }
         this.action = options.action;
-        this.help = `Usage: !${this.name} ${this.args.map(arg => arg.help).join(" ")}`.trim();
+        this.help = `Usage: !${this.name} ${this.args.map(arg => arg.help).join(' ')}`.trim();
     }
 
     execute(message, inputArgs) {
@@ -65,7 +65,7 @@ class Command {
         } catch (e) {
             return Promise.resolve({
                 type: 'dm',
-                reply: `Your command ${message.content} has error: ${e.message}\nUsage:${this.help}`
+                reply: `Your command ${message.content} has error: ${e.message}\n${this.help}`
             });
         }
     }
@@ -80,31 +80,31 @@ class Command {
                 const multiArgs = [];
                 if (!arg.optional && current >= inputArgs.length) {
                     // Require at least 1 value, reject if no args left
-                    throw new Error("Not enough args");
+                    throw new Error('Not enough args');
                 } else {
                     // multi/text is always the last arg, match all remaining args.
                     for (; current < inputArgs.length; current++) {
                         if (arg.validate(inputArgs[current])) {
                             multiArgs.push(inputArgs[current]);
                         } else {
-                            throw new Error("Invalid args");
+                            throw new Error('Invalid args');
                         }
                     }
                     // Array for multi, and a single string for text
-                    parsedArgs[arg.name] = arg.multi ? multiArgs : multiArgs.join(" ");
+                    parsedArgs[arg.name] = arg.multi ? multiArgs : multiArgs.join(' ');
                 }
             } else if (current < inputArgs.length) { // Match the args
                 if (arg.validate(inputArgs[current])) {
                     parsedArgs[arg.name] = inputArgs[current];
                     current++;
                 } else {
-                    throw new Error("Invalid args");
+                    throw new Error('Invalid args');
                 }
             } else {
                 // No more args, we can proceed if all the remaining args are optional
                 // Because we know if one arg is optional the ones after must all be optional, just check this one
                 if (!arg.optional) {
-                    throw new Error("Not enough args");
+                    throw new Error('Not enough args');
                 }
             }
         }
