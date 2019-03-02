@@ -554,7 +554,7 @@ function handleMsg(message, discordUtil) {
                             }
                             // good to start
                             let token = randtoken.generate(5);
-                            let newLobby = lobbies.createLobby(leagueChannel, {steam: user.steam, discord: user.discord, rank: rank.mmr_level, persona: null}, region, rankRequirement, token);
+                            let newLobby = lobbies.createLobby(leagueChannel, user.steam, region, rankRequirement, token);
 
                             // let currentLobby = getLobbyForPlayer(leagueChannel, user.steam);
 
