@@ -215,37 +215,6 @@ function getSteamProfiles(steamIds) {
     });
 }
 
-qs = require('querystring');
-
-function submitTournamentSignup(message, discord, discordname, steam, steamname, rank, mmr, datetime) {
-    return new Promise(function(resolve, reject) {
-        let data = qs.stringify({
-            discord: discord,
-            discordname: discordname,
-            steam: steam,
-            steamname: steamname,
-            rank: rank,
-            mmr: mmr,
-            datetime: datetime,
-        });
-        request("https://script.google.com/macros/s/AKfycbxa3sVhst5AaKfdsDXYuTei71oa9HBkNlOwtOP3Ge9e7cuRYW3M/exec", {
-            method: "POST",
-            followAllRedirects: true,
-            json: true,
-            headers: {
-                'Content-Length': data.length,
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: data,
-        }, (err, res, body) => {
-            if (err) { reject(err); }
-            if (res.statusCode === 200) {
-                resolve();
-            }
-        });
-    });
-}
-
 function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, shouldDeleteMessage=false) {
     if (user !== null && user.steam !== null) {
         dacService.getRankFromSteamId(user.steam).then(rank => {
@@ -482,7 +451,7 @@ discordClient.on('message', message => {
                                 }
 
                                 lobbies.removePlayerFromLobby(leagueChannel, hostUser.steam, playerUser.steam);
-                                let kickUserName = message.client.users.find("id", playerUser.discord);
+                                let kickUserName = discordClient.guild.members.get(playerUser.discord);
                                 discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "kicked " + kickUserName + " from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby. `(" + getLobbyForHost(leagueChannel, hostUser.steam).players.length + "/8)`");
                                 discordUtil.sendDM(playerUser.discord, "<#" + message.channel.id + "> An admin kicked you from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby.");
 
@@ -514,7 +483,7 @@ discordClient.on('message', message => {
                             if (leagueChannelRegion !== null) {
                                 parsedCommand.args[0] = leagueChannelRegion;
                             } else {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Try `!host [" + validRegions.join(', ').toLowerCase() + "] [rank-1]`. Example: `!host na bishop-1`. (no spaces in rank)");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Try `!host [" + validRegions.join(', ').toLowerCase() + "] [rank-1]`. Example: `!host nae bishop-1`. (no spaces in rank)");
                                 return 0;
                             }
                         }
@@ -540,7 +509,7 @@ discordClient.on('message', message => {
                                     return 0;
                                 }
                             } else if (parsedCommand.args.length > 2) {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "]` [rank-1]`. Example: `!host na bishop-1`. (no spaces in rank)");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "]` [rank-1]`. Example: `!host nae bishop-1`. (no spaces in rank)");
                                 return 0;
                             }
                         } else {
@@ -548,7 +517,7 @@ discordClient.on('message', message => {
                         }
 
                         if (!validRegions.includes(region)) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "] [rank-1]`. Example: `!host na bishop-1`. (no spaces in rank)");
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "] [rank-1]`. Example: `!host nae bishop-1`. (no spaces in rank)");
                             return 0;
                         }
 
@@ -576,7 +545,7 @@ discordClient.on('message', message => {
                             }
                             // good to start
                             let token = randtoken.generate(5);
-                            let newLobby = lobbies.createLobby(leagueChannel, user.steam, region, rankRequirement, token);
+                            let newLobby = lobbies.createLobby(leagueChannel, {steam: user.steam, discord: user.discord, rank: rank.mmr_level, persona: null}, region, rankRequirement, token);
 
                             // let currentLobby = getLobbyForPlayer(leagueChannel, user.steam);
 

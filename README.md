@@ -10,9 +10,97 @@ How to run locally
 - Grab bot token `https://discordapp.com/developers/applications/<client_id>/bots`
 - Put bot token in `config.js` `config.discord_token`
 - Start server: nodejs app.js (Node v10.15.1)
+- Get a steam api key `https://steamcommunity.com/dev/apikey`
 - Make sure you have region roles and lobbies created on your discord according to your config.js file
 
 Set up your server with the proper channels and roles (or else the bot will throw errors when it tries to grab channel ID's by name.)
+
+## VM Setup
+```
+(install node as root)
+36  wget https://nodejs.org/dist/v10.15.2/node-v10.15.2-linux-x64.tar.xz
+37  tar xvf node-v10.15.2-linux-x64.tar.xz
+39  cd node-v10.15.2-linux-x64/
+44  cp -r bin/* /usr/local/bin/
+46  cp -r include/* /usr/local/include/
+47  cp -r lib/* /usr/local/lib
+48  cp -r share/* /usr/local/share
+54  ln -s /usr/local/bin/node /usr/bin/node
+55  ln -s /usr/local/bin/npm /usr/bin/npm
+
+
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash
+. ~/.nvm/nvm.sh
+nvm install 10.15.1
+
+/etc/systemd/system/autochessbot.service
+[Unit]
+Description=AutoChessBot
+Documentation=https://example.com
+After=network.target
+
+[Service]
+Environment=NODE_PORT=8080
+Type=simple
+User=root
+LimitNOFILE=65536
+ExecStart=/usr/bin/node /home/ec2-user/autochessbot/app.js
+Restart=on-failure
+StandardOutput=syslog+console
+StandardError=syslog+console
+SyslogIdentifier=autochessbot
+
+[Install]
+WantedBy=multi-user.target
+
+
+/etc/systemd/system/autochessverify.service
+[Unit]
+Description=AutoChessBotVerify
+Documentation=https://example.com
+After=network.target
+
+[Service]
+Environment=NODE_PORT=80
+Type=simple
+User=root
+ExecStart=/usr/bin/node /home/ec2-user/autochessbot/verifyapp/verifyapp.js
+Restart=on-failure
+StandardOutput=syslog+console
+StandardError=syslog+console
+SyslogIdentifier=autochessbotverify
+
+[Install]
+WantedBy=multi-user.target
+
+sudo yum install git
+cd ~
+git clone git@gitlab.com:autochessbot/autochessbot.git
+
+cd autochessbot
+edit config.js with information
+npm install
+
+sudo amazon-linux-extras install nginx1.12
+
+sudo wget -r --no-parent -A 'epel-release-*.rpm' http://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/
+sudo rpm -Uvh dl.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-*.rpm
+sudo yum-config-manager --enable epel*
+sudo yum install -y certbot python2-certbot-nginx
+
+location / {
+proxy_pass http://localhost:8080;
+proxy_read_timeout 90;
+}
+
+cd verifyapp
+ln -s ../config.js config.js
+
+sudo systemctl enable nginx
+sudo systemctl enable autochessbot
+sudo systemctl enable autochessverify
+
+```
 
 ## VERIFY APP
 
