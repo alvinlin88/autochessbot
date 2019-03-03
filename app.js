@@ -365,6 +365,7 @@ for(let i = 0; i < config.discord_tokens.length; i++) {
     discordClients[i].on('message', message => handleMsg(message, discordClients[i], discordUtils[i]));
     discordClients[i].on('rateLimit', r => {
         logger.error(r);
+        console.log(r);
     })
 }
 
