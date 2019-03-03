@@ -327,13 +327,21 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
     }
 }
 
-function handleReady(discordClient, discordUtil) {
+function handleReady(discordClientP, discordUtilP) {
+    let discordClient = discordClientP;
+    let discordUtil = discordUtilP;
+    let guild = discordClient.guilds.get(config.server_id);
     if (Object.keys(leagueRoleIdsByRole).length === 0) {
-        let guild = discordClient.guilds.get(config.server_id);
         leagueRoles.forEach(leagueRole => {
-            leagueRoleIdsByRole[leagueRole] = guild.roles.find(r => r.name === leagueRole).id;
+            let role = guild.roles.find(r => r.name === leagueRole);
+            if (role !== null && role.hasOwnProperty("id")) {
+                leagueRoleIdsByRole[leagueRole] = role;
+            }
             validRegions.forEach(leagueRegion => {
-                leagueRoleIdsByRegion[leagueRegion] = guild.roles.find(r => r.name === leagueRegion).id;
+                let role = guild.roles.find(r => r.name === leagueRegion);
+                if (role !== null && role.hasOwnProperty("id")) {
+                    leagueRoleIdsByRegion[leagueRegion] = role.id;
+                }
             })
         });
     }
@@ -353,7 +361,6 @@ for(let i = 0; i < config.discord_tokens.length; i++) {
 }
 
 function handleMsg(message, discordClient, discordUtil) {
-
     if (message.author.bot === true) {
         return 0; // ignore bot messages
     }
