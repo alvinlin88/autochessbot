@@ -338,14 +338,14 @@ function handleReady(discordClientP, discordUtilP) {
     let guild = discordClient.guilds.get(config.server_id);
     if (Object.keys(leagueRoleIdsByRole).length === 0) {
         leagueRoles.forEach(leagueRole => {
-            let role = guild.roles.find(r => r.name === leagueRole);
-            if (role !== null && role.hasOwnProperty("id")) {
-                leagueRoleIdsByRole[leagueRole] = role;
+            let role1 = guild.roles.find(r => r.name === leagueRole);
+            if (role1 !== null && role1.hasOwnProperty("id")) {
+                leagueRoleIdsByRole[leagueRole] = role1;
             }
             validRegions.forEach(leagueRegion => {
-                let role = guild.roles.find(r => r.name === leagueRegion);
-                if (role !== null && role.hasOwnProperty("id")) {
-                    leagueRoleIdsByRegion[leagueRegion] = role.id;
+                let role2 = guild.roles.find(r => r.name === leagueRegion);
+                if (role2 !== null && role2.hasOwnProperty("id")) {
+                    leagueRoleIdsByRegion[leagueRegion] = role2.id;
                 }
             })
         });
