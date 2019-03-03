@@ -771,7 +771,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                 lobby.lastactivity = Date.now();
 
                                 let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
-                                if (lobbiesInLeagueChannel.length > 10) { // don't print joins if large number of lobbies
+                                if (lobbiesInLeagueChannel.length >= 10) { // don't print joins if large number of lobbies
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
@@ -811,7 +811,7 @@ function handleMsg(message, discordClient, discordUtil) {
                         }
 
                         let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
-                        if (lobbiesInLeagueChannel.length > 10) { // don't reply to message if large number of users
+                        if (lobbiesInLeagueChannel.length >= 10) { // don't reply to message if large number of users
                             discordUtil.deleteMessage(message);
                             return 0;
                         }
@@ -992,7 +992,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                                 fullStr = "~~";
                                                 fullStr2 = "~~";
                                                 joinStr = "";
-                                                if (lobbiesInLeagueChannel.length > 10) { // don't think full games if large number of lobbies
+                                                if (lobbiesInLeagueChannel.length >= 10) { // don't think full games if large number of lobbies
                                                     dontPrint = true;
                                                 }
                                             }
@@ -1069,7 +1069,10 @@ function handleMsg(message, discordClient, discordUtil) {
                                                 lastActivityStr = " (" + +"m last activity)";
                                             }
                                         }
-                                        // discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
+                                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
+                                        if (lobbiesInLeagueChannel.length < 10) { // don't print if large number of lobbies
+                                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
+                                        }
                                         // also whisper
                                         discordUtil.sendDM(message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)`\n" + hostDiscord + "\n" + playerDiscordIds.join("\n") + "\n(Last activity: " + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
                                         discordUtil.deleteMessage(message);
