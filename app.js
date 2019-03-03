@@ -934,6 +934,11 @@ function handleMsg(message, discordClient, discordUtil) {
 
                         discordUtil.sendChannel(message.channel.id, "**__LOBBY LIST__ - Use `!lobby` to display players in your own lobby**");
 
+                        if (lobbiesInLeagueChannel.length >= 10) { // don't print games if large number of lobbies
+                            discordUtil.sendChannel(message.channel.id, "There are more than 10 games available. Please use `!join` to join one. I will not be responding to `!join` and `!leave` commands in this channel.");
+                            return 0;
+                        }
+
                         for (let hostId in lobbiesInLeagueChannel) {
                             if (lobbiesInLeagueChannel.hasOwnProperty(hostId)) {
                                 let lobby = lobbiesInLeagueChannel[hostId];
@@ -998,7 +1003,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                                 joinStr = "";
                                             }
 
-                                            if (!dontPrint && lobbiesInLeagueChannel.length < 10) { // don't think full games if large number of lobbies
+                                            if (!dontPrint) {
                                                 if (printFullList === true) {
                                                     discordUtil.sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr2);
                                                 } else {
