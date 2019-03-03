@@ -261,16 +261,21 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
                 discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having a problem seeing your roles. Are you set to Invisible on Discord?");
             } else {
                 ranks.forEach(r => {
-                    if (discordUser.roles.has(r.role.id)) {
-                        if (rank.mmr_level < r.rank) {
-                            discordUser.removeRole(r.role).catch(logger.error);
-                            removed.push(r.name);
+                    if (r.role !== undefined && r.role.hasOwnProperty("id")) {
+                        if (discordUser.roles.has(r.role.id)) {
+                            if (rank.mmr_level < r.rank) {
+                                discordUser.removeRole(r.role).catch(logger.error);
+                                removed.push(r.name);
+                            }
+                        } else {
+                            if (rank.mmr_level >= r.rank) {
+                                discordUser.addRole(r.role).catch(logger.error);
+                                added.push(r.name);
+                            }
                         }
                     } else {
-                        if (rank.mmr_level >= r.rank) {
-                            discordUser.addRole(r.role).catch(logger.error);
-                            added.push(r.name);
-                        }
+                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having a problem managing your roles.");
+                        return 0;
                     }
                 });
 
