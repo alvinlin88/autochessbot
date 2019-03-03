@@ -521,7 +521,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                     return 0;
                                 }
                             } else if (parsedCommand.args.length > 2) {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "]` [rank-1]`. Example: `!host nae bishop-1`. (no spaces in rank)");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "] [rank-1]`. Example: `!host nae bishop-1`. (no spaces in rank)");
                                 return 0;
                             }
                         } else {
@@ -1023,7 +1023,7 @@ function handleMsg(message, discordClient, discordUtil) {
                         //     discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Could not find that user on this server.");
                         //     return 0;
                         // }
-                        User.findByDiscord( lobbyHostDiscordId).then(hostUser => {
+                        User.findByDiscord(lobbyHostDiscordId).then(hostUser => {
                             let lobby = lobbies.getLobbyForPlayer(leagueChannel, hostUser.steam);
 
                             if (lobby === null) {
