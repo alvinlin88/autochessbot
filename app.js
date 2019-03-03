@@ -1018,6 +1018,10 @@ function handleMsg(message, discordClient, discordUtil) {
                                                 fullStr = "~~";
                                                 fullStr2 = "~~";
                                                 joinStr = "";
+
+                                                if (Object.keys(lobbiesInLeagueChannel).length >= 5) {
+                                                    return 0; // don't print full games when lots of channels
+                                                }
                                             }
 
                                             if (!dontPrint) {
