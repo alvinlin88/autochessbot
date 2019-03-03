@@ -330,6 +330,14 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
 }
 
 function handleReady(discordClient, discordUtil) {
+    if (leagueRoleIdsByRole.length === 0) {
+        leagueRoles.forEach(leagueRole => {
+            leagueRoleIdsByRole[leagueRole] = discordClients[0].guilds.get(config.server_id).roles.find(r => r.name === leagueRole).id;
+            validRegions.forEach(leagueRegion => {
+                leagueRoleIdsByRegion[leagueRegion] = discordClients[0].guilds.get(config.server_id).roles.find(r => r.name === leagueRegion).id;
+            })
+        });
+    }
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
         discordUtil.sendChannel(discordClient.channels.find(r => r.name === "staff-bot").id, "I am back!");
