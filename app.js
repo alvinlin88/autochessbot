@@ -775,19 +775,18 @@ function handleMsg(message, discordClient, discordUtil) {
                                 lobby.lastactivity = Date.now();
 
                                 let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
-                                if (lobbiesInLeagueChannel.length >= 10) { // don't print joins if large number of lobbies
-                                    discordUtil.deleteMessage(message);
-                                    return 0;
-                                }
+
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
-                                    discordUtil.sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`");
                                     discordUtil.sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
                                     discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> Lobby password for <@" + hostUser.discord + "> " + lobby["region"] + " region: `" + lobby["password"] + "`\nPlease join this lobby in Dota 2 Custom Games. If you can not find the lobby, try refreshing in your Dota 2 client or whisper the host on Discord to create it <@" + hostUser.discord + ">.");
                                     if (lobby.players.length === 8) {
                                         discordUtil.sendChannel(message.channel.id, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**", false);
                                         discordUtil.sendDM(hostUser.discord, "**@" + lobby["region"] + " Lobby is full! You can start the game with `!start` in <#" + message.channel.id + ">.** \n(Only start the game if you have verified everyone in the game lobby. Use `!lobby` to see players.)");
                                     }
-                                    discordUtil.deleteMessage(message);
+                                    if (lobbiesInLeagueChannel.length < 10) { // don't print joins if large number of lobbies
+                                        discordUtil.sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`");
+                                        discordUtil.deleteMessage(message);
+                                    }
                                 });
                             });
                         });
@@ -815,19 +814,18 @@ function handleMsg(message, discordClient, discordUtil) {
                         }
 
                         let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
-                        if (lobbiesInLeagueChannel.length >= 10) { // don't reply to message if large number of users
-                            discordUtil.deleteMessage(message);
-                            return 0;
-                        }
 
                         let hostDiscordQuitId = playerLobbyLeave["host"];
                         User.findOneBySteam(hostDiscordQuitId).then(function (hostUser) {
                             if (lobbies.removePlayerFromLobby(leagueChannel, hostUser.steam, user.steam)) {
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
                                     let numPlayersLeft = lobbies.getLobbyForHost(leagueChannel, hostUser.steam).players.length;
-                                    discordUtil.sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ <@" + hostUser.discord + "> @" + playerLobbyLeave.region + " region lobby. `(" + numPlayersLeft + "/8)`");
+
                                     discordUtil.sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ your @" + playerLobbyLeave.region + " region lobby in <#" + message.channel.id + ">. `(" + numPlayersLeft + "/8)`");
-                                    discordUtil.deleteMessage(message);
+                                    if (lobbiesInLeagueChannel.length < 10) { // don't reply to message if large number of users
+                                        discordUtil.sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ <@" + hostUser.discord + "> @" + playerLobbyLeave.region + " region lobby. `(" + numPlayersLeft + "/8)`");
+                                        discordUtil.deleteMessage(message);
+                                    }
                                 });
                             }
                         });
