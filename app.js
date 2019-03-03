@@ -1816,6 +1816,8 @@ function handleMsg(message, discordClient, discordUtil) {
                                 discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Your current rank is: " + getRankString(rank.mmr_level) + "." + MMRStr);
                                 let rankUpdate = {rank: rank.mmr_level, score: rank.score};
                                 if (rank.score === null) delete rankUpdate["score"];
+
+                                return 0; // turn off updating roles with rank for now
                                 user.update(rankUpdate).then(nothing => {
                                     if (leagueLobbies.includes(message.channel.name)) {
                                         updateRoles(discordUtil, message, nothing, false, false, true);
