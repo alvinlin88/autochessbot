@@ -55,12 +55,10 @@ let lobbiesToLeague = {};
 let leagueRoleIdsByRole = [];
 let leagueRoleIdsByRegion = [];
 leagueRoles.forEach(leagueRole => {
-    leagueRoleIdsByRole[leagueRole] = discordClients[0].guilds.get(config.server_id).roles.find(r => r.name === leagueRole).id;
     leagueLobbies.push(leagueToLobbiesPrefix[leagueRole]);
     lobbiesToLeague[leagueToLobbiesPrefix[leagueRole]] = leagueRole;
     leagueChannelToRegion[leagueToLobbiesPrefix[leagueRole]] = null;
     validRegions.forEach(leagueRegion => {
-        leagueRoleIdsByRegion[leagueRegion] = discordClients[0].guilds.get(config.server_id).roles.find(r => r.name === leagueRegion).id;
         leagueLobbies.push(leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase());
         lobbiesToLeague[leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase()] = leagueRole;
         leagueChannelToRegion[leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase()] = leagueRegion;
