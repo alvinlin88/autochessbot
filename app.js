@@ -992,12 +992,9 @@ function handleMsg(message, discordClient, discordUtil) {
                                                 fullStr = "~~";
                                                 fullStr2 = "~~";
                                                 joinStr = "";
-                                                if (lobbiesInLeagueChannel.length >= 10) { // don't think full games if large number of lobbies
-                                                    dontPrint = true;
-                                                }
                                             }
 
-                                            if (!dontPrint) {
+                                            if (!dontPrint && lobbiesInLeagueChannel.length < 10) { // don't think full games if large number of lobbies
                                                 if (printFullList === true) {
                                                     discordUtil.sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr2);
                                                 } else {
