@@ -340,16 +340,25 @@ function handleReady(discordClientP, discordUtilP) {
     let discordClient = discordClientP;
     let discordUtil = discordUtilP;
     let guild = discordClient.guilds.get(config.server_id);
+    console.log("Got guild: " + guild);
     if (Object.keys(leagueRoleIdsByRole).length === 0) {
         leagueRoles.forEach(leagueRole => {
             let role1 = guild.roles.find(r => r.name === leagueRole);
+            console.log("Checking league role: " + leagueRole);
             if (role1 !== null && role1.hasOwnProperty("id")) {
                 leagueRoleIdsByRole[leagueRole] = role1;
+            } else {
+                console.log("Error caching league role: " + leagueRole);
+                console.log(role1);
             }
             validRegions.forEach(leagueRegion => {
+                console.log("Checking region role: " + leagueRegion);
                 let role2 = guild.roles.find(r => r.name === leagueRegion);
                 if (role2 !== null && role2.hasOwnProperty("id")) {
                     leagueRoleIdsByRegion[leagueRegion] = role2.id;
+                } else {
+                    console.log("Error caching region role: " + leagueRegion);
+                    console.log(role2);
                 }
             })
         });
