@@ -339,7 +339,8 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
 function handleReady(discordClientP, discordUtilP) {
     let discordClient = discordClientP;
     let discordUtil = discordUtilP;
-    let guild = discordClient.guilds.get(config.server_id);
+    let guild = discordClient.guilds.find(s => s.name === config.server_name);
+    // let guild = discordClient.guilds.get(config.server_id);
     console.log("Got guild: " + guild);
     if (Object.keys(leagueRoleIdsByRole).length === 0) {
         leagueRoles.forEach(leagueRole => {
