@@ -802,7 +802,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                         discordUtil.sendChannel(message.channel.id, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**", false);
                                         discordUtil.sendDM(hostUser.discord, "**@" + lobby["region"] + " Lobby is full! You can start the game with `!start` in <#" + message.channel.id + ">.** \n(Only start the game if you have verified everyone in the game lobby. Use `!lobby` to see players.)");
                                     }
-                                    if (lobbiesInLeagueChannel.length < 10) { // don't print joins if large number of lobbies
+                                    if (Object.keys(lobbiesInLeagueChannel).length < 10) { // don't print joins if large number of lobbies
                                         discordUtil.sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`");
                                         discordUtil.deleteMessage(message);
                                     }
@@ -841,7 +841,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                     let numPlayersLeft = lobbies.getLobbyForHost(leagueChannel, hostUser.steam).players.length;
 
                                     discordUtil.sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ your @" + playerLobbyLeave.region + " region lobby in <#" + message.channel.id + ">. `(" + numPlayersLeft + "/8)`");
-                                    if (lobbiesInLeagueChannel.length < 10) { // don't reply to message if large number of users
+                                    if (Object.keys(lobbiesInLeagueChannel).length < 10) { // don't reply to message if large number of users
                                         discordUtil.sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ <@" + hostUser.discord + "> @" + playerLobbyLeave.region + " region lobby. `(" + numPlayersLeft + "/8)`");
                                         discordUtil.deleteMessage(message);
                                     }
@@ -951,7 +951,7 @@ function handleMsg(message, discordClient, discordUtil) {
 
                         discordUtil.sendChannel(message.channel.id, "**__LOBBY LIST__ - Use `!lobby` to display players in your own lobby**");
 
-                        if (lobbiesInLeagueChannel.length >= 10) { // don't print games if large number of lobbies
+                        if (Object.keys(lobbiesInLeagueChannel).length >= 10) { // don't print games if large number of lobbies
                             discordUtil.sendChannel(message.channel.id, "There are more than 10 games available. Please use `!join` to join one. I will not be responding to `!join` and `!leave` commands in this channel.");
                             return 0;
                         }
@@ -1093,7 +1093,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                             }
                                         }
                                         let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
-                                        if (lobbiesInLeagueChannel.length < 10) { // don't print if large number of lobbies
+                                        if (Object.keys(lobbiesInLeagueChannel).length < 10) { // don't print if large number of lobbies
                                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
                                         }
                                         // also whisper
