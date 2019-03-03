@@ -52,8 +52,8 @@ let activeTournament = 1;
 let leagueLobbies = [];
 let leagueChannelToRegion = {};
 let lobbiesToLeague = {};
-let leagueRoleIdsByRole = [];
-let leagueRoleIdsByRegion = [];
+let leagueRoleIdsByRole = {};
+let leagueRoleIdsByRegion = {};
 leagueRoles.forEach(leagueRole => {
     leagueLobbies.push(leagueToLobbiesPrefix[leagueRole]);
     lobbiesToLeague[leagueToLobbiesPrefix[leagueRole]] = leagueRole;
@@ -328,7 +328,7 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
 }
 
 function handleReady(discordClient, discordUtil) {
-    if (leagueRoleIdsByRole.length === 0) {
+    if (Object.keys(leagueRoleIdsByRole).length === 0) {
         let guild = discordClient.guilds.get(config.server_id);
         leagueRoles.forEach(leagueRole => {
             leagueRoleIdsByRole[leagueRole] = guild.roles.find(r => r.name === leagueRole).id;
