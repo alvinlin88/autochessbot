@@ -329,10 +329,11 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
 
 function handleReady(discordClient, discordUtil) {
     if (leagueRoleIdsByRole.length === 0) {
+        let guild = discordClient.guilds.get(config.server_id);
         leagueRoles.forEach(leagueRole => {
-            leagueRoleIdsByRole[leagueRole] = discordClients[0].guilds.get(config.server_id).roles.find(r => r.name === leagueRole).id;
+            leagueRoleIdsByRole[leagueRole] = guild.roles.find(r => r.name === leagueRole).id;
             validRegions.forEach(leagueRegion => {
-                leagueRoleIdsByRegion[leagueRegion] = discordClients[0].guilds.get(config.server_id).roles.find(r => r.name === leagueRegion).id;
+                leagueRoleIdsByRegion[leagueRegion] = guild.roles.find(r => r.name === leagueRegion).id;
             })
         });
     }
