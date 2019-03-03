@@ -351,16 +351,16 @@ function handleReady(discordClientP, discordUtilP) {
                 console.log("Error caching league role: " + leagueRole);
                 console.log(role1);
             }
-            validRegions.forEach(leagueRegion => {
-                console.log("Checking region role: " + leagueRegion);
-                let role2 = guild.roles.find(r => r.name === leagueRegion);
-                if (role2 !== null && role2.hasOwnProperty("id")) {
-                    leagueRoleIdsByRegion[leagueRegion] = role2.id;
-                } else {
-                    console.log("Error caching region role: " + leagueRegion);
-                    console.log(role2);
-                }
-            })
+        });
+        validRegions.forEach(leagueRegion => {
+            console.log("Checking region role: " + leagueRegion);
+            let role2 = guild.roles.find(r => r.name === leagueRegion);
+            if (role2 !== null && role2.hasOwnProperty("id")) {
+                leagueRoleIdsByRegion[leagueRegion] = role2.id;
+            } else {
+                console.log("Error caching region role: " + leagueRegion);
+                console.log(role2);
+            }
         });
     }
     logger.info(`Logged in as ${discordClient.user.tag}!`);
