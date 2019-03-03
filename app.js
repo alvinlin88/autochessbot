@@ -52,11 +52,15 @@ let activeTournament = 1;
 let leagueLobbies = [];
 let leagueChannelToRegion = {};
 let lobbiesToLeague = {};
+let leagueRoleIdsByRole = [];
+let leagueRoleIdsByRegion = [];
 leagueRoles.forEach(leagueRole => {
+    leagueRoleIdsByRole[leagueRole] = discordClients[0].guilds.get(config.server_id).roles.find(r => r.name === leagueRole).id;
     leagueLobbies.push(leagueToLobbiesPrefix[leagueRole]);
     lobbiesToLeague[leagueToLobbiesPrefix[leagueRole]] = leagueRole;
     leagueChannelToRegion[leagueToLobbiesPrefix[leagueRole]] = null;
     validRegions.forEach(leagueRegion => {
+        leagueRoleIdsByRegion[leagueRegion] = discordClients[0].guilds.get(config.server_id).roles.find(r => r.name === leagueRegion).id;
         leagueLobbies.push(leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase());
         lobbiesToLeague[leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase()] = leagueRole;
         leagueChannelToRegion[leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase()] = leagueRegion;
@@ -239,13 +243,13 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
             let ranks = [];
 
             leagueRoles.forEach(leagueRole => {
-                let roleObj = message.guild.roles.find(r => r.name === leagueRole);
+                let roleObj = leagueRoleIdsByRole[leagueRole];
 
                 if (roleObj !== null) {
                     ranks.push({
                         name: leagueRole,
                         rank: leagueRequirements[leagueRole],
-                        role: message.guild.roles.find(r => r.name === leagueRole),
+                        role: leagueRoleIdsByRole[leagueRole],
                     })
                 }
             });
@@ -562,7 +566,7 @@ function handleMsg(message, discordClient, discordUtil) {
 
                             // let currentLobby = getLobbyForPlayer(leagueChannel, user.steam);
 
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**=== <@&" + message.guild.roles.find(r => r.name === region).id + "> Lobby started by <@" + user.discord + ">** " + getRankString(rank.mmr_level) + ". **Type \"!join <@" + user.discord + ">\" to join!** [" + getRankString(newLobby["rankRequirement"]) + " required to join] \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords in any channel. You will be banned.", false);
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**=== <@&" + leagueRoleIdsByRegion[region] + "> Lobby started by <@" + user.discord + ">** " + getRankString(rank.mmr_level) + ". **Type \"!join <@" + user.discord + ">\" to join!** [" + getRankString(newLobby["rankRequirement"]) + " required to join] \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords in any channel. You will be banned.", false);
                             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> **Please host a private Dota Auto Chess lobby in @" + region + " region with the following password:** `" + newLobby["password"] + "`\nPlease remember to double check people's ranks and make sure the right ones joined the game before starting. \nYou can see the all players in the lobby by using `!lobby` in the channel. \nWait until the game has started in the Dota 2 client before typing `!start`. \nIf you need to kick a player from the Discord lobby that has not joined your Dota 2 lobby or if their rank changed, use `!kick @player` in the channel.");
                         });
                     })();
