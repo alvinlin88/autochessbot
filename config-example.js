@@ -10,6 +10,8 @@ config.discord_client_id = "";
 config.discord_client_secret = "";
 config.verify_redirect_url = "http://localhost:8080/callback";
 
+config.default_locale = "en";
+
 config.logfile = "autochess.log";
 config.logfile_error = "autochess_error.log";
 config.sqlitedb = "db.sqlite";

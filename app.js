@@ -22,6 +22,19 @@ const randtoken = require("rand-token");
 
 const logger = require('./logger.js');
 
+const i18n = require('i18n');
+
+let t = {};
+
+i18n.configure({
+    locales: ['en', 'kr'],
+    directory: './locales',
+    updateFiles: false,
+    register: t
+});
+
+i18n.setLocale('en');
+
 const request = require('request');
 const User = require('./schema/user.js');
 const VerifiedSteam = require('./schema/verified-steam.js');
@@ -85,16 +98,16 @@ function parseCommand(message) {
 
 
 function getRank(rank) {
-    if (rank === 0) { return {name: "Unranked"}; }
-    if (rank > 0 && rank <= 9) { return {icon: "♟", name: "Pawn", level: (rank).toString()}; }
-    if (rank >= 10 && rank < (10 + 9)) { return {icon: "♞", name: "Knight", level: (rank - 9).toString()}; }
-    if (rank >= (10 + 9) && rank < (10 + 9 + 9)) { return {icon: "♝", name: "Bishop", level: (rank - 9 - 9).toString()}; }
-    if (rank >= (10 + 9 + 9) && rank < (10 + 9 + 9 + 9)) { return {icon: "♜", name: "Rook", level: (rank - 9 - 9 - 9).toString()}; }
-    if (rank >= (10 + 9 + 9 + 9) && rank < (10 + 9 + 9 + 9 + 1)) { return {icon: "♚", name: "King"}; }
-    if (rank >= (10 + 9 + 9 + 9 + 1)) { return {icon: "♛", name: "Queen"}; }
+    if (rank === 0) { return {name: t.__("unranked")}; }
+    if (rank > 0 && rank <= 9) { return {icon: "♟", name: t.__("pawn"), level: (rank).toString()}; }
+    if (rank >= 10 && rank < (10 + 9)) { return {icon: "♞", name: t.__("knight"), level: (rank - 9).toString()}; }
+    if (rank >= (10 + 9) && rank < (10 + 9 + 9)) { return {icon: "♝", name: t.__("bishop"), level: (rank - 9 - 9).toString()}; }
+    if (rank >= (10 + 9 + 9) && rank < (10 + 9 + 9 + 9)) { return {icon: "♜", name: t.__("rook"), level: (rank - 9 - 9 - 9).toString()}; }
+    if (rank >= (10 + 9 + 9 + 9) && rank < (10 + 9 + 9 + 9 + 1)) { return {icon: "♚", name: t.__("king")}; }
+    if (rank >= (10 + 9 + 9 + 9 + 1)) { return {icon: "♛", name: t.__("queen")}; }
     // if (rank >= (10 + 9 + 9 + 9) && rank < (10 + 9 + 9 + 9 + 1)) { return "King-" + (rank - 9 - 9 - 9 - 9).toString(); }
     // if (rank >= (10 + 9 + 9 + 9 + 1)) { return "Queen-" + (rank - 9 - 9 - 9 - 9 - 1).toString(); }
-    return "ERROR";
+    return t.__("ERROR");
 }
 
 function getRankString(rank) {
@@ -110,7 +123,7 @@ function getRankString(rank) {
             return iconStr + "**" + rankData.name + "**";
         }
     }
-    return "ERROR";
+    return t.__("ERROR");
 }
 
 function parseRank(rankInput) {
@@ -222,18 +235,18 @@ function getSteamProfiles(steamIds) {
     });
 }
 
-function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoChange=false, shouldDeleteMessage=false) {
+function updateRoles(discordClient, discordUtil, message, user, notifyOnChange=true, notifyNoChange=false, shouldDeleteMessage=false) {
     if (user !== null && user.steam !== null) {
         dacService.getRankFromSteamId(user.steam).then(rank => {
             if(rank === null) {
-                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having problems verifying your rank.");
+                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("problems verifying rank"));
                 return 0;
             }
             if (message.channel.type === "dm") {
                 return 0; // can't update roles in DM.
             }
             if (message.guild === null) {
-                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#542465986859761676>.");
+                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("can't update role", {channelId: discordClient.channels.find(r => r.name === "chessbot-commands").id}));
                 return 0;
             }
             let ranks = [];
@@ -256,7 +269,7 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
             let discordUser = message.guild.members.get(user.discord);
 
             if (discordUser === null) {
-                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having a problem seeing your roles. Are you set to Invisible on Discord?");
+                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("can't see roles"));
             } else {
                 ranks.forEach(r => {
                     if (discordUser.roles.has(r.role.id)) {
@@ -274,7 +287,7 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
 
                 let rankStr = getRankString(rank.mmr_level);
                 if (rankStr === "ERROR") {
-                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I had a problem getting your rank, did you use the right steam id? See <#542454956825903104> for more information. Use `!unlink` to start over.");
+                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("problems getting rank", {channelId: discordClient.channels.find(r => r.name === "chessbot-help").id}));
                     return 0;
                 }
 
@@ -341,7 +354,6 @@ for(let i = 0; i < config.discord_tokens.length; i++) {
 }
 
 function handleMsg(message, discordClient, discordUtil) {
-
     if (message.author.bot === true) {
         return 0; // ignore bot messages
     }
@@ -350,10 +362,19 @@ function handleMsg(message, discordClient, discordUtil) {
         // nothing
     }
 
+    // detect language
+
+    t.setLocale(config.default_locale);
+    t.getLocales().forEach(locale => {
+        if (message.channel.name.includes(locale)) {
+            t.setLocale(locale);
+        }
+    });
+
     // delete and "warn" users about posting lobby passwords.
     lobbyPasswordPrefixes.forEach(prefix => {
         if (message.content.match(new RegExp("\\b" + prefix + "([a-zA-Z0-9]{5})\\b"))) {
-            let text = "Please _DO NOT_ post lobby passwords given out by ChessBot in any channel. Your message was deleted. Attempting to bypass this will result in a ban.";
+            let text = t.__("don't post passwords");
             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, text);
             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> " + text);
             discordUtil.sendChannel(discordClient.channels.find(r => r.name === "chessbot-warnings").id, "<@" + message.author.id + "> posted a lobby password in <#" + message.channel.id + ">.\nMessage content: " + message.content);
@@ -372,7 +393,7 @@ function handleMsg(message, discordClient, discordUtil) {
     let parsedCommand = parseCommand(message);
 
     if (message.channel.type !== "dm" && (message.member === null || message.guild === null)) {
-        discordUtil.sendDM(message.author.id, "Error! Are you set to invisible mode?");
+        discordUtil.sendDM(message.author.id, t.__("invisible mode?"));
         logger.error("message.member: " + message.member + " or message.guild " + message.guild + " was null " + message.author.id + ": " + message.author.username + "#" + message.author.discriminator);
 
         return 0;
@@ -382,7 +403,7 @@ function handleMsg(message, discordClient, discordUtil) {
         // if we can see user roles (not a DM) and user is staff, continue
     } else if (message.channel.type !== "dm" && !leagueLobbies.includes(message.channel.name) && !botChannels.includes(message.channel.name)) {
         // otherwise if command was not typed in a whitelisted channel
-        discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> You cannot use bot commands in this channel. Try <#542465986859761676>.");
+        discordUtil.sendDM(message.author.id, t.__("cannot use bot commands", {currentChannelId: message.channel.id, channelId: discordClient.channels.find(r => r.name === "chessbot-commands").id}));
         discordUtil.deleteMessage(message);
         return 0;
     }
@@ -393,9 +414,8 @@ function handleMsg(message, discordClient, discordUtil) {
         let isLobbyCommand = null;
 
         if (user === null ||user.steam === null) {
-            const readme = discordClient.channels.find(r => r.name === 'readme').id;
-            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `You need to complete verification to use bot commands. See <#${readme}> for more information.`);
-            updateRoles(discordUtil, message, user, false, false, true);
+            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("complete verification", {channelId: discordClient.channels.find(r => r.name === 'readme').id}));
+            updateRoles(discordClient, discordUtil, message, user, false, false, true);
             return 0;
         }
 
@@ -488,7 +508,7 @@ function handleMsg(message, discordClient, discordUtil) {
                         let hostLobbyExist = getLobbyForHost(leagueChannel, user.steam);
 
                         if (hostLobbyExist !== null) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You are already hosting a lobby. Type `!lobby` to see players.");
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("already hosting lobby"));
                             return 0;
                         }
                         if (parsedCommand.args.length === 0) {
@@ -1329,7 +1349,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I could not find that user.");
                             return 0;
                         }
-                        updateRoles(discordUtil, message, playerUser, true, true);
+                        updateRoles(discordClient, discordUtil, message, playerUser, true, true);
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, trying to update roles for <@" + playerUser.discord + ">.");
                     });
                 })();
@@ -1769,9 +1789,9 @@ function handleMsg(message, discordClient, discordUtil) {
                                 if (rank.score === null) delete rankUpdate["score"];
                                 user.update(rankUpdate).then(nothing => {
                                     if (leagueLobbies.includes(message.channel.name)) {
-                                        updateRoles(discordUtil, message, nothing, false, false, true);
+                                        updateRoles(discordClient, discordUtil, message, nothing, false, false, true);
                                     } else {
-                                        updateRoles(discordUtil, message, nothing, false, false, false);
+                                        updateRoles(discordClient, discordUtil, message, nothing, false, false, false);
                                     }
                                 });
                             });
@@ -1821,9 +1841,9 @@ function handleMsg(message, discordClient, discordUtil) {
                         return 0;
                     }
                     if (leagueLobbies.includes(message.channel.name)) {
-                        updateRoles(discordUtil, message, user, true, true, true);
+                        updateRoles(discordClient, discordUtil, message, user, true, true, true);
                     } else {
-                        updateRoles(discordUtil, message, user, true, true, false);
+                        updateRoles(discordClient, discordUtil, message, user, true, true, false);
                     }
                 })();
                 break;
