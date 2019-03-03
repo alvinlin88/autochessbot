@@ -951,11 +951,6 @@ function handleMsg(message, discordClient, discordUtil) {
 
                         discordUtil.sendChannel(message.channel.id, "**__LOBBY LIST__ - Use `!lobby` to display players in your own lobby**");
 
-                        if (Object.keys(lobbiesInLeagueChannel).length >= 10) { // don't print games if large number of lobbies
-                            discordUtil.sendChannel(message.channel.id, "There are more than 10 games available. Please use `!join` to join one. I will not be responding to `!join` and `!leave` commands in this channel.");
-                            return 0;
-                        }
-
                         for (let hostId in lobbiesInLeagueChannel) {
                             if (lobbiesInLeagueChannel.hasOwnProperty(hostId)) {
                                 let lobby = lobbiesInLeagueChannel[hostId];
