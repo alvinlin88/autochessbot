@@ -1,17 +1,22 @@
 const config = require("./config");
 
-const Discord = require('discord.js'),
-    discordClient = new Discord.Client(),
-    discordClient2 = new Discord.Client();
+const Discord = require('discord.js');
+
 const dacService = require('./dac-service.js');
 
 const mc = require('./message-consolidator');
 // Send consolidated messages at configured speed
 mc.startMessageFlushCron();
 
-const DiscordUtil = require('./discord-util.js'),
-    discordUtil = new DiscordUtil(discordClient),
-    discordUtil2 = new DiscordUtil(discordClient2);
+const DiscordUtil = require('./discord-util.js');
+
+let discordClients = [];
+let discordUtils = [];
+
+for(let i = 0; i < config.discord_tokens.length; i++) {
+    discordClients[i] = new Discord.Client();
+    discordUtils[i] = new DiscordUtil(discordClients[i]);
+}
 
 const randtoken = require("rand-token");
 
@@ -217,7 +222,7 @@ function getSteamProfiles(steamIds) {
     });
 }
 
-function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, shouldDeleteMessage=false) {
+function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoChange=false, shouldDeleteMessage=false) {
     if (user !== null && user.steam !== null) {
         dacService.getRankFromSteamId(user.steam).then(rank => {
             if(rank === null) {
@@ -319,7 +324,7 @@ function updateRoles(message, user, notifyOnChange=true, notifyNoChange=false, s
     }
 }
 
-function handleReady() {
+function handleReady(discordClient, discordUtil) {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
         discordUtil.sendChannel(discordClient.channels.find(r => r.name === "staff-bot").id, "I am back!");
@@ -328,16 +333,14 @@ function handleReady() {
     }
 }
 
-discordClient.on('ready', handleReady);
-discordClient2.on('ready', handleReady);
 
-discordClient.on('error', logger.error);
-discordClient2.on('error', logger.error);
+for(let i = 0; i < config.discord_tokens.length; i++) {
+    discordClients[i].on('ready', _ => handleReady(discordClients[i], discordUtils[i]));
+    discordClients[i].on('error', logger.error);
+    discordClients[i].on('message', message => handleMsg(message, discordClients[i], discordUtils[i]));
+}
 
-discordClient.on('message', message => handleMsg(message, discordUtil));
-discordClient2.on('message', message => handleMsg(message, discordUtil2));
-
-function handleMsg(message, discordUtil) {
+function handleMsg(message, discordClient, discordUtil) {
 
     if (message.author.bot === true) {
         return 0; // ignore bot messages
@@ -392,7 +395,7 @@ function handleMsg(message, discordUtil) {
         if (user === null ||user.steam === null) {
             const readme = discordClient.channels.find(r => r.name === 'readme').id;
             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `You need to complete verification to use bot commands. See <#${readme}> for more information.`);
-            updateRoles(message, user, false, false, true);
+            updateRoles(discordUtil, message, user, false, false, true);
             return 0;
         }
 
@@ -1326,7 +1329,7 @@ function handleMsg(message, discordUtil) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I could not find that user.");
                             return 0;
                         }
-                        updateRoles(message, playerUser, true, true);
+                        updateRoles(discordUtil, message, playerUser, true, true);
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, trying to update roles for <@" + playerUser.discord + ">.");
                     });
                 })();
@@ -1766,9 +1769,9 @@ function handleMsg(message, discordUtil) {
                                 if (rank.score === null) delete rankUpdate["score"];
                                 user.update(rankUpdate).then(nothing => {
                                     if (leagueLobbies.includes(message.channel.name)) {
-                                        updateRoles(message, nothing, false, false, true);
+                                        updateRoles(discordUtil, message, nothing, false, false, true);
                                     } else {
-                                        updateRoles(message, nothing, false, false, false);
+                                        updateRoles(discordUtil, message, nothing, false, false, false);
                                     }
                                 });
                             });
@@ -1818,9 +1821,9 @@ function handleMsg(message, discordUtil) {
                         return 0;
                     }
                     if (leagueLobbies.includes(message.channel.name)) {
-                        updateRoles(message, user, true, true, true);
+                        updateRoles(discordUtil, message, user, true, true, true);
                     } else {
-                        updateRoles(message, user, true, true, false);
+                        updateRoles(discordUtil, message, user, true, true, false);
                     }
                 })();
                 break;
@@ -1900,8 +1903,6 @@ function handleMsg(message, discordUtil) {
     });
 }
 
-discordClient.login(config.discord_token);
-// use a second bot
-if (config.discord_token_2 !== "") {
-    discordClient2.login(config.discord_token_2);
+for(let i = 0; i < config.discord_tokens.length; i++) {
+    discordClients[i].login(config.discord_tokens[i]);
 }

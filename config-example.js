@@ -4,15 +4,11 @@ config.steam_name = "ChessBotTest";
 config.steam_user = "";
 config.steam_pass = "";
 config.steam_guard_code = "";
-config.discord_token = "";
+config.discord_tokens = [""];
 config.steam_token = "";
 config.discord_client_id = "";
 config.discord_client_secret = "";
 config.verify_redirect_url = "http://localhost:8080/callback";
-
-config.discord_token_2 = "";
-
-
 
 config.logfile = "autochess.log";
 config.logfile_error = "autochess_error.log";
