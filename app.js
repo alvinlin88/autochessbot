@@ -292,7 +292,8 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
 
                 // always show and whisper about demotions in case they cannot see the channel anymore
                 if (removed.length > 0) {
-                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
+                    // discordUtil.sendChannelAndMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
+                    discordUtil.sendDM(message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
                     discordUtil.sendDM(message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
                 }
 
@@ -769,6 +770,11 @@ function handleMsg(message, discordClient, discordUtil) {
                                 lobby.players.push(user.steam);
                                 lobby.lastactivity = Date.now();
 
+                                let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
+                                if (lobbiesInLeagueChannel.length > 10) { // don't print joins if large number of lobbies
+                                    discordUtil.deleteMessage(message);
+                                    return 0;
+                                }
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
                                     discordUtil.sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`");
                                     discordUtil.sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
@@ -800,6 +806,12 @@ function handleMsg(message, discordClient, discordUtil) {
                         }
                         if (playerLobbyLeave.host === user.steam) {
                             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Hosts should use `!cancel` instead of `!leave`.");
+                            discordUtil.deleteMessage(message);
+                            return 0;
+                        }
+
+                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(leagueChannel);
+                        if (lobbiesInLeagueChannel.length > 10) { // don't reply to message if large number of users
                             discordUtil.deleteMessage(message);
                             return 0;
                         }
@@ -891,7 +903,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             lobbyTimeout2 = 30;
                             lobbyListRateLimit = 20000;
                         }
-                        if (lobbiesInLeagueChannel.length > 10) {
+                        if (lobbiesInLeagueChannel.length > 8) {
                             lobbyTimeout1 = 5;
                             lobbyTimeout2 = 15;
                             lobbyListRateLimit = 25000;
@@ -980,6 +992,9 @@ function handleMsg(message, discordClient, discordUtil) {
                                                 fullStr = "~~";
                                                 fullStr2 = "~~";
                                                 joinStr = "";
+                                                if (lobbiesInLeagueChannel.length > 10) { // don't think full games if large number of lobbies
+                                                    dontPrint = true;
+                                                }
                                             }
 
                                             if (!dontPrint) {
@@ -1741,7 +1756,8 @@ function handleMsg(message, discordClient, discordUtil) {
                                     //todo remind about people they can just use !rank with no param
                                 }
 
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Current rank for " + publicSteamId + " is: " + getRankString(rank.mmr_level) + "." + MMRStr);
+                                // discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Current rank for " + publicSteamId + " is: " + getRankString(rank.mmr_level) + "." + MMRStr);
+                                discordUtil.sendDM(message.author.id, "Current rank for " + publicSteamId + " is: " + getRankString(rank.mmr_level) + "." + MMRStr);
 
                                 if (leagueLobbies.includes(message.channel.name)) {
                                     discordUtil.deleteMessage(message);
