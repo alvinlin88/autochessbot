@@ -260,6 +260,7 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
             if (discordUser === null) {
                 discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having a problem seeing your roles. Are you set to Invisible on Discord?");
             } else {
+                let tmpfix = false;
                 ranks.forEach(r => {
                     if (r.role !== undefined && r.role.hasOwnProperty("id")) {
                         if (discordUser.roles.has(r.role.id)) {
@@ -274,7 +275,10 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
                             }
                         }
                     } else {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having a problem managing your roles.");
+                        if (tmpfix === false) {
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having a problem managing your roles.");
+                        }
+                        tmpfix = true;
                         return 0;
                     }
                 });
