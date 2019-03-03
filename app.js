@@ -342,6 +342,7 @@ function handleReady(discordClientP, discordUtilP) {
     let guild = discordClient.guilds.find(s => s.name === config.server_name);
     // let guild = discordClient.guilds.get(config.server_id);
     console.log("Got guild: " + guild);
+    if (guild === null) return 0;
     if (Object.keys(leagueRoleIdsByRole).length === 0) {
         leagueRoles.forEach(leagueRole => {
             let role1 = guild.roles.find(r => r.name === leagueRole);
