@@ -47,4 +47,21 @@ module.exports = class DiscordUtil {
         }
     }
 
+    handle(message, result) {
+        switch (result.type) {
+            case 'channel':
+                this.sendChannel(message.channel.id, result.reply);
+                break;
+            case 'channelMention':
+                this.sendChannelAndMention(message.channel.id, message.author.id, result.reply);
+                break;
+            case 'dm':
+                this.sendDM(message.author.id, result.reply);
+                break;
+        }
+        if (result.delete === true) {
+            this.deleteMessage(message);
+        }
+    }
+
 };
