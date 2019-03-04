@@ -347,6 +347,9 @@ function handleReady(discordClient, discordUtil) {
 
 
 for(let i = 0; i < config.discord_tokens.length; i++) {
+    console.log("CLIENT: " + discordClients[i]);
+    console.log("UTIL: " + discordUtils[i]);
+
     discordClients[i].on('ready', _ => handleReady(discordClients[i], discordUtils[i]));
     discordClients[i].on('error', logger.error);
     discordClients[i].on('message', message => handleMsg(message, discordClients[i], discordUtils[i]));
