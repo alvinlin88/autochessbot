@@ -11,6 +11,10 @@ module.exports = class DiscordUtil {
     sendChannelAndMention(channelDiscordId, userDiscordId, text) {
         let channel = this.discordClient.channels.get(channelDiscordId);
         let user = this.discordClient.users.get(userDiscordId);
+        if (user === null) {
+            logger.error("user is null");
+            return 0;
+        }
         mc.enqueueMessage(channel, text, userDiscordId);
         logger.info('Sent message in channel ' + channel.name + ' to ' + user.username + ': ' + text);
     }
@@ -23,6 +27,10 @@ module.exports = class DiscordUtil {
 
     sendDM(userDiscordId, text) {
         let user = this.discordClient.users.get(userDiscordId);
+        if (user === null) {
+            logger.error("user is null");
+            return 0;
+        }
         user.send(text).then(logger.info).catch(function (error) {
             if (error.code === 50007) {
                 // TODO: figure out how to send this in the channel the user sent it from... we don't have message.channel.id
