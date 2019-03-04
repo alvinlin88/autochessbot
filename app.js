@@ -252,36 +252,37 @@ function updateRoles(discordClient, discordUtil, message, user, notifyOnChange=t
                 }
             });
 
-            let added = [];
-            let removed = [];
+            let roleNamesToAdd = [];
+            let roleNamesToRemove = [];
+            let roleIdsToAdd = [];
+            let roleIdsToRemove = [];
 
             let discordUser = message.guild.members.get(user.discord);
 
             if (discordUser === null) {
                 discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having a problem seeing your roles. Are you set to Invisible on Discord?");
             } else {
-                let tmpfix = false;
                 ranks.forEach(r => {
                     if (r.role !== undefined && r.role.hasOwnProperty("id")) {
                         if (discordUser.roles.has(r.role.id)) {
                             if (rank.mmr_level < r.rank) {
-                                discordUser.removeRole(r.role).catch(logger.error);
-                                removed.push(r.name);
+                                roleIdsToAdd.push(r.id);
+                                roleNamesToRemove.push(r.name);
                             }
                         } else {
                             if (rank.mmr_level >= r.rank) {
-                                discordUser.addRole(r.role).catch(logger.error);
-                                added.push(r.name);
+                                roleIdsToRemove.push(r.id);
+                                roleNamesToAdd.push(r.name);
                             }
                         }
-                    } else {
-                        if (tmpfix === false) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having a problem managing your roles.");
-                        }
-                        tmpfix = true;
-                        return 0;
                     }
                 });
+                if (roleIdsToAdd.length > 0) {
+                    discordUser.addRoles(roleIdsToAdd).then().catch(logger.error);
+                }
+                if (roleIdsToRemove.length > 0) {
+                    discordUser.removeRoles(roleIdsToRemove).then().catch(logger.error);
+                }
 
                 let rankStr = getRankString(rank.mmr_level);
                 if (rankStr === "ERROR") {
@@ -302,19 +303,19 @@ function updateRoles(discordClient, discordUtil, message, user, notifyOnChange=t
                 }
 
                 // always show and whisper about demotions in case they cannot see the channel anymore
-                if (removed.length > 0) {
+                if (roleNamesToRemove.length > 0) {
                     // discordUtil.sendChannelAndMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
-                    discordUtil.sendDM(message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
-                    discordUtil.sendDM(message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + removed.join("`, `") + "` (sorry!)");
+                    discordUtil.sendDM(message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + roleNamesToRemove.join("`, `") + "` (sorry!)");
+                    discordUtil.sendDM(message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " demoted from: `" + roleNamesToRemove.join("`, `") + "` (sorry!)");
                 }
 
                 if (notifyOnChange) {
-                    if (added.length > 0) {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " promoted to: `" + added.join("`, `") + "`");
+                    if (roleNamesToAdd.length > 0) {
+                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " promoted to: `" + roleNamesToAdd.join("`, `") + "`");
                     }
                 }
                 if (notifyNoChange) {
-                    if (added.length === 0 && removed.length === 0) {
+                    if (roleNamesToAdd.length === 0 && roleNamesToRemove.length === 0) {
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + " No role changes based on your rank.");
 
                     }
@@ -521,7 +522,7 @@ function handleMsg(message, discordClient, discordUtil) {
                 case "host":
                     (function () {
                         if (user === null) {
-
+                            // TODO
                         }
 
                         if (disableLobbyCommands === true) {
