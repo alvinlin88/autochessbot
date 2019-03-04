@@ -224,7 +224,7 @@ function getSteamProfiles(steamIds) {
     });
 }
 
-function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoChange=false, shouldDeleteMessage=false) {
+function updateRoles(discordClient, discordUtil, message, user, notifyOnChange=true, notifyNoChange=false, shouldDeleteMessage=false) {
     if (user !== null && user.steam !== null) {
         dacService.getRankFromSteamId(user.steam).then(rank => {
             if(rank === null) {
@@ -235,7 +235,7 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
                 return 0; // can't update roles in DM.
             }
             if (message.guild === null) {
-                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#542465986859761676>.");
+                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-commands"]).id + ">.");
                 return 0;
             }
             let ranks = [];
@@ -285,7 +285,7 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
 
                 let rankStr = getRankString(rank.mmr_level);
                 if (rankStr === "ERROR") {
-                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I had a problem getting your rank, did you use the right steam id? See <#542454956825903104> for more information. Use `!unlink` to start over.");
+                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I had a problem getting your rank, did you use the right steam id? See <#" + discordClient.channels.find(c => c.name === config.channels["readme"]).id + "> for more information.");
                     return 0;
                 }
 
@@ -339,7 +339,7 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
 function handleReady(discordClient, discordUtil) {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
-        discordUtil.sendChannel(discordClient.channels.find(r => r.name === "staff-bot").id, "I am back!");
+        discordUtil.sendChannel(discordClient.channels.find(c => c.name === config.channels["staff-bot"]).id, "I am back!");
     } catch(err) {
         logger.error(err);
     }
@@ -359,7 +359,7 @@ for(let i = 0; i < config.discord_tokens.length; i++) {
             channel = " <#" + r.path.match("[0-9]+")[0] + ">";
         }
         console.log(discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path);
-        discordUtils[i].sendChannel(discordClients[i].channels.find(c => c.name === "chessbot-warnings").id, discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path + channel);
+        discordUtils[i].sendChannel(discordClients[i].channels.find(c => c.name === config.channels["chessbot-warnings"]).id, discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path + channel);
     })
 }
 
@@ -403,7 +403,7 @@ function handleMsg(message, discordClient, discordUtil) {
             let text = "Please _DO NOT_ post lobby passwords given out by ChessBot in any channel. Your message was deleted. Attempting to bypass this will result in a ban.";
             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, text);
             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> " + text);
-            discordUtil.sendChannel(discordClient.channels.find(r => r.name === "chessbot-warnings").id, "<@" + message.author.id + "> posted a lobby password in <#" + message.channel.id + ">.\nMessage content: " + message.content);
+            discordUtil.sendChannel(discordClient.channels.find(c => c.name === config.channels["chessbot-warnings"]).id, "<@" + message.author.id + "> posted a lobby password in <#" + message.channel.id + ">.\nMessage content: " + message.content);
             discordUtil.deleteMessage(message);
             return 0;
         }
@@ -429,7 +429,7 @@ function handleMsg(message, discordClient, discordUtil) {
         // if we can see user roles (not a DM) and user is staff, continue
     } else if (message.channel.type !== "dm" && !leagueLobbies.includes(message.channel.name) && !botChannels.includes(message.channel.name)) {
         // otherwise if command was not typed in a whitelisted channel
-        discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> You cannot use bot commands in this channel. Try <#542465986859761676>.");
+        discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> You cannot use bot commands in this channel. Try <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-commands"]).id + ">.");
         discordUtil.deleteMessage(message);
         return 0;
     }
@@ -440,9 +440,9 @@ function handleMsg(message, discordClient, discordUtil) {
         let isLobbyCommand = null;
 
         if (user === null ||user.steam === null) {
-            const readme = discordClient.channels.find(r => r.name === 'readme').id;
+            const readme = discordClient.channels.find(c => c.name === config.channels['readme']).id;
             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `You need to complete verification to use bot commands. See <#${readme}> for more information.`);
-            updateRoles(discordUtil, message, user, false, false, true);
+            updateRoles(discordClient, discordUtil, message, user, false, false, true);
             return 0;
         }
 
@@ -1396,7 +1396,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I could not find that user.");
                             return 0;
                         }
-                        updateRoles(discordUtil, message, playerUser, true, true);
+                        updateRoles(discordClient, discordUtil, message, playerUser, true, true);
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, trying to update roles for <@" + playerUser.discord + ">.");
                     });
                 })();
@@ -1670,7 +1670,7 @@ function handleMsg(message, discordClient, discordUtil) {
                 (function () {
                     if (message.channel.name === "tournament-signups") {
                         if (user.validated !== true) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You must have a verified account in order to register for tournaments. See <#" + discordClient.channels.find(r => r.name === 'readme').id + "> for instructions.");
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You must have a verified account in order to register for tournaments. See <#" + discordClient.channels.find(c => c.name === config.channels['readme']).id + "> for instructions.");
                             return 0;
                         }
 
@@ -1839,14 +1839,14 @@ function handleMsg(message, discordClient, discordUtil) {
                                 return 0; // turn off updating roles with rank for now
                                 user.update(rankUpdate).then(nothing => {
                                     if (leagueLobbies.includes(message.channel.name)) {
-                                        updateRoles(discordUtil, message, nothing, false, false, true);
+                                        updateRoles(discordClient, discordUtil, message, nothing, false, false, true);
                                     } else {
-                                        updateRoles(discordUtil, message, nothing, false, false, false);
+                                        updateRoles(discordClient, discordUtil, message, nothing, false, false, false);
                                     }
                                 });
                             });
                         } else {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `You have not linked a steam id. Follow instructions in <#${discordClient.channels.find(r => r.name === 'readme').id}> to verify.`);
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `You have not linked a steam id. Follow instructions in <#${discordClient.channels.find(c => c.name === config.channels['readme']).id}> to verify.`);
                         }
                     }
                 })();
@@ -1887,19 +1887,19 @@ function handleMsg(message, discordClient, discordUtil) {
             case "role":
                 (function () {
                     if (message.channel.type === "dm") {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I can not update roles in direct messages. Please try in <#542465986859761676>.");
+                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I can not update roles in direct messages. Please try in <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-commands"]).id + ">.");
                         return 0;
                     }
                     if (leagueLobbies.includes(message.channel.name)) {
-                        updateRoles(discordUtil, message, user, true, true, true);
+                        updateRoles(discordClient, discordUtil, message, user, true, true, true);
                     } else {
-                        updateRoles(discordUtil, message, user, true, true, false);
+                        updateRoles(discordClient, discordUtil, message, user, true, true, false);
                     }
                 })();
                 break;
             case "help":
                 (function () {
-                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "See <#542454956825903104> for more information.");
+                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "See <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-help"]).id + "> for more information.");
                 })();
                 break;
             case "staffhelp":
@@ -1965,7 +1965,7 @@ function handleMsg(message, discordClient, discordUtil) {
             }
             if (isLobbyCommand === false) {
                 logger.info("Unhandled bot message: " + message.content);
-                discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": I was not able to process this command. Please read <#542454956825903104> for command list. Join <#542494966220587038> for help from staff.");
+                discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": I was not able to process this command. Please read <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-help"]).id + "> for command list. Join <#" + discordClient.channels.find(c => c.name === config.channels["help-desk"]).id + "> for help from staff.");
                 discordUtil.deleteMessage(message);
                 return 0;
             }
