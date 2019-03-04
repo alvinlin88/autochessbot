@@ -2,6 +2,16 @@ const User = require('./models.js').User;
 const VerifiedSteam = require('./models.js').VerifiedSteam;
 
 const verifiedSteamUtil = {
+    create: function (verifiedSteamObj) {
+        return VerifiedSteam.create(verifiedSteamObj);
+    },
+
+    upsert: function (verifiedSteamObj) {
+        return this.findOneBySteam(verifiedSteamObj.steam).then(verifiedSteam => {
+            return verifiedSteam === null ? this.create(verifiedSteamObj) : verifiedSteam.update(verifiedSteamObj);
+        });
+    },
+
     findOneBySteam: function (steam) {
         return VerifiedSteam.findOne({where: {steam: steam}});
     },
@@ -16,6 +26,8 @@ const verifiedSteamUtil = {
                     bannedBy: bannedBy,
                     bannedAt: Date.now()
                 });
+            } else if (verifiedSteam.banned === true) {
+                return null;
             } else {
                 return verifiedSteam.update({
                     banned: true,
