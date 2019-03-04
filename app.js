@@ -33,7 +33,7 @@ i18n.configure({
     register: t
 });
 
-i18n.setLocale('en');
+i18n.setLocale(config.default_locale);
 
 const request = require('request');
 const User = require('./schema/user.js');
@@ -185,7 +185,7 @@ function getSteamPersonaNames(steamIds) {
                         let personaNames = {};
 
                         steamIds.forEach(steamId => {
-                            personaNames[steamId] = "ERROR";
+                            personaNames[steamId] = t.__("ERROR");
                         });
 
                         for (let playerKey in body.response.players) {
@@ -420,11 +420,11 @@ function handleMsg(message, discordClient, discordUtil) {
     // detect language
 
     t.setLocale(config.default_locale);
-    t.getLocales().forEach(locale => {
-        if (message.channel.name.includes(locale)) {
-            t.setLocale(locale);
-        }
-    });
+    // t.getLocales().forEach(locale => {
+    //     if (message.channel.name.includes(locale)) {
+    //         t.setLocale(locale);
+    //     }
+    // });
 
     // delete and "warn" users about posting lobby passwords.
     lobbyPasswordPrefixes.forEach(prefix => {
@@ -1021,7 +1021,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                     User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                         getSteamPersonaNames(lobby.players).then(personas => {
                                             let playerDiscordIds = [];
-                                            let hostDiscord = "ERROR";
+                                            let hostDiscord = t.__("ERROR");
                                             let hostDiscordId = null;
                                             players.forEach(player => {
                                                 if (player.steam !== lobby.host) {
@@ -1136,7 +1136,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                 User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
                                     getSteamPersonaNames(lobby.players).then(personas => {
                                         let playerDiscordIds = [];
-                                        let hostDiscord = "ERROR";
+                                        let hostDiscord = t.__("ERROR");
                                         let hostDiscordId = null;
                                         players.forEach(player => {
                                             if (player.steam !== lobby.host) {

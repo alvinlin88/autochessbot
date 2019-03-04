@@ -8,7 +8,6 @@
   "queen": "Queen",
   "ERROR": "ERROR",
 
-
   "problems verifying rank": "I am having problems verifying your rank.",
   "can't update role": "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#{{channelId}}>.",
   "can't see roles": "I am having a problem seeing your roles. Are you set to Invisible on Discord?",
