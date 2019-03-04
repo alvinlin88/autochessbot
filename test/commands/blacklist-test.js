@@ -36,33 +36,62 @@ describe('Tests for !blacklist', () => {
                 }
                 return verifiedSteam;
             }),
-            VerifiedSteam.upsert({steam: alreadyVerified}),
+            VerifiedSteam.upsert({steam: alreadyVerified, banned: false}),
             VerifiedSteam.upsert({steam: alreadyBlacklisted, banned: true})
         ]));
 
     it('Blacklist a new steam', () => {
-        return expect(blacklist.execute(message, [newSteam, 'reason 1'])).to.eventually.deep.equal(
-            {
-                type: 'channelMention',
-                reply: `I have blacklisted steam id \`${newSteam}\``
+        let now = new Date();
+        let reason = 'reason 1';
+
+        return blacklist.execute(message, [newSteam, reason]).then(
+            result => {
+                expect(result).to.deep.equal({
+                    type: 'channelMention',
+                    reply: `I have blacklisted steam id \`${newSteam}\``
+                });
+                return VerifiedSteam.findOneBySteam(newSteam).then(verifiedSteam => {
+                    expect(verifiedSteam.banned).to.be.true;
+                    expect(verifiedSteam.bannedAt).to.be.above(now);
+                    expect(verifiedSteam.banReason).to.equal(reason);
+                });
             }
         );
     });
 
     it('Blacklist a already verified steam', () => {
-        return expect(blacklist.execute(message, [alreadyVerified, 'reason 2 blah blah'])).to.eventually.deep.equal(
-            {
-                type: 'channelMention',
-                reply: `I have blacklisted steam id \`${alreadyVerified}\``
+        let now = new Date();
+        const reason = 'reason 2 blah blah';
+
+        return blacklist.execute(message, [alreadyVerified, reason]).then(
+            result => {
+                expect(result).to.deep.equal({
+                    type: 'channelMention',
+                    reply: `I have blacklisted steam id \`${alreadyVerified}\``
+                });
+                return VerifiedSteam.findOneBySteam(alreadyVerified).then(verifiedSteam => {
+                    expect(verifiedSteam.banned).to.be.true;
+                    expect(verifiedSteam.bannedAt).to.be.above(now);
+                    expect(verifiedSteam.banReason).to.equal(reason);
+                });
             }
         );
     });
 
     it('Blacklist a already blacklisted steam', () => {
-        return expect(blacklist.execute(message, [alreadyBlacklisted, 'reason 3 hehehe'])).to.eventually.deep.equal(
-            {
-                type: 'channelMention',
-                reply: `I have blacklisted steam id \`${alreadyBlacklisted}\``
+        let now = new Date();
+        const reason = 'reason 3 hehe';
+
+        return blacklist.execute(message, [alreadyBlacklisted, reason]).then(
+            result => {
+                expect(result).to.deep.equal({
+                    type: 'channelMention',
+                    reply: `Steam id \`${alreadyBlacklisted}\` is already blacklisted.`
+                });
+                return VerifiedSteam.findOneBySteam(alreadyBlacklisted).then(verifiedSteam => {
+                    expect(verifiedSteam.banned).to.be.true;
+                    expect(verifiedSteam.updatedAt).to.be.below(now);
+                });
             }
         );
     });

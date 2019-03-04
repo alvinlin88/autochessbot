@@ -8,7 +8,7 @@ const verifiedSteamUtil = {
 
     upsert: function (verifiedSteamObj) {
         return this.findOneBySteam(verifiedSteamObj.steam).then(verifiedSteam => {
-            return verifiedSteam === null ? this.create(verifiedSteamObj) : verifiedSteam;
+            return verifiedSteam === null ? this.create(verifiedSteamObj) : verifiedSteam.update(verifiedSteamObj);
         });
     },
 
@@ -26,6 +26,8 @@ const verifiedSteamUtil = {
                     bannedBy: bannedBy,
                     bannedAt: Date.now()
                 });
+            } else if (verifiedSteam.banned === true) {
+                return null;
             } else {
                 return verifiedSteam.update({
                     banned: true,
