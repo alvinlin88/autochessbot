@@ -353,7 +353,7 @@ for(let i = 0; i < config.discord_tokens.length; i++) {
     discordClients[i].on('rateLimit', r => {
         let channel = "";
         if (r.path.includes("channel")) {
-            channel = " <#" + r.path.match("[0-9]")[0] + ">";
+            channel = " <#" + r.path.match("[0-9]+")[0] + ">";
         }
         console.log(discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path);
         discordUtils[i].sendChannel(discordClients[i].channels.find(c => c.name === "chessbot-warnings").id, discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path + channel);
