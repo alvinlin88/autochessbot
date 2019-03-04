@@ -316,12 +316,8 @@ function updateRoles(discordClient, discordUtil, message, user, notifyOnChange=t
                     if (notifyOnChange) {
                         if (roleNamesToAdd.length > 0) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + messagePrefix2 + " promoted to: `" + roleNamesToAdd.join("`, `") + "`");
-                        }
-                    }
-                    if (notifyNoChange) {
-                        if (roleNamesToAdd.length === 0 && roleNamesToRemove.length === 0) {
+                        } else if (roleNamesToAdd.length === 0 && roleNamesToRemove.length === 0) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, messagePrefix + " rank is " + rankStr + "." + MMRStr + " No role changes based on your rank.");
-
                         }
                     }
                 }).catch(error => {
