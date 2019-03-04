@@ -336,35 +336,7 @@ function updateRoles(discordUtil, message, user, notifyOnChange=true, notifyNoCh
     }
 }
 
-function handleReady(discordClientP, discordUtilP) {
-    let discordClient = discordClientP;
-    let discordUtil = discordUtilP;
-    let guild = discordClient.guilds.find(s => s.name === config.server_name);
-    // let guild = discordClient.guilds.get(config.server_id);
-    console.log("Got guild: " + guild);
-    if (guild === null) return 0;
-    if (Object.keys(leagueRoleIdsByRole).length === 0) {
-        leagueRoles.forEach(leagueRole => {
-            let role1 = guild.roles.find(r => r.name === leagueRole);
-            console.log("Checking league role: " + leagueRole);
-            if (role1 !== null && role1.hasOwnProperty("id")) {
-                leagueRoleIdsByRole[leagueRole] = role1;
-            } else {
-                console.log("Error caching league role: " + leagueRole);
-                console.log(role1);
-            }
-        });
-        validRegions.forEach(leagueRegion => {
-            console.log("Checking region role: " + leagueRegion);
-            let role2 = guild.roles.find(r => r.name === leagueRegion);
-            if (role2 !== null && role2.hasOwnProperty("id")) {
-                leagueRoleIdsByRegion[leagueRegion] = role2.id;
-            } else {
-                console.log("Error caching region role: " + leagueRegion);
-                console.log(role2);
-            }
-        });
-    }
+function handleReady(discordClient, discordUtil) {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
         discordUtil.sendChannel(discordClient.channels.find(r => r.name === "staff-bot").id, "I am back!");
@@ -389,6 +361,31 @@ for(let i = 0; i < config.discord_tokens.length; i++) {
 }
 
 function handleMsg(message, discordClient, discordUtil) {
+    // should be on 'ready' but guild is null for some reason
+    let guild = message.guild;
+    if (Object.keys(leagueRoleIdsByRole).length === 0) {
+        leagueRoles.forEach(leagueRole => {
+            let role1 = guild.roles.find(r => r.name === leagueRole);
+            console.log("Checking league role: " + leagueRole);
+            if (role1 !== null && role1.hasOwnProperty("id")) {
+                leagueRoleIdsByRole[leagueRole] = role1;
+            } else {
+                console.log("Error caching league role: " + leagueRole);
+                console.log(role1);
+            }
+        });
+        validRegions.forEach(leagueRegion => {
+            console.log("Checking region role: " + leagueRegion);
+            let role2 = guild.roles.find(r => r.name === leagueRegion);
+            if (role2 !== null && role2.hasOwnProperty("id")) {
+                leagueRoleIdsByRegion[leagueRegion] = role2.id;
+            } else {
+                console.log("Error caching region role: " + leagueRegion);
+                console.log(role2);
+            }
+        });
+    }
+
     if (message.author.bot === true) {
         return 0; // ignore bot messages
     }
