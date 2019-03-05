@@ -18,7 +18,30 @@
   "cannot use bot commands": "<#{{currentChannelId}}> You cannot use bot commands in this channel. Try <#{{channelId}}>.",
   "complete verification": "You need to complete verification to use bot commands. See <#{{channelId}}> for more information.",
 
+  "lobby hosting disabled": "Lobby hosting disabled. Bot is going down for maintenance.",
   "already hosting lobby": "You are already hosting a lobby. Type `!lobby` to see players.",
+  "invalid arguments host": "Invalid arguments. Try `!host [{{validRegionsJoin}}] [rank-1]`. Example: `!host nae bishop-1`. (no spaces in rank)",
+  "you can only host": "You can only host {{leagueChannelRegion}} region lobbies in this channel.",
+  "invalid rank requirement": "Invalid rank requirement. Example: `!host {{region}} bishop-1`. (no spaces in rank)",
+  "not high enough rank to host": "You are not high enough rank to host this lobby. (Your rank: {{rankStr}}, required rank: {{requiredRankStr}})",
+  "not high enough minimum": "You are not high enough rank to host this lobby. The highest rank restriction you can make is 2 ranks below your current rank. (Your rank: {{rankStr}}, highest allowed rank restriction: {{minRankStr}})",
+  "not hosting any lobbies": "You are not hosting any lobbies in <#{{channelId}}>",
+
+  "host": "Host",
+  "region lobby started": "**@{{lobbyRegion}} region lobby started. Good luck!** {{playerDiscords}}",
+  "not enough players": "Not enough players to start yet. `({{currentPlayers}}/8)`",
+
+  "already in a lobby": "<#{{channelId}}> \"{{messageContent}}\": You are already in a lobby! Use `!leave` to leave.",
+  "need to specify host or region": "<#{{channelId}}> \"{{messageContent}}\": Need to specify a host or region to join.",
+
+  "problems verifying rank with channel": "<#{{messageId}}> \"{{messageContent}}\": I am having problems verifying your rank.",
+  "no lobbies currently": "There are no lobbies currently. Use `!host` or `!host {{leagueChannelRegion}}` to host one!",
+  "no lobbies for that region currently": "There are no lobbies for that region currently. Use `!host {{region}}` to host one!",
+  "all lobbies full": "<#{{channelId}}> \"{{messageContent}}\": All lobbies full. Use `!host [region]` to host another lobby.",
+  "can't join lobby": "<#{{channelId}}> \"{{messageContent}}\": Host does not exist or you can not join any lobbies (Maybe they are all full? Use `!host [region]` to host a new lobby). Make sure you have the required rank or a lobby for that region exists. Use `!join [@host]` or `!join [region]`.",
+  "host not found in database": "<#{{channelId}}> \"{{messageContent}}\": Host not found in database.",
+  "host not found": "<#{{channelId}}> \"{{messageContent}}\": Host not found. Use `!list` to see lobbies or `!host [region]` to start one!",
+  "that lobby is full": "<#{{channelId}}> \"{{messageContent}}\": That Lobby is full. Use `!host [region]` to start another one.",
 
   "": ""
 }

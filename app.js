@@ -28,12 +28,11 @@ let t = {};
 
 i18n.configure({
     locales: ['en', 'kr'],
+    defaultLocale: config.default_locale,
     directory: './locales',
     updateFiles: false,
     register: t
 });
-
-i18n.setLocale(config.default_locale);
 
 const request = require('request');
 const User = require('./schema/user.js');
@@ -565,7 +564,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             return 0;
                         }
                         if (disableLobbyHost === true) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Lobby hosting disabled. Bot is going down for maintenance.");
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("lobby hosting disabled"));
                         }
 
                         let hostLobbyExist = getLobbyForHost(leagueChannel, user.steam);
@@ -578,7 +577,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             if (leagueChannelRegion !== null) {
                                 parsedCommand.args[0] = leagueChannelRegion;
                             } else {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Try `!host [" + validRegions.join(', ').toLowerCase() + "] [rank-1]`. Example: `!host nae bishop-1`. (no spaces in rank)");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("invalid arguments host", {validRegionsJoin: validRegions.join(', ').toLowerCase()}));
                                 return 0;
                             }
                         }
@@ -586,7 +585,7 @@ function handleMsg(message, discordClient, discordUtil) {
                         let region = parsedCommand.args[0].toUpperCase();
 
                         if (leagueChannelRegion !== null && leagueChannelRegion !== region) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You can only host " + leagueChannelRegion + " region lobbies in this channel.");
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("you can only host", {leagueChannelRegion: leagueChannelRegion}));
                             return 0;
                         }
 
@@ -600,11 +599,11 @@ function handleMsg(message, discordClient, discordUtil) {
                                 rankRequirement = parseRank(parsedCommand.args[1]);
 
                                 if (rankRequirement === null) {
-                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid rank requirement. Example: `!host " + region.toLowerCase() + " bishop-1`. (no spaces in rank)");
+                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("invalid rank requirement", {region: region.toLowerCase()}));
                                     return 0;
                                 }
                             } else if (parsedCommand.args.length > 2) {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "] [rank-1]`. Example: `!host nae bishop-1`. (no spaces in rank)");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("invalid arguments host", {validRegionsJoin: validRegions.join(', ').toLowerCase()}));
                                 return 0;
                             }
                         } else {
@@ -612,14 +611,14 @@ function handleMsg(message, discordClient, discordUtil) {
                         }
 
                         if (!validRegions.includes(region)) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "] [rank-1]`. Example: `!host nae bishop-1`. (no spaces in rank)");
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("invalid arguments host", {validRegionsJoin: validRegions.join(', ').toLowerCase()}));
                             return 0;
                         }
 
                         // create lobby
                         dacService.getRankFromSteamId(user.steam).then(rank => {
                             if (rank === null) {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having problems verifying your rank.");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("problems verifying rank"));
                                 return 0;
                             }
                             let rankUpdate = {rank: rank.mmr_level, score: rank.score};
@@ -627,15 +626,15 @@ function handleMsg(message, discordClient, discordUtil) {
                             user.update(rankUpdate);
                             let minHostRankRestrictions = rank.mmr_level - 2;
                             if (rank.mmr_level < leagueRequirements[leagueRole] && rank.mmr_level !== leagueRequirements[leagueRole]) {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required rank: " + getRankString(leagueRequirements[leagueRole]) + ")");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("not high enough rank to host", {rankStr: getRankString(rank.mmr_level), requiredRankStr: getRankString(leagueRequirements[leagueRole])}));
                                 return 0;
                             }
                             if (rank.mmr_level < rankRequirement && rank.mmr_level !== leagueRequirements[leagueRole]) {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required rank: " + getRankString(rankRequirement) + ")");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("not high enough rank to host", {rankStr: getRankString(rank.mmr_level), requiredRankStr: getRankString(leagueRequirements[leagueRole])}));
                                 return 0;
                             }
                             if (rankRequirement > minHostRankRestrictions && rankRequirement > leagueRequirements[leagueRole] && rank.mmr_level !== leagueRequirements[leagueRole]) {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You are not high enough rank to host this lobby. The highest rank restriction you can make is 2 ranks below your current rank. (Your rank: " + getRankString(rank.mmr_level) + ", highest allowed rank restriction: " + getRankString(minHostRankRestrictions) + ")");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("not high enough minimum", {rankStr: getRankString(rank.mmr_level), minRankStr: getRankString(minHostRankRestrictions)}));
                                 return 0;
                             }
                             // good to start
@@ -664,66 +663,33 @@ function handleMsg(message, discordClient, discordUtil) {
                         let lobby = lobbies.getLobbyForHost(leagueChannel, user.steam);
 
                         if (lobby === undefined || lobby === null) {
-                            discordUtil.sendDM(message.author.id, "You are not hosting any lobbies in <#" + message.channel.id + ">");
+                            discordUtil.sendDM(message.author.id, t.__("not hosting any lobbies", {channelId: message.channel.id}));
                             discordUtil.deleteMessage(message);
                             return 0;
                         }
 
-                        // if (parsedCommand.args.length > 0) { // TODO: DRY
-                        //     let force = parsedCommand.args[0];
-                        //
-                        //     if (force !== "force") {
-                        //         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments");
-                        //         return 0;
-                        //     }
-                        //     if (lobby.players.length < 2) {
-                        //         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You need at least 2 players to force start a lobby. `(" + lobby.players.length + "/8)`");
-                        //         return 0;
-                        //     }
-                        //
-                        //     User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
-                        //         getSteamPersonaNames(lobby.players).then(personas => {
-                        //             let playerDiscordIds = [];
-                        //             let hostUserDiscordId = null;
-                        //
-                        //             players.forEach(player => {
-                        //                 if (player.steam !== lobby.host) {
-                        //                     playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + "");
-                        //                 } else {
-                        //                     playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + " **[Host]**");
-                        //                     hostUserDiscordId = player.discord;
-                        //                 }
-                        //             });
-                        //
-                        //             lobbies.deleteLobby(leagueChannel, user.steam);
-                        //
-                        //             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**@" + lobby.region + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
-                        //         });
-                        //     });
-                        // } else {
-                            if (lobby.players.length === 8) {
-                                User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
-                                    getSteamPersonaNames(lobby.players).then(personas => {
-                                        let playerDiscordIds = [];
-                                        let hostUserDiscordId = null;
+                        if (lobby.players.length === 8) {
+                            User.findAllUsersWithSteamIdsIn(lobby.players).then(players => {
+                                getSteamPersonaNames(lobby.players).then(personas => {
+                                    let playerDiscordIds = [];
+                                    let hostUserDiscordId = null;
 
-                                        players.forEach(player => {
-                                            if (player.steam !== lobby.host) {
-                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank));
-                                            } else {
-                                                playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + " **[Host]**");
-                                                hostUserDiscordId = player.discord;
-                                            }
-                                        });
-
-                                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**@" + lobby["region"] + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
-                                        lobbies.deleteLobby(leagueChannel, user.steam);
+                                    players.forEach(player => {
+                                        if (player.steam !== lobby.host) {
+                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank));
+                                        } else {
+                                            playerDiscordIds.push("<@" + player.discord + "> \"" + personas[player.steam] + "\" " + getRankString(player.rank) + " **[" + t.__("host") + "]**");
+                                            hostUserDiscordId = player.discord;
+                                        }
                                     });
+
+                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("region lobby started", {lobbyRegion: lobby["region"], playerDiscords: playerDiscordIds.join(" | ")}));
+                                    lobbies.deleteLobby(leagueChannel, user.steam);
                                 });
-                            } else {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Not enough players to start yet. `(" + lobby.players.length + "/8)`");
-                            }
-                        // }
+                            });
+                        } else {
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("not enough players", {currentPlayers: lobby.players.length}));
+                        }
                     })();
                     break;
                 case "join":
@@ -736,13 +702,13 @@ function handleMsg(message, discordClient, discordUtil) {
                         let playerLobbyJoin = lobbies.getLobbyForPlayer(leagueChannel, user.steam);
 
                         if (playerLobbyJoin !== null) {
-                            discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are already in a lobby! Use `!leave` to leave.");
+                            discordUtil.sendDM(message.author.id, t.__("already in a lobby", {channelId: message.channel.id, messageContent: message.content}));
                             discordUtil.deleteMessage(message);
                             return 0;
                         }
                         if (parsedCommand.args.length === 0) {
                             if (leagueChannelRegion === null) {
-                                discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Need to specify a host or region to join.");
+                                discordUtil.sendDM(message.author.id, t.__("need to specify host or region", {channelId: message.channel.id, messageContent: message.content}));
                                 discordUtil.deleteMessage(message);
                                 return 0;
                             } else {
@@ -752,7 +718,7 @@ function handleMsg(message, discordClient, discordUtil) {
 
                         dacService.getRankFromSteamId(user.steam).then(rank => {
                             if (rank === null) {
-                                discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": I am having problems verifying your rank.");
+                                discordUtil.sendDM(message.author.id, t.__("problems verifying rank with channel", {channelId: message.channel.id, messageContent: message.content}));
                                 discordUtil.deleteMessage(message);
                                 return 0;
                             }
@@ -766,10 +732,10 @@ function handleMsg(message, discordClient, discordUtil) {
 
                                 if (Object.keys(lobbiesInLeagueChannel).length === 0) {
                                     if (leagueChannelRegion !== null) {
-                                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "There are no lobbies currently. Use `!host` or `!host " + leagueChannelRegion.toLowerCase() + "` to host one!");
+                                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("no lobbies currently", {leagueChannelRegion: leagueChannelRegion.toLowerCase()}));
                                         return 0;
                                     } else {
-                                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "There are no lobbies for that region currently. Use `!host " + region.toLowerCase() + "` to host one!");
+                                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("no lobbies for that region currently", {region: region.toLowerCase()}));
                                         return 0
                                     }
                                 }
@@ -799,13 +765,13 @@ function handleMsg(message, discordClient, discordUtil) {
                                 }
 
                                 if (lobbiesFull === Object.keys(lobbiesInLeagueChannel).length) {
-                                    discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": All lobbies full. Use `!host [region]` to host another lobby.");
+                                    discordUtil.sendDM(message.author.id, t.__("all lobbies full", {channelId: message.channel.id, messageContent: message.content}));
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
 
                                 if (resultLobbyHostId === null) {
-                                    discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Host does not exist or you can not join any lobbies (Maybe they are all full? Use `!host [region]` to host a new lobby). Make sure you have the required rank or a lobby for that region exists. Use `!join [@host]` or `!join [region]`.");
+                                    discordUtil.sendDM(message.author.id, t.__("can't join lobby", {channelId: message.channel.id, messageContent: message.content}));
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
@@ -821,12 +787,12 @@ function handleMsg(message, discordClient, discordUtil) {
 
                             userPromise.then(function (hostUser) {
                                 if (hostUser === null) {
-                                    discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Host not found in database.");
+                                    discordUtil.sendDM(message.author.id, t.__("host not found in database", {channelId: message.channel.id, messageContent: message.content});
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
                                 if (!lobbies.hasHostedLobbyInChannel(leagueChannel, hostUser.steam)) {
-                                    discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Host not found. Use `!list` to see lobbies or `!host [region]` to start one!");
+                                    discordUtil.sendDM(message.author.id, t.__("host not found", {channelId: message.channel.id, messageContent: message.content}));
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
@@ -834,7 +800,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                 let lobby = getLobbyForHost(leagueChannel, hostUser.steam);
 
                                 if (lobby.players.length === 8) {
-                                    discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": That Lobby is full. Use `!host [region]` to start another one.");
+                                    discordUtil.sendDM(message.author.id, t.__("that lobby is full", {channelId: message.channel.id, messageContent: message.content}));
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
