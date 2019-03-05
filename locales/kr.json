@@ -8,15 +8,4 @@
   "queen": "퀸",
   "ERROR": "에러",
 
-  "problems verifying rank": "I am having problems verifying your rank.",
-  "can't update role": "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#{{channelId}}>.",
-  "can't see roles": "I am having a problem seeing your roles. Are you set to Invisible on Discord?",
-  "problems getting rank": "I had a problem getting your rank, did you use the right steam id? See <#{{channelId}}> for more information. Use `!unlink` to start over.",
-
-  "don't post passwords": "Please _DO NOT_ post lobby passwords given out by ChessBot in any channel. Your message was deleted. Attempting to bypass this will result in a ban.",
-  "invisible mode?": "Error! Are you set to invisible mode?",
-  "cannot use bot commands": "<#{{currentChannelId}}> You cannot use bot commands in this channel. Try <#{{channelId}}>.",
-  "complete verification": "You need to complete verification to use bot commands. See <#{{channelId}}> for more information.",
-
-  "already hosting lobby": "You are already hosting a lobby. Type `!lobby` to see players.",
 }

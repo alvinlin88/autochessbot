@@ -29,6 +29,7 @@ let t = {};
 i18n.configure({
     locales: ['en', 'kr'],
     defaultLocale: config.default_locale,
+    fallbacks: {'kr': 'en'},
     directory: './locales',
     updateFiles: false,
     register: t
@@ -787,7 +788,7 @@ function handleMsg(message, discordClient, discordUtil) {
 
                             userPromise.then(function (hostUser) {
                                 if (hostUser === null) {
-                                    discordUtil.sendDM(message.author.id, t.__("host not found in database", {channelId: message.channel.id, messageContent: message.content});
+                                    discordUtil.sendDM(message.author.id, t.__("host not found in database", {channelId: message.channel.id, messageContent: message.content}));
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
