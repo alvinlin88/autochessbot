@@ -1,6 +1,7 @@
 const config = require("./config");
 
 const metrics = require("./metrics");
+metrics.startCollection();
 
 const Discord = require('discord.js');
 
