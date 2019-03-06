@@ -3,12 +3,14 @@
 const logger = require('./logger.js');
 const mc = require('./message-consolidator.js');
 
+const metrics = require("./metrics");
+
 module.exports = class DiscordUtil {
     constructor(discordClient) {
         this.discordClient = discordClient;
     }
 
-    sendChannelAndMention(channelDiscordId, userDiscordId, text) {
+    sendChannelAndMention(channelDiscordId, userDiscordId, text, isDM=false) {
         let channel = this.discordClient.channels.get(channelDiscordId);
         let user = this.discordClient.users.get(userDiscordId);
         if (user === null) {
@@ -17,12 +19,22 @@ module.exports = class DiscordUtil {
         }
         mc.enqueueMessage(channel, text, userDiscordId);
         logger.info('Sent message in channel ' + channel.name + ' to ' + user.username + ': ' + text);
+        if (isDM) {
+            metrics.sendDMCounter.inc(1);
+        } else {
+            metrics.sendChannelCounter.inc({'channel': channelDiscordId}, 1);
+        }
     }
 
-    sendChannel(channelDiscordId, text) {
+    sendChannel(channelDiscordId, text, isDM=false) {
         let channel = this.discordClient.channels.get(channelDiscordId);
         mc.enqueueMessage(channel, text);
         logger.info('Sent message in channel ' + channel.name + ': ' + text);
+        if (isDM) {
+            metrics.sendDMCounter.inc(1);
+        } else {
+            metrics.sendChannelCounter.inc({'channel': channelDiscordId}, 1);
+        }
     }
 
     sendDM(userDiscordId, text) {
@@ -39,11 +51,13 @@ module.exports = class DiscordUtil {
             logger.log(error);
         }.bind(this));
         logger.info("Sent direct message to user " + user.username + ": " + text);
+        metrics.sendDMCounter.inc(1);
     }
 
     deleteMessage(message) {
         if (message.channel.type !== "dm") {
             message.delete("Processed").catch(logger.error);
+            metrics.sendChannelCounter.inc({'channel': message.channel.id}, 1);
         }
     }
 

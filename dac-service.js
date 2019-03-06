@@ -1,6 +1,8 @@
 const logger = require('./logger.js');
 const request = require("request");
 
+const metrics = require("./metrics");
+
 class DacService {
     constructor() {
         this.DACSwitch = 2;
@@ -23,12 +25,14 @@ class DacService {
 
     getRankFromSteamIdB(steamId) {
         return new Promise(function (resolve, reject) {
+            const end = metrics.dacRequestHistogram.startTimer();
             request('http://autochess.ppbizon.com/courier/get/@' + steamId, {json: true}, (err, res, body) => {
+                end();
+
                 if (err) {
                     resolve(null);
                     logger.error(err);
                 }
-
                 if (res !== undefined && res.hasOwnProperty("statusCode")) {
                     if (res.statusCode === 200 && body.err === 0) {
                         try {
@@ -56,10 +60,13 @@ class DacService {
 
     getRankFromSteamIdA(steamId) {
         return new Promise(function (resolve, reject) {
+            const end = metrics.dacRequestHistogram.startTimer();
             request('http://autochess.ppbizon.com/ranking/get?player_ids=' + steamId, {
                 json: true,
                 headers: {'User-Agent': 'Valve/Steam HTTP Client 1.0 (570;Windows;tenfoot)'}
             }, (err, res, body) => {
+                end();
+
                 if (err) {
                     resolve(null);
                     logger.error(err);
