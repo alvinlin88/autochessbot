@@ -138,3 +138,80 @@ location / {
     proxy_redirect          http://localhost:8080 https://autochessbot.vinthian.com;
 }
 ```
+
+
+Metrics
+=======
+
+```
+wget https://github.com/prometheus/prometheus/releases/download/v2.7.2/prometheus-2.7.2.linux-amd64.tar.gz
+
+cd
+tar xvf prometheus-2.7.2.linux-amd64.tar.gz
+mv prometheus-2.7.2.linux-amd64 prometheus
+
+
+prometheus.yml:
+
+scrape_configs:
+  - job_name: 'autochessbot'
+    static_configs:
+    - targets: ['localhost:3000']
+
+
+[ec2-user@ip-10-0-1-234 prometheus]$ cat /etc/systemd/system/autochessbotprom.service
+[Unit]
+Description=AutoChessBot
+Documentation=https://example.com
+After=network.target
+
+[Service]
+#Environment=NODE_PORT=8080
+Type=simple
+User=root
+LimitNOFILE=65536
+ExecStart=/home/ec2-user/prometheus/prometheus --config.file=/home/ec2-user/prometheus/prometheus.yml --storage.tsdb.retention=15d
+Restart=on-failure
+StandardOutput=syslog+console
+StandardError=syslog+console
+SyslogIdentifier=autochessbotprom
+
+[Install]
+WantedBy=multi-user.target
+
+systemctl daemon-reload
+systemctl enable autochessbotprom
+
+/etc/nginx/nginx.conf
+
+--- (not needed)
+server {
+server_name autochessbotmetrics.vinthian.com;
+location / {
+
+proxy_set_header        Host $host;
+proxy_set_header        X-Real-IP $remote_addr;
+proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header        X-Forwarded-Proto $scheme;
+
+# Fix the “It appears that your reverse proxy set up is broken" error.
+proxy_pass          http://localhost:3000;
+}
+}
+
+--- (also not needed if using grafana)
+server {
+server_name autochessbotprom.vinthian.com;
+location / {
+
+proxy_set_header        Host $host;
+proxy_set_header        X-Real-IP $remote_addr;
+proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header        X-Forwarded-Proto $scheme;
+
+# Fix the “It appears that your reverse proxy set up is broken" error.
+proxy_pass          http://localhost:9090;
+}
+}
+```
+
