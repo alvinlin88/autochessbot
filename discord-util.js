@@ -57,7 +57,7 @@ module.exports = class DiscordUtil {
     deleteMessage(message) {
         if (message.channel.type !== "dm") {
             message.delete("Processed").catch(logger.error);
-            metrics.sendChannelCounter.inc({'channel_name': message.channel.name, 'channel_id': message.channel.id}, 1);
+            metrics.deleteMessageCounter.inc({'channel_name': message.channel.name, 'channel_id': message.channel.id}, 1);
         }
     }
 
