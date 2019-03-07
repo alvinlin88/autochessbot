@@ -142,7 +142,7 @@ location / {
 
 Metrics
 =======
-
+### Prometheus
 ```
 wget https://github.com/prometheus/prometheus/releases/download/v2.7.2/prometheus-2.7.2.linux-amd64.tar.gz
 
@@ -181,7 +181,36 @@ WantedBy=multi-user.target
 
 systemctl daemon-reload
 systemctl enable autochessbotprom
+```
+### Grafana
+```
+wget https://dl.grafana.com/oss/release/grafana-6.0.1.linux-amd64.tar.gz 
+tar -zxf grafana-6.0.1.linux-amd64.tar.gz 
+mv grafana-6.0.1/ grafana
 
+cat /etc/systemd/system/autochessbotgrafana.service
+
+[Unit]
+Description=AutoChessBotGrafana
+Documentation=https://example.com
+After=network.target
+
+[Service]
+Type=simple
+User=root
+LimitNOFILE=65536
+WorkingDirectory=/home/ec2-user/grafana
+ExecStart=/home/ec2-user/grafana/bin/grafana-server web
+Restart=on-failure
+StandardOutput=syslog+console
+StandardError=syslog+console
+SyslogIdentifier=autochessbotgrafana
+
+[Install]
+WantedBy=multi-user.target
+```
+### Nginx
+```
 /etc/nginx/nginx.conf
 
 --- (not needed)
