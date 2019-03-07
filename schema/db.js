@@ -19,7 +19,7 @@ const dbInstance = new Sequelize('autochess', 'postgres', 'postgres', {
         logger.info(text);
         let split = text.split(/ +/g);
         if (split[0] === "Executed") {
-            metrics.sequelizeHistogram.observe({'type': split[2].trim()}, benchmark);
+            metrics.sequelizeSummary.observe({'type': split[2].trim()}, benchmark);
         }
     },
     benchmark: true,
