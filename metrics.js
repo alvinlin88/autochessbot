@@ -1,12 +1,6 @@
 "use strict";
 
 const PromClient = require('prom-client');
-const express = require('express');
-const app = express();
-
-app.get('/metrics', (req, res) => {
-    res.end(PromClient.register.metrics());
-});
 
 module.exports.startCollection = function() {
     PromClient.collectDefaultMetrics({ timeout: 5000 });
@@ -57,4 +51,3 @@ module.exports.commandInvocationArgs = new PromClient.Counter({
     labelNames: ['channel_name', 'channel_id', 'name', 'args'],
 });
 
-app.listen(3000);

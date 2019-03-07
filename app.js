@@ -1,5 +1,14 @@
 const config = require("./config");
 
+const PromClient = require('prom-client');
+const express = require('express');
+const app = express();
+
+app.get('/metrics', (req, res) => {
+    res.end(PromClient.register.metrics());
+});
+app.listen(3000);
+
 const metrics = require("./metrics");
 metrics.startCollection();
 
