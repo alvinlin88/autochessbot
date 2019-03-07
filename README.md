@@ -209,6 +209,8 @@ SyslogIdentifier=autochessbotgrafana
 [Install]
 WantedBy=multi-user.target
 ```
+In `grafana/conf` do `cp defaults.ini custom.ini`. Change `port` based on nginx config and change `root_url` to `root_url = %(protocol)s://%(domain)s:%(http_port)s/grafana/`
+
 ### Nginx
 ```
 /etc/nginx/nginx.conf
