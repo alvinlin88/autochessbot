@@ -443,14 +443,17 @@ function handleMsg(message, discordClient, discordUtil) {
 
     let parsedCommand = parseCommand(message);
 
-    let metricsChannel;
+    let metricsChannelId;
+    let metricsChannelName;
     if (message.channel.type === "dm") {
-        metricsChannel = "dm";
+        metricsChannelId = "dm";
+        metricsChannelName = "dm";
     } else {
-        metricsChannel = message.channel.id;
+        metricsChannelId = message.channel.id;
+        metricsChannelName = message.channel.name;
     }
 
-    metrics.commandInvocation.inc({"channel": metricsChannel, "name": parsedCommand.command}, 1);
+    metrics.commandInvocation.inc({"channel_name": metricsChannelName, "channel_id": metricsChannelId, "name": parsedCommand.command}, 1);
     // not sure if this one is useful
     // metrics.commandInvocationArgs.inc({"channel": metricsChannel, "name": parsedCommand.command, "args": parsedCommand.args.join(" ")}, 1);
 
