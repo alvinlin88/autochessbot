@@ -1,6 +1,9 @@
 const Sequelize = require('sequelize');
 const logger = require('../logger.js');
 const config = require("../config");
+
+const metrics = require("../metrics");
+
 const dbInstance = new Sequelize('autochess', 'postgres', 'postgres', {
     host: 'localhost',
     dialect: 'sqlite',
@@ -12,7 +15,14 @@ const dbInstance = new Sequelize('autochess', 'postgres', 'postgres', {
         idle: 10000
     },
 
-    logging: logger.info,
+    logging: function (text, benchmark) {
+        logger.info(text);
+        let split = text.split(/ +/g);
+        if (split[0] === "Executed") {
+            metrics.sequelizeHistogram.observe({'type': split[2].trim()}, benchmark);
+        }
+    },
+    benchmark: true,
 
     // http://docs.sequelizejs.com/manual/tutorial/querying.html#operators
     operatorsAliases: false,

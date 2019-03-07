@@ -39,6 +39,12 @@ module.exports.steamRequestHistogram = new PromClient.Histogram({
     help: 'help',
 });
 
+module.exports.sequelizeHistogram = new PromClient.Histogram({
+    name: 'db_query',
+    help: 'help',
+    labelNames: ['type'],
+});
+
 module.exports.commandInvocation = new PromClient.Counter({
     name: 'command_invocation',
     help: 'help',
