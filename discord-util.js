@@ -20,9 +20,9 @@ module.exports = class DiscordUtil {
         mc.enqueueMessage(channel, text, userDiscordId);
         logger.info('Sent message in channel ' + channel.name + ' to ' + user.username + ': ' + text);
         if (isDM) {
-            metrics.sendDMCounter.inc(1);
+            metrics.sendDMCounter.inc();
         } else {
-            metrics.sendChannelCounter.inc({'channel_name': channel.name, 'channel_id': channelDiscordId}, 1);
+            metrics.sendChannelCounter.inc({'channel_name': channel.name, 'channel_id': channelDiscordId});
         }
     }
 
@@ -31,9 +31,9 @@ module.exports = class DiscordUtil {
         mc.enqueueMessage(channel, text);
         logger.info('Sent message in channel ' + channel.name + ': ' + text);
         if (isDM) {
-            metrics.sendDMCounter.inc(1);
+            metrics.sendDMCounter.inc();
         } else {
-            metrics.sendChannelCounter.inc({'channel_name': channel.name, 'channel_id': channelDiscordId}, 1);
+            metrics.sendChannelCounter.inc({'channel_name': channel.name, 'channel_id': channelDiscordId});
         }
     }
 
@@ -51,13 +51,13 @@ module.exports = class DiscordUtil {
             logger.log(error);
         }.bind(this));
         logger.info("Sent direct message to user " + user.username + ": " + text);
-        metrics.sendDMCounter.inc(1);
+        metrics.sendDMCounter.inc();
     }
 
     deleteMessage(message) {
         if (message.channel.type !== "dm") {
             message.delete("Processed").catch(logger.error);
-            metrics.deleteMessageCounter.inc({'channel_name': message.channel.name, 'channel_id': message.channel.id}, 1);
+            metrics.deleteMessageCounter.inc({'channel_name': message.channel.name, 'channel_id': message.channel.id});
         }
     }
 

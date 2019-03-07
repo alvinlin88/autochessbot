@@ -463,9 +463,9 @@ function handleMsg(message, discordClient, discordUtil) {
         metricsChannelName = message.channel.name;
     }
 
-    metrics.commandInvocation.inc({"channel_name": metricsChannelName, "channel_id": metricsChannelId, "name": parsedCommand.command}, 1);
+    metrics.commandInvocation.inc({"channel_name": metricsChannelName, "channel_id": metricsChannelId, "name": parsedCommand.command});
     // not sure if this one is useful
-    // metrics.commandInvocationArgs.inc({"channel": metricsChannel, "name": parsedCommand.command, "args": parsedCommand.args.join(" ")}, 1);
+    // metrics.commandInvocationArgs.inc({"channel": metricsChannel, "name": parsedCommand.command, "args": parsedCommand.args.join(" ")});
 
     if (message.channel.type !== "dm" && (message.member === null || message.guild === null)) {
         discordUtil.sendDM(message.author.id, "Error! Are you set to invisible mode?");
