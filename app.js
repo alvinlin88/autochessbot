@@ -376,12 +376,13 @@ for(let i = 0; i < config.discord_tokens.length; i++) {
     discordClients[i].on('error', logger.error);
     discordClients[i].on('message', message => handleMsg(message, discordClients[i], discordUtils[i]));
     discordClients[i].on('rateLimit', r => {
-        let channel = "";
+        let channelId = r.path.match("[0-9]+")[0];
+        let channel = discordClients[i].channels.get(channelId);
         if (r.path.includes("channel")) {
-            channel = " <#" + r.path.match("[0-9]+")[0] + ">";
+            channelId = " <#" + channelId + ">";
         }
         console.log(discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path);
-        discordUtils[i].sendChannel(discordClients[i].channels.find(c => c.name === config.channels["chessbot-warnings"]).id, discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path + channel);
+        discordUtils[i].sendChannel(discordClients[i].channels.find(c => c.name === config.channels["chessbot-warnings"]).id, discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path + channelId + " " + channel.name);
     })
 }
 
