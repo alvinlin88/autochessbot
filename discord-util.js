@@ -10,7 +10,7 @@ module.exports = class DiscordUtil {
         this.discordClient = discordClient;
     }
 
-    sendChannelAndMention(channelDiscordId, userDiscordId, text, isDM=false) {
+    sendChannelAndMention(channelDiscordName, channelDiscordId, userDiscordId, text, isDM=false) {
         let channel = this.discordClient.channels.get(channelDiscordId);
         let user = this.discordClient.users.get(userDiscordId);
         if (user === null) {
@@ -22,18 +22,18 @@ module.exports = class DiscordUtil {
         if (isDM) {
             metrics.sendDMCounter.inc(1);
         } else {
-            metrics.sendChannelCounter.inc({'channel': channelDiscordId}, 1);
+            metrics.sendChannelCounter.inc({'channel_name': channelDiscordName, 'channel_id': channelDiscordId}, 1);
         }
     }
 
-    sendChannel(channelDiscordId, text, isDM=false) {
+    sendChannel(channelDiscordName, channelDiscordId, text, isDM=false) {
         let channel = this.discordClient.channels.get(channelDiscordId);
         mc.enqueueMessage(channel, text);
         logger.info('Sent message in channel ' + channel.name + ': ' + text);
         if (isDM) {
             metrics.sendDMCounter.inc(1);
         } else {
-            metrics.sendChannelCounter.inc({'channel': channelDiscordId}, 1);
+            metrics.sendChannelCounter.inc({'channel_name': channelDiscordName, 'channel_id': channelDiscordId}, 1);
         }
     }
 
@@ -57,7 +57,7 @@ module.exports = class DiscordUtil {
     deleteMessage(message) {
         if (message.channel.type !== "dm") {
             message.delete("Processed").catch(logger.error);
-            metrics.sendChannelCounter.inc({'channel': message.channel.id}, 1);
+            metrics.sendChannelCounter.inc({'channel_name': message.channel.name, 'channel_id': message.channel.id}, 1);
         }
     }
 

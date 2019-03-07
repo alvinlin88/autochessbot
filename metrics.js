@@ -20,13 +20,13 @@ module.exports.sendDMCounter = new PromClient.Counter({
 module.exports.sendChannelCounter = new PromClient.Counter({
     name: 'send_channel',
     help: 'help',
-    labelNames: ['channel'],
+    labelNames: ['channel_name', 'channel_id'],
 });
 
 module.exports.deleteMessageCounter = new PromClient.Counter({
     name: 'delete_message',
     help: 'help',
-    labelNames: ['channel'],
+    labelNames: ['channel_name', 'channel_id'],
 });
 
 module.exports.dacRequestHistogram = new PromClient.Histogram({
@@ -42,13 +42,13 @@ module.exports.steamRequestHistogram = new PromClient.Histogram({
 module.exports.commandInvocation = new PromClient.Counter({
     name: 'command_invocation',
     help: 'help',
-    labelNames: ['channel', 'name'],
+    labelNames: ['channel_name', 'channel_id', 'name'],
 });
 
 module.exports.commandInvocationArgs = new PromClient.Counter({
     name: 'command_invocation_args',
     help: 'help',
-    labelNames: ['channel', 'name', 'args'],
+    labelNames: ['channel_name', 'channel_id', 'name', 'args'],
 });
 
 app.listen(3000);
