@@ -240,14 +240,14 @@ function updateRoles(discordClient, discordUtil, message, user, notifyOnChange=t
     if (user !== null && user.steam !== null) {
         dacService.getRankFromSteamId(user.steam).then(rank => {
             if(rank === null) {
-                discordUtil.sendChannelAndMention(, message.channel.id, message.author.id, "I am having problems verifying your rank.", isDM);
+                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "I am having problems verifying your rank.", isDM);
                 return 0;
             }
             if (message.channel.type === "dm") {
                 return 0; // can't update roles in DM.
             }
             if (message.guild === null) {
-                discordUtil.sendChannelAndMention(, message.channel.id, message.author.id, "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-commands"]).id + ">.", isDM);
+                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Something went wrong! I can not update your roles. Are you directly messaging me? Please use <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-commands"]).id + ">.", isDM);
                 return 0;
             }
             let ranks = [];
