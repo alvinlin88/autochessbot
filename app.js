@@ -1468,55 +1468,6 @@ function handleMsg(message, discordClient, discordUtil) {
                     });
                 })();
                 break;
-            case "admincreatelink":
-                (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
-
-                    if (parsedCommand.args.length < 1) {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!adminlink [@discord] [[steamid]]`");
-                        return 0;
-                    }
-                    let createLinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
-                    let forceSteamIdLink = parsedCommand.args[1];
-
-                    User.findByDiscord(createLinkPlayerDiscordId).then(function (linkPlayerUser) {
-                        if (linkPlayerUser === null) {
-                            User.create({
-                                discord: createLinkPlayerDiscordId,
-                                steam: forceSteamIdLink,
-                                validated: false,
-                            }).then(() => {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I have linked <@" + createLinkPlayerDiscordId + "> steam id `" + forceSteamIdLink + "`. Remember they will not have any roles. Use `!adminupdateroles [@discord]`.");
-                            }).catch(function (msg) {
-                                logger.error("error " + msg);
-                            });
-                        } else {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, <@" + createLinkPlayerDiscordId + "> is already linked to steam id `" + linkPlayerUser.steam + "`. Use `!adminupdatelink [@discord] [steam]` instead.");
-                            return 0;
-                        }
-                    });
-                })();
-                break;
-            case "adminunlink":
-                (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
-
-                    if (parsedCommand.args.length !== 1) {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!adminunlink [@discord]`");
-                        return 0;
-                    }
-                    let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
-
-                    User.findByDiscord(unlinkPlayerDiscordId).then(function (unlinkPlayerUser) {
-                        let oldSteamID = unlinkPlayerUser.steam;
-                        unlinkPlayerUser.update({steam: null, validated: false}).then(function (result) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id. `" + oldSteamID + "`");
-                        }, function (error) {
-                            logger.error(error);
-                        });
-                    });
-                })();
-                break;
             case "adminunlinksteam":
                 (function () {
                     if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
