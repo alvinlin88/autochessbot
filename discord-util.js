@@ -10,7 +10,7 @@ module.exports = class DiscordUtil {
         this.discordClient = discordClient;
     }
 
-    sendChannelAndMention(channelDiscordId, userDiscordId, text, isDM=false) {
+    sendChannelAndMention(channelDiscordId, userDiscordId, text) {
         let channel = this.discordClient.channels.get(channelDiscordId);
         let user = this.discordClient.users.get(userDiscordId);
         if (user === null) {
@@ -19,18 +19,18 @@ module.exports = class DiscordUtil {
         }
         mc.enqueueMessage(channel, text, userDiscordId);
         logger.info('Sent message in channel ' + channel.name + ' to ' + user.username + ': ' + text);
-        if (isDM) {
+        if (channel.type === "dm") {
             metrics.sendDMCounter.inc();
         } else {
             metrics.sendChannelCounter.inc({'channel_name': channel.name, 'channel_id': channelDiscordId});
         }
     }
 
-    sendChannel(channelDiscordId, text, isDM=false) {
+    sendChannel(channelDiscordId, text) {
         let channel = this.discordClient.channels.get(channelDiscordId);
         mc.enqueueMessage(channel, text);
         logger.info('Sent message in channel ' + channel.name + ': ' + text);
-        if (isDM) {
+        if (channel.type === "dm") {
             metrics.sendDMCounter.inc();
         } else {
             metrics.sendChannelCounter.inc({'channel_name': channel.name, 'channel_id': channelDiscordId});

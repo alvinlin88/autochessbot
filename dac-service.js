@@ -38,20 +38,25 @@ class DacService {
                         try {
                             if (body.user_info.hasOwnProperty(steamId)) {
                                 this.lastDACBSuccess = Date.now();
+                                metrics.dacRequestSuccessCounter.inc();
                                 resolve({
                                     "mmr_level": body.user_info[steamId]["mmr_level"],
                                     "score": null,
                                 })
                             } else {
+                                metrics.dacRequestErrorCounter.inc();
                                 resolve(null);
                             }
                         } catch (error) {
+                            metrics.dacRequestErrorCounter.inc();
                             logger.error(error.message + " " + error.stack);
                         }
                     } else {
+                        metrics.dacRequestErrorCounter.inc();
                         resolve(null);
                     }
                 } else {
+                    metrics.dacRequestErrorCounter.inc();
                     resolve(null);
                 }
             });
@@ -77,14 +82,17 @@ class DacService {
                         try {
                             this.lastDACASuccess = Date.now();
                             if (body.ranking_info.length === 1) {
+                                metrics.dacRequestSuccessCounter.inc();
                                 resolve({
                                     "mmr_level": body.ranking_info[0]["mmr_level"],
                                     "score": body.ranking_info[0]["score"],
                                 })
                             } else {
+                                metrics.dacRequestErrorCounter.inc();
                                 resolve(null);
                             }
                         } catch (error) {
+                            metrics.dacRequestErrorCounter.inc();
                             logger.error(error.message + " " + error.stack);
                         }
                     } else {
@@ -94,30 +102,8 @@ class DacService {
                         });
                     }
                 } else {
+                    metrics.dacRequestErrorCounter.inc();
                     resolve(null);
-                }
-            });
-        }.bind(this));
-    }
-
-    getRanksFromSteamIdList(steamIdList) {
-        return new Promise(function (resolve, reject) {
-            request('http://101.200.189.65:431/dac/ranking/get?player_ids=' + steamIdList.join(',') + '&hehe=' + Math.floor(Math.random() * 10000), {
-                json: true,
-                headers: {'User-Agent': 'Valve/Steam HTTP Client 1.0 (570;Windows;tenfoot)'}
-            }, (err, res, body) => {
-                if (err) {
-                    reject(err);
-                }
-
-                if (res !== undefined && res.hasOwnProperty("statusCode")) {
-                    if (res.statusCode === 200) {
-                        try {
-                            resolve(body.ranking_info);
-                        } catch (error) {
-                            logger.error(error.message + " " + error.stack);
-                        }
-                    }
                 }
             });
         }.bind(this));
