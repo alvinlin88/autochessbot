@@ -50,7 +50,7 @@ app.get("/confirm", function (req, res) {
 
         VerifiedSteam.findOneBySteam(steamID)
             .then(verifiedSteam => {
-                if (verifiedSteam.banned === true) {
+                if (verifiedSteam !== null && verifiedSteam.banned === true) {
                     res.render("error");
                     return Promise.resolve(null);
                 } else if (verifiedSteam === null || verifiedSteam.userId === null) {
