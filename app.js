@@ -1473,7 +1473,7 @@ function handleMsg(message, discordClient, discordUtil) {
                     if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
 
                     if (parsedCommand.args.length !== 1) {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!adminunlink [steamid]`");
+                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!adminunlinksteam [steamid]`");
                         return 0;
                     }
                     if (!parseInt(parsedCommand.args[0])) {
@@ -1482,17 +1482,23 @@ function handleMsg(message, discordClient, discordUtil) {
                     }
                     let unlinkPlayerSteamId = parsedCommand.args[0];
                     VerifiedSteam.findOneBySteam(unlinkPlayerSteamId).then(verifiedSteam => {
-                        if (verifiedSteam !== null) {
+                        if (verifiedSteam === null) {
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `Sir, steam id \`${unlinkPlayerSteamId}\` is not verified by anyone.`);
+                            return 0;
+                        }
+                        if (verifiedSteam.banned === true) {
+                            let banInfo = `Steam \`${unlinkPlayerSteamId}\` was banned by <@${verifiedSteam.bannedBy}> for \`${verifiedSteam.banReason}\``;
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, banInfo + "\n I cannot unlink unless you `unblacklist`");
+                        } else {
                             verifiedSteam.destroy().then(
                                 () => discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `Sir, I have removed verified steam id record for \`${unlinkPlayerSteamId}\``))
+                            User.findAllBySteam(unlinkPlayerSteamId).then(function (unlinkPlayerUsers) {
+                                unlinkPlayerUsers.forEach(unlinkPlayerUser => {
+                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id.");
+                                    unlinkPlayerUser.update({steam: null, validated: false});
+                                });
+                            });
                         }
-                    });
-
-                    User.findAllBySteam(unlinkPlayerSteamId).then(function (unlinkPlayerUsers) {
-                        unlinkPlayerUsers.forEach(unlinkPlayerUser => {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id.");
-                            unlinkPlayerUser.update({steam: null, validated: false});
-                        });
                     });
                 })();
                 break;
