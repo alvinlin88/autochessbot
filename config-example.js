@@ -12,7 +12,11 @@ config.discord_client_id = ""; // Only need to set the first bot's id/secret
 config.discord_client_secret = "";
 config.verify_redirect_url = "http://localhost:8080/callback";
 
-config.server_ids = [];
+config.server_config = {
+    "000000000000000000": { // Serveer ID
+        "validRegions": ["LUXEMBOURG", "AUSTRIA", "STOCKHOLM"], // Note: Region names must be UPPER CASE for now
+    },
+};
 
 config.channels = { // for i18n
     "chessbot-commands": "chessbot-commands",
