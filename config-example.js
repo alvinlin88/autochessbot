@@ -13,7 +13,7 @@ config.discord_client_secret = "";
 config.verify_redirect_url = "http://localhost:8080/callback";
 
 config.server_config = {
-    "000000000000000000": { // Serveer ID
+    "000000000000000000": { // Server ID
         "validRegions": ["LUXEMBOURG", "AUSTRIA", "STOCKHOLM"], // Note: Region names must be UPPER CASE for now
     },
 };

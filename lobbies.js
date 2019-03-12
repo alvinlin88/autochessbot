@@ -14,7 +14,7 @@ module.exports = class Lobbies {
     }
 
     initialize() {
-        Object.keys(config.server_ids).forEach(serverID => {
+        Object.keys(config.server_config).forEach(serverID => {
             this.lobbies[serverID] = {};
             config.leagueRoles.forEach(leagueRole => {
                 this.lobbies[serverID][config.leagueToLobbiesPrefix[leagueRole]] = {};
