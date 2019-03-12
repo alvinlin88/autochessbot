@@ -407,29 +407,44 @@ for(let i = 0; i < config.discord_tokens.length; i++) {
 }
 
 function handleMsg(message, discordClient, discordUtil) {
+    // Override validRegions if a server ID and validRegion was specifically defined
+
+    if (message.channel.type !== "dm") {
+        if (Object.keys(config.server_config).includes(message.member.guild.id)) {
+            validRegions = config.server_config[message.member.guild.id]["validRegions"];
+        }
+    }
+
     // should be on 'ready' but guild is null for some reason
     let guild = message.guild;
     if (Object.keys(leagueRoleIdsByRole).length === 0) {
         leagueRoles.forEach(leagueRole => {
             let role1 = guild.roles.find(r => r.name === leagueRole);
-            console.log("Checking league role: " + leagueRole);
             if (role1 !== null && role1.hasOwnProperty("id")) {
+                console.log("Server " + message.guild.name + ": Role " + role1.name + " found: Caching. -- " + role1);
                 leagueRoleIdsByRole[leagueRole] = role1;
             } else {
-                console.log("Error caching league role: " + leagueRole);
-                console.log(role1);
+                console.log("Server " + message.guild.name + ": Error caching league role: " + leagueRole + " -- " + role1);
             }
         });
         validRegions.forEach(leagueRegion => {
-            console.log("Checking region role: " + leagueRegion);
             let role2 = guild.roles.find(r => r.name === leagueRegion);
             if (role2 !== null && role2.hasOwnProperty("id")) {
                 leagueRoleIdsByRegion[leagueRegion] = role2.id;
+                console.log("Server " + message.guild.name + ": Role " + role2.name + " found. Caching. -- " + role2);
             } else {
-                console.log("Error caching region role: " + leagueRegion);
-                console.log(role2);
+                console.log("Server " + message.guild.name + ": Error caching region role: " + leagueRegion + " -- " + role2);
             }
         });
+    }
+
+
+    let adminRoleId;
+    if (message.guild !== null && message.guild.roles.find(r => r.name === adminRoleName) !== null) {
+        adminRoleId = message.guild.roles.find(r => r.name === adminRoleName).id;
+    } else {
+        // Silently fail if admin role is not present on server
+        adminRoleId = 0;
     }
 
     if (message.author.bot === true) {
@@ -482,7 +497,7 @@ function handleMsg(message, discordClient, discordUtil) {
         return 0;
     }
 
-    if (message.channel.type !== "dm" && message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) {
+    if (message.channel.type !== "dm" && message.member.roles.has(adminRoleId)) {
         // if we can see user roles (not a DM) and user is staff, continue
     } else if (message.channel.type !== "dm" && !leagueLobbies.includes(message.channel.name) && !botChannels.includes(message.channel.name)) {
         // otherwise if command was not typed in a whitelisted channel
@@ -512,6 +527,10 @@ function handleMsg(message, discordClient, discordUtil) {
         }
 
         if (leagueLobbies.includes(message.channel.name)) {
+            // Add lobby to lobbies data if it doesn't exist
+            if (lobbies.getLobbiesInChannel(message.member.guild.id, message.channel.name) === undefined) {
+                lobbies.resetLobbies(message.member.guild.id, message.channel.name);
+            }
             let leagueRole = lobbiesToLeague[message.channel.name];
             let leagueChannel = message.channel.name;
             let leagueChannelRegion = leagueChannelToRegion[leagueChannel];
@@ -522,7 +541,7 @@ function handleMsg(message, discordClient, discordUtil) {
                 case "adminend":
                 case "adminunhost":
                     (function () {
-                        if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                        if (!message.member.roles.has(adminRoleId)) return 0;
 
                         if (parsedCommand.args.length !== 1) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!admincancel [@host]`");
@@ -530,14 +549,14 @@ function handleMsg(message, discordClient, discordUtil) {
 
                         let hostLobbyDiscordId = parseDiscordId(parsedCommand.args[0]);
                         User.findByDiscord(hostLobbyDiscordId).then(hostUser => {
-                            let hostLobbyEnd = getLobbyForHost(message.guild.id, leagueChannel, hostUser.steam);
+                            let hostLobbyEnd = getLobbyForHost(message.member.guild.id, leagueChannel, hostUser.steam);
                             if (hostLobbyEnd === null) {
                                 discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, <@" + hostUser.discord + "> is not hosting any lobby.");
                             }
                             else {
                                 let regionEnd = hostLobbyEnd["region"];
 
-                                lobbies.deleteLobby(message.guild.id, leagueChannel, hostUser.steam);
+                                lobbies.deleteLobby(message.member.guild.id, leagueChannel, hostUser.steam);
                                 discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I cancelled <@" + hostUser.discord + ">'s lobby for @" + regionEnd + ".");
                                 discordUtil.sendDM(hostUser.discord, "**Your lobby in <#" + message.channel.id + " was cancelled by an admin.**");
                             }
@@ -546,7 +565,7 @@ function handleMsg(message, discordClient, discordUtil) {
                     break;
                 case "adminkick":
                     (function () {
-                        if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                        if (!message.member.roles.has(adminRoleId)) return 0;
 
                         if (parsedCommand.args.length !== 2) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!adminkick [@host] [@player]`.");
@@ -564,7 +583,7 @@ function handleMsg(message, discordClient, discordUtil) {
 
                         User.findByDiscord(hostDiscordIdKick).then(hostUser => {
                             User.findByDiscord(playerDiscordIdKick).then(playerUser => {
-                                let hostLobby = getLobbyForHost(message.guild.id, leagueChannel, hostUser.steam);
+                                let hostLobby = getLobbyForHost(message.member.guild.id, leagueChannel, hostUser.steam);
                                 if (hostLobby === null) {
                                     discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, that person is not hosting a lobby currently.");
                                     return 0;
@@ -574,9 +593,9 @@ function handleMsg(message, discordClient, discordUtil) {
                                     return 0;
                                 }
 
-                                lobbies.removePlayerFromLobby(message.guild.id, leagueChannel, hostUser.steam, playerUser.steam);
+                                lobbies.removePlayerFromLobby(message.member.guild.id, leagueChannel, hostUser.steam, playerUser.steam);
                                 let kickUserName = discordClient.guild.members.get(playerUser.discord);
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "kicked " + kickUserName + " from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby. `(" + getLobbyForHost(message.guild.id, leagueChannel, hostUser.steam).players.length + "/8)`");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "kicked " + kickUserName + " from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby. `(" + getLobbyForHost(message.member.guild.id, leagueChannel, hostUser.steam).players.length + "/8)`");
                                 discordUtil.sendDM(playerUser.discord, "<#" + message.channel.id + "> An admin kicked you from <@" + hostUser.discord + "> @" + hostLobby.region + " region lobby.");
 
                             });
@@ -597,7 +616,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Lobby hosting disabled. Bot is going down for maintenance.");
                         }
 
-                        let hostLobbyExist = getLobbyForHost(message.guild.id, leagueChannel, user.steam);
+                        let hostLobbyExist = getLobbyForHost(message.member.guild.id, leagueChannel, user.steam);
 
                         if (hostLobbyExist !== null) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "You are already hosting a lobby. Type `!lobby` to see players.");
@@ -640,7 +659,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             rankRequirement = 1; // For lobbies that don't have a rank requirement set in the config
                         }
 
-                        if (!validRegions.includes(region)) {
+                        if (!validRegions.includes(region.toUpperCase())) {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!host [" + validRegions.join(', ').toLowerCase() + "] [rank-1]`. Example: `!host nae bishop-1`. (no spaces in rank)");
                             return 0;
                         }
@@ -669,7 +688,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             }
                             // good to start
                             let token = randtoken.generate(5);
-                            let newLobby = lobbies.createLobby(message.guild.id, leagueChannel, user.steam, region, rankRequirement, token);
+                            let newLobby = lobbies.createLobby(message.member.guild.id, leagueChannel, user.steam, region, rankRequirement, token);
 
                             // let currentLobby = getLobbyForPlayer(leagueChannel, user.steam);
 
@@ -691,7 +710,7 @@ function handleMsg(message, discordClient, discordUtil) {
                         }
 
                         // check 8/8 then check all ranks, then send passwords
-                        let lobby = lobbies.getLobbyForHost(message.guild.id, leagueChannel, user.steam);
+                        let lobby = lobbies.getLobbyForHost(message.member.guild.id, leagueChannel, user.steam);
 
                         if (lobby === undefined || lobby === null) {
                             discordUtil.sendDM(message.author.id, "You are not hosting any lobbies in <#" + message.channel.id + ">");
@@ -725,7 +744,7 @@ function handleMsg(message, discordClient, discordUtil) {
                         //                 }
                         //             });
                         //
-                        //             lobbies.deleteLobby(message.guild.id, leagueChannel, user.steam);
+                        //             lobbies.deleteLobby(message.member.guild.id, leagueChannel, user.steam);
                         //
                         //             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**@" + lobby.region + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
                         //         });
@@ -747,7 +766,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                         });
 
                                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**@" + lobby["region"] + " region lobby started. Good luck!** " + playerDiscordIds.join(" | "));
-                                        lobbies.deleteLobby(message.guild.id, leagueChannel, user.steam);
+                                        lobbies.deleteLobby(message.member.guild.id, leagueChannel, user.steam);
                                     });
                                 });
                             } else {
@@ -763,7 +782,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             return 0;
                         }
 
-                        let playerLobbyJoin = lobbies.getLobbyForPlayer(message.guild.id, leagueChannel, user.steam);
+                        let playerLobbyJoin = lobbies.getLobbyForPlayer(message.member.guild.id, leagueChannel, user.steam);
 
                         if (playerLobbyJoin !== null) {
                             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are already in a lobby! Use `!leave` to leave.");
@@ -792,7 +811,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                 let region = parsedCommand.args[0].toUpperCase();
                                 // find host with most users not over 8 and join.
 
-                                let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(message.guild.id, leagueChannel);
+                                let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(message.member.guild.id, leagueChannel);
 
                                 if (Object.keys(lobbiesInLeagueChannel).length === 0) {
                                     if (leagueChannelRegion !== null) {
@@ -855,13 +874,13 @@ function handleMsg(message, discordClient, discordUtil) {
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
-                                if (!lobbies.hasHostedLobbyInChannel(message.guild.id, leagueChannel, hostUser.steam)) {
+                                if (!lobbies.hasHostedLobbyInChannel(message.member.guild.id, leagueChannel, hostUser.steam)) {
                                     discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Host not found. Use `!list` to see lobbies or `!host [region]` to start one!");
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
 
-                                let lobby = getLobbyForHost(message.guild.id, leagueChannel, hostUser.steam);
+                                let lobby = getLobbyForHost(message.member.guild.id, leagueChannel, hostUser.steam);
 
                                 if (lobby.players.length === 8) {
                                     discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": That Lobby is full. Use `!host [region]` to start another one.");
@@ -886,7 +905,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                 lobby.players.push(user.steam);
                                 lobby.lastactivity = Date.now();
 
-                                let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(message.guild.id, leagueChannel);
+                                let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(message.member.guild.id, leagueChannel);
 
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
                                     discordUtil.sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
@@ -912,7 +931,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             return 0;
                         }
 
-                        let playerLobbyLeave = lobbies.getLobbyForPlayer(message.guild.id, leagueChannel, user.steam);
+                        let playerLobbyLeave = lobbies.getLobbyForPlayer(message.member.guild.id, leagueChannel, user.steam);
 
                         if (playerLobbyLeave === null) {
                             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not in any lobbies.");
@@ -925,13 +944,13 @@ function handleMsg(message, discordClient, discordUtil) {
                             return 0;
                         }
 
-                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(message.guild.id, leagueChannel);
+                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(message.member.guild.id, leagueChannel);
 
                         let hostDiscordQuitId = playerLobbyLeave["host"];
                         User.findOneBySteam(hostDiscordQuitId).then(function (hostUser) {
-                            if (lobbies.removePlayerFromLobby(message.guild.id, leagueChannel, hostUser.steam, user.steam)) {
+                            if (lobbies.removePlayerFromLobby(message.member.guild.id, leagueChannel, hostUser.steam, user.steam)) {
                                 getSteamPersonaNames([user.steam]).then(personaNames => {
-                                    let numPlayersLeft = lobbies.getLobbyForHost(message.guild.id, leagueChannel, hostUser.steam).players.length;
+                                    let numPlayersLeft = lobbies.getLobbyForHost(message.member.guild.id, leagueChannel, hostUser.steam).players.length;
 
                                     discordUtil.sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ your @" + playerLobbyLeave.region + " region lobby in <#" + message.channel.id + ">. `(" + numPlayersLeft + "/8)`");
                                     if (Object.keys(lobbiesInLeagueChannel).length < 10) { // don't reply to message if large number of users
@@ -950,7 +969,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             return 0;
                         }
 
-                        let hostLobby = getLobbyForHost(message.guild.id, leagueChannel, user.steam);
+                        let hostLobby = getLobbyForHost(message.member.guild.id, leagueChannel, user.steam);
 
                         if (hostLobby === null) {
                             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not hosting any lobbies in <#" + message.channel.id + ">");
@@ -989,9 +1008,9 @@ function handleMsg(message, discordClient, discordUtil) {
                                 return 0;
                             }
 
-                            if (lobbies.removePlayerFromLobby(message.guild.id, leagueChannel, user.steam, kickedPlayerUser.steam)) {
+                            if (lobbies.removePlayerFromLobby(message.member.guild.id, leagueChannel, user.steam, kickedPlayerUser.steam)) {
                                 let kickUserName = message.client.users.find("id", kickedPlayerDiscordId);
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "kicked " + kickUserName + " from <@" + user.discord + "> @" + hostLobby.region + " region lobby. `(" + lobbies.getLobbyForHost(message.guild.id, leagueChannel, user.steam).players.length + "/8)`");
+                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "kicked " + kickUserName + " from <@" + user.discord + "> @" + hostLobby.region + " region lobby. `(" + lobbies.getLobbyForHost(message.member.guild.id, leagueChannel, user.steam).players.length + "/8)`");
                                 discordUtil.sendDM(kickedPlayerDiscordId, "<@" + user.discord + "> kicked you from their lobby in <#" + message.channel.id + ">.");
                             }
                         });
@@ -1006,7 +1025,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             return 0;
                         }
 
-                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(message.guild.id, leagueChannel);
+                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(message.member.guild.id, leagueChannel);
 
                         // if number of lobbies is large, cancel them faster
                         let lobbyTimeout1 = 15; // timeout for no activity
@@ -1026,8 +1045,8 @@ function handleMsg(message, discordClient, discordUtil) {
                         // Get player info and print out current users in lobby.
                         let numPrinted = 0;
 
-                        if (listratelimit.hasOwnProperty(leagueChannel)) {
-                            if (Date.now() - listratelimit[leagueChannel] < lobbyListRateLimit) {
+                        if (listratelimit.hasOwnProperty(message.member.guild.id + "-" + leagueChannel)) {
+                            if (Date.now() - listratelimit[message.member.guild.id + "-" + leagueChannel] < lobbyListRateLimit && !message.member.roles.has(adminRoleId)) {
                                 discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": This command is currently rate limited in <#" + message.channel.id + ">.");
                                 discordUtil.deleteMessage(message);
                                 // rate limited
@@ -1040,7 +1059,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             printFullList = true;
                         }
 
-                        listratelimit[leagueChannel] = Date.now();
+                        listratelimit[message.member.guild.id + "-" + leagueChannel] = Date.now();
 
                         discordUtil.sendChannel(message.channel.id, "**__LOBBY LIST__ - Use `!lobby` to display players in your own lobby**");
 
@@ -1066,7 +1085,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                             let dontPrint = false;
 
                                             if (!dontPrint && lobby.hasOwnProperty("leaves") && lobby.leaves >= 10) {
-                                                lobbies.deleteLobby(message.guild.id, leagueChannel, lobby.host);
+                                                lobbies.deleteLobby(message.member.guild.id, leagueChannel, lobby.host);
                                                 dontPrint = true;
                                                 discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because too many players left it._");
                                                 discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because too many players left it.**");
@@ -1078,13 +1097,13 @@ function handleMsg(message, discordClient, discordUtil) {
                                                     lastActivityStr = " (" + lastActivity + "m last activity)";
                                                 }
                                                 if (!dontPrint && lastActivity > lobbyTimeout1 && !exemptLeagueRolePruning.includes(leagueRole)) {
-                                                    lobbies.deleteLobby(message.guild.id, leagueChannel, lobby.host);
+                                                    lobbies.deleteLobby(message.member.guild.id, leagueChannel, lobby.host);
                                                     dontPrint = true;
                                                     discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because of no activity (joins/leaves) for more than " + lobbyTimeout1 + " minutes._");
                                                     discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because of no activity (joins/leaves) for more than 15 minutes.**");
                                                 }
                                                 if (!dontPrint && lastActivity > 5 && lobby.players.length === 8 && !exemptLeagueRolePruning.includes(leagueRole)) {
-                                                    lobbies.deleteLobby(message.guild.id, leagueChannel, lobby.host);
+                                                    lobbies.deleteLobby(message.member.guild.id, leagueChannel, lobby.host);
                                                     dontPrint = true;
                                                     discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because it is full and has had no activity (joins/leaves) for more than 5 minutes._");
                                                     discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because it was full and had no activity (joins/leaves) for more than 5 minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**");
@@ -1093,7 +1112,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                             let lobbyTime = Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60);
 
                                             if (!dontPrint && lobbyTime > lobbyTimeout2 && !exemptLeagueRolePruning.includes(leagueRole)) {
-                                                lobbies.deleteLobby(message.guild.id, leagueChannel, lobby.host);
+                                                lobbies.deleteLobby(message.member.guild.id, leagueChannel, lobby.host);
                                                 dontPrint = true;
                                                 discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because it has not started after " + lobbyTimeout2 + " minutes._");
                                                 discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because it was not started after " + lobbyTimeout2 + " minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**");
@@ -1155,7 +1174,7 @@ function handleMsg(message, discordClient, discordUtil) {
                         //     return 0;
                         // }
                         User.findByDiscord(lobbyHostDiscordId).then(hostUser => {
-                            let lobby = lobbies.getLobbyForPlayer(message.guild.id, leagueChannel, hostUser.steam);
+                            let lobby = lobbies.getLobbyForPlayer(message.member.guild.id, leagueChannel, hostUser.steam);
 
                             if (lobby === null) {
                                 discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": That user is not (or you are not) hosting any lobbies.");
@@ -1185,7 +1204,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                                 lastActivityStr = " (" + +"m last activity)";
                                             }
                                         }
-                                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(message.guild.id, leagueChannel);
+                                        let lobbiesInLeagueChannel = lobbies.getLobbiesInChannel(message.member.guild.id, leagueChannel);
                                         if (Object.keys(lobbiesInLeagueChannel).length < 10) { // don't print if large number of lobbies
                                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + Math.round((Date.now() - new Date(lobby.starttime)) / 1000 / 60) + "m)" + lastActivityStr);
                                         }
@@ -1209,7 +1228,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             return 0;
                         }
 
-                        let hostLobbyEnd = getLobbyForHost(message.guild.id, leagueChannel, user.steam);
+                        let hostLobbyEnd = getLobbyForHost(message.member.guild.id, leagueChannel, user.steam);
 
                         if (hostLobbyEnd === null) {
                             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not hosting any lobbies in <#" + message.channel.id + ">");
@@ -1218,8 +1237,8 @@ function handleMsg(message, discordClient, discordUtil) {
                         }
                         let regionEnd = hostLobbyEnd["region"];
 
-                        if (lobbies.isHostOfHostedLobby(message.guild.id, leagueChannel, user.steam)) {
-                            lobbies.deleteLobby(message.guild.id, leagueChannel, user.steam);
+                        if (lobbies.isHostOfHostedLobby(message.member.guild.id, leagueChannel, user.steam)) {
+                            lobbies.deleteLobby(message.member.guild.id, leagueChannel, user.steam);
                             discordUtil.sendChannel(message.channel.id, "<@" + user.discord + "> @" + regionEnd + " region **lobby cancelled**.");
                             return 0;
                         }
@@ -1236,7 +1255,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             return 0;
                         }
 
-                        let playerSendPassLobby = lobbies.getLobbyForPlayer(message.guild.id, leagueChannel, user.steam);
+                        let playerSendPassLobby = lobbies.getLobbyForPlayer(message.member.guild.id, leagueChannel, user.steam);
 
                         if (playerSendPassLobby === null) {
                             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not in any lobbies.");
@@ -1257,7 +1276,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                 return 0;
                             }
 
-                            let lobby = lobbies.getLobbyForHost(message.guild.id, leagueChannel, hostUser.steam);
+                            let lobby = lobbies.getLobbyForHost(message.member.guild.id, leagueChannel, hostUser.steam);
                             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": Lobby password for <@" + hostUser.discord + "> " + lobby["region"] + " region: `" + lobby["password"] + "`. Please join this lobby in Dota 2 Custom Games. If you cannot find the lobby, whisper the host on Discord to create it <@" + hostUser.discord + ">.");
                             discordUtil.deleteMessage(message);
 
@@ -1284,7 +1303,7 @@ function handleMsg(message, discordClient, discordUtil) {
             case "getouttahere":
             case "seppuku":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
                     disableLobbyCommands = true;
 
                     lobbies.backupLobbies(logger);
@@ -1342,7 +1361,7 @@ function handleMsg(message, discordClient, discordUtil) {
             case "admindisablebot":
             case "disablebot":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
 
                     if (disableLobbyCommands === false) {
                         disableLobbyCommands = true;
@@ -1375,7 +1394,7 @@ function handleMsg(message, discordClient, discordUtil) {
             case "admintogglehost":
             case "togglehost":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
 
                     if (disableLobbyHost === true) {
                         disableLobbyHost = false;
@@ -1399,7 +1418,7 @@ function handleMsg(message, discordClient, discordUtil) {
             case "adminlobbyinfo":
             case "lobbyinfo":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
 
                     discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "disableLobbyCommands: " + disableLobbyCommands + ", " + "disableLobbyHost: " + disableLobbyHost);
                     // add lobby sizes
@@ -1408,7 +1427,7 @@ function handleMsg(message, discordClient, discordUtil) {
             case "adminclearlobbies":
             case "clearlobbies":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
 
                     if (parsedCommand.args.length !== 1) {
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, invalid argument, try: `!adminclearlobbies " + leagueRoles.join(", ") + "`.");
@@ -1420,7 +1439,7 @@ function handleMsg(message, discordClient, discordUtil) {
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, invalid League, try:" + leagueRoles.join(", "));
                     }
 
-                    lobbies.resetLobbies(message.guild.id, role);
+                    lobbies.resetLobbies(message.member.guild.id, role);
                     discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I cleared " + role + " lobbies.");
 
                     lobbies.backupLobbies(logger);
@@ -1430,7 +1449,7 @@ function handleMsg(message, discordClient, discordUtil) {
                 (function () {
                     if (message.author.id !== "204094307689431043") return 0; // no permissions
 
-                    lobbies.resetLobbies(message.guild.id, parsedCommand.args[0]);
+                    lobbies.resetLobbies(message.member.guild.id, parsedCommand.args[0]);
                     discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "OK.");
                 })();
                 break;
@@ -1440,13 +1459,13 @@ function handleMsg(message, discordClient, discordUtil) {
                         return 0; // no permissions
                     }
 
-                    lobbies.removeLobbies(message.guild.id, parsedCommand.args[0]);
+                    lobbies.removeLobbies(message.member.guild.id, parsedCommand.args[0]);
                     discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "OK.");
                 })();
                 break;
             case "adminupdateroles":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
 
                     if (message.channel.type === "dm") {
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I can not update roles in direct messages. Please try in a channel on the server.");
@@ -1470,7 +1489,7 @@ function handleMsg(message, discordClient, discordUtil) {
                 break;
             case "adminunlinksteam":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
 
                     if (parsedCommand.args.length !== 1) {
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!adminunlinksteam [steamid]`");
@@ -1504,7 +1523,7 @@ function handleMsg(message, discordClient, discordUtil) {
                 break;
             case "unblacklist":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
 
                     if (parsedCommand.args.length !== 1) {
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!unblacklist [steamid]`");
@@ -1535,7 +1554,7 @@ function handleMsg(message, discordClient, discordUtil) {
             case "getsteam":
             case "gets":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
 
                     if (parsedCommand.args.length !== 1) {
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!admingetsteam [@discord]`");
@@ -1576,7 +1595,7 @@ function handleMsg(message, discordClient, discordUtil) {
             case "getdiscord":
             case "getd":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
 
                     if (parsedCommand.args.length !== 1) {
                         discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!admingetdiscord [steam]`");
@@ -1610,7 +1629,7 @@ function handleMsg(message, discordClient, discordUtil) {
             case "verificationstats":
             case "vstats":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
                     if (message.channel.type !== "dm") {
                         User.getVerificationStats().then(count => {
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `Sir, ${count} users have verified their steam accounts.`);
@@ -1649,7 +1668,7 @@ function handleMsg(message, discordClient, discordUtil) {
                 break;
             case "admintournamentlist":
                 (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
+                    if (!message.member.roles.has(adminRoleId)) return 0;
                     let counter = 0;
                     Tournament.findAllTopRegistrations(64).then(registrations => {
                         registrations.forEach(registration => {
@@ -1683,7 +1702,7 @@ function handleMsg(message, discordClient, discordUtil) {
 
                             let region = parsedCommand.args[0].toUpperCase();
 
-                            if (!validRegions.includes(region)) {
+                            if (!validRegions.includes(region.toUpperCase())) {
                                 discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Invalid arguments. Must be `!register [" + validRegions.join(', ').toLowerCase() + "] [:flag_ca:, :flag_us:, ...]`");
                                 return 0;
                             }

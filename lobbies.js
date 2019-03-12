@@ -14,12 +14,12 @@ module.exports = class Lobbies {
     }
 
     initialize() {
-        config.server_ids.forEach(serverID => {
+        Object.keys(config.server_ids).forEach(serverID => {
             this.lobbies[serverID] = {};
             config.leagueRoles.forEach(leagueRole => {
                 this.lobbies[serverID][config.leagueToLobbiesPrefix[leagueRole]] = {};
                 config.validRegions.forEach(leagueRegion => {
-                    this.lobbies[serverID][config.leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase()] = {};
+                    this.lobbies[serverID][config.leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toUpperCase()] = {};
                 });
             });
         });
