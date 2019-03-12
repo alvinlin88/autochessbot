@@ -648,8 +648,9 @@ function handleMsg(message, discordClient, discordUtil) {
                             if (leagueRoleIdsByRegion.hasOwnProperty(region)) {
                                 regionStr = "<@&" + leagueRoleIdsByRegion[region] + ">";
                             }
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**=== " + regionStr + " Lobby started by <@" + user.discord + ">** " + getRankString(rank.mmr_level) + ". **Type \"!join <@" + user.discord + ">\" to join!** [" + getRankString(newLobby["rankRequirement"]) + " required to join] \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords in any channel. You will be banned.", false);
-                            discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> **Please host a private Dota Auto Chess lobby in @" + region + " region with the following password:** `" + newLobby["password"] + "`\nPlease remember to double check people's ranks and make sure the right ones joined the game before starting. \nYou can see the all players in the lobby by using `!lobby` in the channel. \nWait until the game has started in the Dota 2 client before typing `!start`. \nIf you need to kick a player from the Discord lobby that has not joined your Dota 2 lobby or if their rank changed, use `!kick @player` in the channel.");
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("lobby started", {regionStr, userStr: user.discord, rankStr: getRankString(rank.mmr_level), rankrequireStr: getRankString(newLobby["rankRequirement"])}), false);
+
+                            discordUtil.sendDM(message.author.id, t.__("please start lobby", {channelidStr: message.channel.id, region, passwordStr: newLobby["password"]});
                         });
                     })();
                     break;
@@ -810,12 +811,12 @@ function handleMsg(message, discordClient, discordUtil) {
                                 if (rank.score === null) delete rankUpdate["score"];
                                 user.update(rankUpdate);
                                 if (rank.mmr_level < leagueRequirements[leagueRole]) {
-                                    discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\":You are not high enough rank to join lobbies in this league. (Your rank: " + getRankString(rank.mmr_level) + ", required league rank: " + getRankString(leagueRequirements[leagueRole]) + ")");
+                                    discordUtil.sendDM(message.author.id, t.__("not high enough league rank", {channelidStr: message.channel.id, messageStr: message.content,mmrrankStr: getRankString(rank.mmr_level), leagueroleStr: getRankString(leagueRequirements[leagueRole])}));
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
                                 if (rank.mmr_level < lobby["rankRequirement"]) {
-                                    discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": You are not high enough rank to join this lobby. (Your rank: " + getRankString(rank.mmr_level) + ", required lobby rank: " + getRankString(lobby["rankRequirement"]) + ")", true);
+                                    discordUtil.sendDM(message.author.id, t.__("not high enough lobby rank", {channelidStr: message.channel.id, messageStr: message.content,mmrrankStr: getRankString(rank.mmr_level), lobbyrankStr: getRankString(lobby["rankRequirement"])}), true);
                                     discordUtil.deleteMessage(message);
                                     return 0;
                                 }
