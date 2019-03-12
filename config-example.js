@@ -12,6 +12,8 @@ config.discord_client_id = ""; // Only need to set the first bot's id/secret
 config.discord_client_secret = "";
 config.verify_redirect_url = "http://localhost:8080/callback";
 
+config.server_ids = [];
+
 config.channels = { // for i18n
     "chessbot-commands": "chessbot-commands",
     "chessbot-warnings": "chessbot-warnings",

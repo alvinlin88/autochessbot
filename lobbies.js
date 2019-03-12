@@ -14,24 +14,27 @@ module.exports = class Lobbies {
     }
 
     initialize() {
-        config.leagueRoles.forEach(leagueRole => {
-            this.lobbies[config.leagueToLobbiesPrefix[leagueRole]] = {};
-            config.validRegions.forEach(leagueRegion => {
-                this.lobbies[config.leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase()] = {};
+        config.server_ids.forEach(serverID => {
+            this.lobbies[serverID] = {};
+            config.leagueRoles.forEach(leagueRole => {
+                this.lobbies[serverID][config.leagueToLobbiesPrefix[leagueRole]] = {};
+                config.validRegions.forEach(leagueRegion => {
+                    this.lobbies[serverID][config.leagueToLobbiesPrefix[leagueRole] + "-" + leagueRegion.toLowerCase()] = {};
+                });
             });
         });
     }
 
-    getLobbiesInChannel(leagueChannel) {
-        return this.lobbies[leagueChannel];
+    getLobbiesInChannel(serverID, leagueChannel) {
+        return this.lobbies[serverID][leagueChannel];
     }
 
     // This version is guarded with existence check
-    getLobbyForHostSafe(leagueChannel, hostUserSteam) {
+    getLobbyForHostSafe(serverID, leagueChannel, hostUserSteam) {
         let result = null;
-        for (let hostId in this.lobbies[leagueChannel]) {
-            if (this.lobbies[leagueChannel].hasOwnProperty(hostId)) {
-                let lobby = this.lobbies[leagueChannel][hostId];
+        for (let hostId in this.lobbies[serverID][leagueChannel]) {
+            if (this.lobbies[serverID][leagueChannel].hasOwnProperty(hostId)) {
+                let lobby = this.lobbies[serverID][leagueChannel][hostId];
 
                 if (lobby["host"] === hostUserSteam) {
                     result = lobby;
@@ -41,24 +44,24 @@ module.exports = class Lobbies {
         return result;
     }
 
-    hasHostedLobbyInChannel(leagueChannel, hostUserSteam) {
-        return this.lobbies[leagueChannel].hasOwnProperty(hostUserSteam);
+    hasHostedLobbyInChannel(serverID, leagueChannel, hostUserSteam) {
+        return this.lobbies[serverID][leagueChannel].hasOwnProperty(hostUserSteam);
     }
 
     // isn't this always the case?
-    isHostOfHostedLobby(leagueChannel, hostUserSteam) {
-        return this.lobbies[leagueChannel][hostUserSteam]["host"] === hostUserSteam;
+    isHostOfHostedLobby(serverID, leagueChannel, hostUserSteam) {
+        return this.lobbies[serverID][leagueChannel][hostUserSteam]["host"] === hostUserSteam;
     }
 
-    getLobbyForHost(leagueChannel, hostUserSteam) {
-        return this.lobbies[leagueChannel][hostUserSteam];
+    getLobbyForHost(serverID, leagueChannel, hostUserSteam) {
+        return this.lobbies[serverID][leagueChannel][hostUserSteam];
     }
 
-    getLobbyForPlayer(leagueChannel, player) {
+    getLobbyForPlayer(serverID, leagueChannel, player) {
         let result = null;
-        for (let hostId in this.lobbies[leagueChannel]) {
-            if (this.lobbies[leagueChannel].hasOwnProperty(hostId)) {
-                let lobby = this.lobbies[leagueChannel][hostId];
+        for (let hostId in this.lobbies[serverID][leagueChannel]) {
+            if (this.lobbies[serverID][leagueChannel].hasOwnProperty(hostId)) {
+                let lobby = this.lobbies[serverID][leagueChannel][hostId];
 
                 lobby["players"].forEach(p => {
                     if (p === player) {
@@ -98,13 +101,13 @@ module.exports = class Lobbies {
         });
     }
 
-    deleteLobby(leagueChannel, hostUserSteam) {
-        delete this.lobbies[leagueChannel][hostUserSteam];
+    deleteLobby(serverID, leagueChannel, hostUserSteam) {
+        delete this.lobbies[serverID][leagueChannel][hostUserSteam];
     }
 
     // returns true if the player was in the lobby and now removed, false otherwise.
-    removePlayerFromLobby(leagueChannel, hostUserSteam, playerUserSteam) {
-        let lobby = this.lobbies[leagueChannel][hostUserSteam];
+    removePlayerFromLobby(serverID, leagueChannel, hostUserSteam, playerUserSteam) {
+        let lobby = this.lobbies[serverID][leagueChannel][hostUserSteam];
         let index = lobby.players.indexOf(playerUserSteam);
         if (lobby.hasOwnProperty("leaves")) {
             lobby.leaves = lobby.leaves + 1;
@@ -118,7 +121,7 @@ module.exports = class Lobbies {
         return false;
     }
 
-    createLobby(leagueChannel, hostUserSteam, region, rankRequirement, token) {
+    createLobby(serverID, leagueChannel, hostUserSteam, region, rankRequirement, token) {
         let newLobby = {
             "host": hostUserSteam,
             "password": region.toLowerCase() + "_" + token.toLowerCase(),
@@ -129,16 +132,16 @@ module.exports = class Lobbies {
             "lastactivity": Date.now(),
             "leaves": 0,
         };
-        this.lobbies[leagueChannel][hostUserSteam] = newLobby;
+        this.lobbies[serverID][leagueChannel][hostUserSteam] = newLobby;
         return newLobby;
     }
 
-    resetLobbies(leagueChannel) {
-        this.lobbies[leagueChannel] = {};
+    resetLobbies(serverID, leagueChannel) {
+        this.lobbies[serverID][leagueChannel] = {};
     }
 
-    removeLobbies(leagueChannel) {
-        delete this.lobbies[leagueChannel];
+    removeLobbies(serverID, leagueChannel) {
+        delete this.lobbies[serverID][leagueChannel];
     }
 
     startBackupJob() {
