@@ -7,9 +7,11 @@ describe('BotInitializationTest', function() {
         it('should init lobbies', function() {
             const lobbies = new Lobbies();
             lobbies.restoreLobbies();
-            config.leagueRoles.forEach(leagueRole => {
-                let lobbiesInChannel = lobbies.getLobbiesInChannel(config.leagueToLobbiesPrefix[leagueRole]);
-                expect(lobbiesInChannel).to.not.be.null;
+            config.server_ids.forEach(serverID => {
+                config.leagueRoles.forEach(leagueRole => {
+                    let lobbiesInChannel = lobbies.getLobbiesInChannel(serverID, config.leagueToLobbiesPrefix[leagueRole]);
+                    expect(lobbiesInChannel).to.not.be.null;
+                });
             });
         });
 });
