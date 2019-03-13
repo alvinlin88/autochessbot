@@ -1,5 +1,17 @@
 const config = require("./config");
 
+const PromClient = require('prom-client');
+const express = require('express');
+const app = express();
+
+app.get('/metrics', (req, res) => {
+    res.end(PromClient.register.metrics());
+});
+app.listen(3000);
+
+const metrics = require("./metrics");
+metrics.startCollection();
+
 const Discord = require('discord.js');
 
 const dacService = require('./dac-service.js');
@@ -161,7 +173,11 @@ function getLobbyForHost(leagueChannel, host) {
 
 function getSteamPersonaNames(steamIds) {
     return new Promise(function(resolve, reject) {
+
+        const end = metrics.steamRequestHistogram.startTimer();
         request("http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=" + config.steam_token + "&steamids=" + steamIds.join(","), { json: true}, (err, res, body) => {
+            end();
+
             if (err) { reject(err); }
 
             if (res !== undefined && res.hasOwnProperty("statusCode")) {
@@ -183,11 +199,17 @@ function getSteamPersonaNames(steamIds) {
                             }
                         }
 
+                        metrics.steamRequestSuccessCounter.inc();
                         resolve(personaNames);
                     } catch (error) {
+                        metrics.steamRequestErrorCounter.inc();
                         logger.error(error.message + " " + error.stack);
                     }
+                } else {
+                    metrics.steamRequestErrorCounter.inc();
                 }
+            } else {
+                metrics.steamRequestErrorCounter.inc();
             }
         });
     });
@@ -196,7 +218,11 @@ function getSteamPersonaNames(steamIds) {
 
 function getSteamProfiles(steamIds) {
     return new Promise(function(resolve, reject) {
+
+        const end = metrics.dacRequestHistogram.startTimer();
         request("http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=" + config.steam_token + "&steamids=" + steamIds.join(","), { json: true}, (err, res, body) => {
+            end();
+
             if (err) { reject(err); }
 
             if (res !== undefined && res.hasOwnProperty("statusCode")) {
@@ -215,11 +241,16 @@ function getSteamProfiles(steamIds) {
                             }
                         }
 
+                        metrics.steamRequestSuccessCounter.inc();
                         resolve(personaNames);
                     } catch (error) {
                         logger.error(error.message + " " + error.stack);
                     }
+                } else {
+                    metrics.steamRequestErrorCounter.inc();
                 }
+            } else {
+                metrics.steamRequestErrorCounter.inc();
             }
         });
     });
@@ -350,7 +381,7 @@ function updateRoles(discordClient, discordUtil, message, user, notifyOnChange=t
 function handleReady(discordClient, discordUtil) {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
-        discordUtil.sendChannel(discordClient.channels.find(c => c.name === config.channels["staff-bot"]).id, "I am back!");
+        discordUtil.sendChannel(discordClient.channels.find(c => c.name === config.channels["staff-bot"]).id, "I am back!", false);
     } catch(err) {
         logger.error(err);
     }
@@ -365,12 +396,13 @@ for(let i = 0; i < config.discord_tokens.length; i++) {
     discordClients[i].on('error', logger.error);
     discordClients[i].on('message', message => handleMsg(message, discordClients[i], discordUtils[i]));
     discordClients[i].on('rateLimit', r => {
-        let channel = "";
+        let channelId = r.path.match("[0-9]+")[0];
+        let channel = discordClients[i].channels.get(channelId);
         if (r.path.includes("channel")) {
-            channel = " <#" + r.path.match("[0-9]+")[0] + ">";
+            channelId = " <#" + channelId + ">";
         }
         console.log(discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path);
-        discordUtils[i].sendChannel(discordClients[i].channels.find(c => c.name === config.channels["chessbot-warnings"]).id, discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path + channel);
+        discordUtils[i].sendChannel(discordClients[i].channels.find(c => c.name === config.channels["chessbot-warnings"]).id, discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path + channelId + " " + channel.name);
     })
 }
 
@@ -403,7 +435,7 @@ function handleMsg(message, discordClient, discordUtil) {
     if (message.author.bot === true) {
         return 0; // ignore bot messages
     }
-    // private message
+
     if (message.channel.type === "dm") {
         // nothing
     }
@@ -428,6 +460,20 @@ function handleMsg(message, discordClient, discordUtil) {
     logger.info(" *** Received command: " + message.content);
 
     let parsedCommand = parseCommand(message);
+
+    let metricsChannelId;
+    let metricsChannelName;
+    if (message.channel.type === "dm") {
+        metricsChannelId = "dm";
+        metricsChannelName = "dm";
+    } else {
+        metricsChannelId = message.channel.id;
+        metricsChannelName = message.channel.name;
+    }
+
+    metrics.commandInvocation.inc({"channel_name": metricsChannelName, "channel_id": metricsChannelId, "name": parsedCommand.command});
+    // not sure if this one is useful
+    // metrics.commandInvocationArgs.inc({"channel": metricsChannel, "name": parsedCommand.command, "args": parsedCommand.args.join(" ")});
 
     if (message.channel.type !== "dm" && (message.member === null || message.guild === null)) {
         discordUtil.sendDM(message.author.id, "Error! Are you set to invisible mode?");
@@ -631,7 +677,8 @@ function handleMsg(message, discordClient, discordUtil) {
                             if (leagueRoleIdsByRegion.hasOwnProperty(region)) {
                                 regionStr = "<@&" + leagueRoleIdsByRegion[region] + ">";
                             }
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**=== " + regionStr + " Lobby started by <@" + user.discord + ">** " + getRankString(rank.mmr_level) + ". **Type \"!join <@" + user.discord + ">\" to join!** [" + getRankString(newLobby["rankRequirement"]) + " required to join] \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords in any channel. You will be banned.", false);
+
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "**=== " + regionStr + " Lobby started by <@" + user.discord + ">** " + getRankString(rank.mmr_level) + ". **Type `!join @" + message.author.username + "#" + message.author.discriminator + "` to join!** [" + getRankString(newLobby["rankRequirement"]) + " required to join] \nThe bot will whisper you the password on Discord. Make sure you are allowing direct messages from server members in your Discord Settings. \nPlease _DO NOT_ post lobby passwords in any channel. You will be banned.");
                             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> **Please host a private Dota Auto Chess lobby in @" + region + " region with the following password:** `" + newLobby["password"] + "`\nPlease remember to double check people's ranks and make sure the right ones joined the game before starting. \nYou can see the all players in the lobby by using `!lobby` in the channel. \nWait until the game has started in the Dota 2 client before typing `!start`. \nIf you need to kick a player from the Discord lobby that has not joined your Dota 2 lobby or if their rank changed, use `!kick @player` in the channel.");
                         });
                     })();
@@ -845,7 +892,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                     discordUtil.sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
                                     discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> Lobby password for <@" + hostUser.discord + "> " + lobby["region"] + " region: `" + lobby["password"] + "`\nPlease join this lobby in Dota 2 Custom Games. If you can not find the lobby, try refreshing in your Dota 2 client or whisper the host on Discord to create it <@" + hostUser.discord + ">.");
                                     if (lobby.players.length === 8) {
-                                        discordUtil.sendChannel(message.channel.id, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**", false);
+                                        discordUtil.sendChannel(message.channel.id, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**");
                                         discordUtil.sendDM(hostUser.discord, "**@" + lobby["region"] + " Lobby is full! You can start the game with `!start` in <#" + message.channel.id + ">.** \n(Only start the game if you have verified everyone in the game lobby. Use `!lobby` to see players.)");
                                     }
                                     if (Object.keys(lobbiesInLeagueChannel).length < 10) { // don't print joins if large number of lobbies
@@ -1054,7 +1101,8 @@ function handleMsg(message, discordClient, discordUtil) {
 
                                             let fullStr = "";
                                             let fullStr2 = "";
-                                            let joinStr = " | Use \"!join <@" + hostDiscordId + ">\" to join lobby.";
+                                            let host = message.guild.members.get(hostDiscordId).user;
+                                            let joinStr = " | Use `!join @" + host.username + "#" + host.discriminator + "` to join lobby.";
                                             if (lobby.players.length >= 8) {
                                                 fullStr = "~~";
                                                 fullStr2 = "~~";
@@ -1420,61 +1468,12 @@ function handleMsg(message, discordClient, discordUtil) {
                     });
                 })();
                 break;
-            case "admincreatelink":
-                (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
-
-                    if (parsedCommand.args.length < 1) {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!adminlink [@discord] [[steamid]]`");
-                        return 0;
-                    }
-                    let createLinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
-                    let forceSteamIdLink = parsedCommand.args[1];
-
-                    User.findByDiscord(createLinkPlayerDiscordId).then(function (linkPlayerUser) {
-                        if (linkPlayerUser === null) {
-                            User.create({
-                                discord: createLinkPlayerDiscordId,
-                                steam: forceSteamIdLink,
-                                validated: false,
-                            }).then(() => {
-                                discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I have linked <@" + createLinkPlayerDiscordId + "> steam id `" + forceSteamIdLink + "`. Remember they will not have any roles. Use `!adminupdateroles [@discord]`.");
-                            }).catch(function (msg) {
-                                logger.error("error " + msg);
-                            });
-                        } else {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, <@" + createLinkPlayerDiscordId + "> is already linked to steam id `" + linkPlayerUser.steam + "`. Use `!adminupdatelink [@discord] [steam]` instead.");
-                            return 0;
-                        }
-                    });
-                })();
-                break;
-            case "adminunlink":
-                (function () {
-                    if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
-
-                    if (parsedCommand.args.length !== 1) {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!adminunlink [@discord]`");
-                        return 0;
-                    }
-                    let unlinkPlayerDiscordId = parseDiscordId(parsedCommand.args[0]);
-
-                    User.findByDiscord(unlinkPlayerDiscordId).then(function (unlinkPlayerUser) {
-                        let oldSteamID = unlinkPlayerUser.steam;
-                        unlinkPlayerUser.update({steam: null, validated: false}).then(function (result) {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id. `" + oldSteamID + "`");
-                        }, function (error) {
-                            logger.error(error);
-                        });
-                    });
-                })();
-                break;
             case "adminunlinksteam":
                 (function () {
                     if (!message.member.roles.has(message.guild.roles.find(r => r.name === adminRoleName).id)) return 0;
 
                     if (parsedCommand.args.length !== 1) {
-                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!adminunlink [steamid]`");
+                        discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, the command is `!adminunlinksteam [steamid]`");
                         return 0;
                     }
                     if (!parseInt(parsedCommand.args[0])) {
@@ -1483,17 +1482,23 @@ function handleMsg(message, discordClient, discordUtil) {
                     }
                     let unlinkPlayerSteamId = parsedCommand.args[0];
                     VerifiedSteam.findOneBySteam(unlinkPlayerSteamId).then(verifiedSteam => {
-                        if (verifiedSteam !== null) {
+                        if (verifiedSteam === null) {
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `Sir, steam id \`${unlinkPlayerSteamId}\` is not verified by anyone.`);
+                            return 0;
+                        }
+                        if (verifiedSteam.banned === true) {
+                            let banInfo = `Steam \`${unlinkPlayerSteamId}\` was banned by <@${verifiedSteam.bannedBy}> for \`${verifiedSteam.banReason}\``;
+                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, banInfo + "\n I cannot unlink unless you `unblacklist`");
+                        } else {
                             verifiedSteam.destroy().then(
                                 () => discordUtil.sendChannelAndMention(message.channel.id, message.author.id, `Sir, I have removed verified steam id record for \`${unlinkPlayerSteamId}\``))
+                            User.findAllBySteam(unlinkPlayerSteamId).then(function (unlinkPlayerUsers) {
+                                unlinkPlayerUsers.forEach(unlinkPlayerUser => {
+                                    discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id.");
+                                    unlinkPlayerUser.update({steam: null, validated: false});
+                                });
+                            });
                         }
-                    });
-
-                    User.findAllBySteam(unlinkPlayerSteamId).then(function (unlinkPlayerUsers) {
-                        unlinkPlayerUsers.forEach(unlinkPlayerUser => {
-                            discordUtil.sendChannelAndMention(message.channel.id, message.author.id, "Sir, I have unlinked <@" + unlinkPlayerUser.discord + ">'s steam id.");
-                            unlinkPlayerUser.update({steam: null, validated: false});
-                        });
                     });
                 })();
                 break;

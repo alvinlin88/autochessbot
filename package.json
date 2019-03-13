@@ -16,12 +16,14 @@
     "express": "^4.16.4",
     "express-handlebars": "^3.0.0",
     "express-session": "^1.15.6",
+    "glob": "latest",
     "long": "^4.0.0",
     "openid-client": "^2.4.5",
     "passport": "^0.4.0",
     "passport-openid": "^0.4.0",
     "passport-steam": "^1.0.10",
     "pg": "^7.8.0",
+    "prom-client": "^11.2.1",
     "pug": "^2.0.3",
     "rand-token": "^0.4.0",
     "request": "^2.88.0",
@@ -30,8 +32,7 @@
     "sqlite": "^3.0.1",
     "steam": "^1.4.0",
     "steamid": "^1.1.0",
-    "winston": "^3.2.1",
-    "glob": "latest"
+    "winston": "^3.2.1"
   },
   "devDependencies": {
     "chai": "^4.2.0",
