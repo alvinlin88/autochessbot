@@ -312,7 +312,7 @@ function updateRoles(discordClient, discordUtil, message, user, notifyOnChange=t
 
                 let rankStr = getRankString(rank.mmr_level);
                 if (rankStr === "ERROR") {
-                    discordUtil.sendChannelAndMention(message.channel, message.author, "I had a problem getting your rank, did you use the right steam id? See <#" + discordClient.channels.find(c => c.name === config.channels["readme"]).id + "> for more information.");
+                    discordUtil.sendChannelAndMention(message.channel, message.author, "I had a problem getting your rank, did you use the right steam id? See <#" + findChannel(discordClient, config.channels["readme"]).id + "> for more information.");
                     return 0;
                 }
 
@@ -378,10 +378,14 @@ function updateRoles(discordClient, discordUtil, message, user, notifyOnChange=t
     }
 }
 
+function findChannel(discordClient, name) {
+    return discordClient.channels.find(c => c.name === name);
+}
+
 function handleReady(discordClient, discordUtil) {
     logger.info(`Logged in as ${discordClient.user.tag}!`);
     try {
-        discordUtil.sendChannel(discordClient.channels.find(c => c.name === config.channels["staff-bot"]).id, "I am back!", false);
+        discordUtil.sendChannel(findChannel(discordClient, config.channels["staff-bot"]), "I am back!", false);
     } catch(err) {
         logger.error(err);
     }
@@ -402,7 +406,7 @@ for(let i = 0; i < config.discord_tokens.length; i++) {
             channelId = " <#" + channelId + ">";
         }
         console.log(discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path);
-        discordUtils[i].sendChannel(discordClients[i].channels.find(c => c.name === config.channels["chessbot-warnings"]).id, discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path + channelId + " " + channel.name);
+        discordUtils[i].sendChannel(findChannel(discordClients[i], config.channels["chessbot-warnings"]), discordClients[i].user.tag + ": RATE LIMITED " + r.requestLimit + " " + r.timeDifference + "ms " + r.method + " " + r.path + channelId + " " + channel.name);
     })
 }
 
@@ -446,7 +450,7 @@ function handleMsg(message, discordClient, discordUtil) {
             let text = "Please _DO NOT_ post lobby passwords given out by ChessBot in any channel. Your message was deleted. Attempting to bypass this will result in a ban.";
             discordUtil.sendChannelAndMention(message.channel, message.author, text);
             discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> " + text);
-            discordUtil.sendChannel(discordClient.channels.find(c => c.name === config.channels["chessbot-warnings"]).id, "<@" + message.author.id + "> posted a lobby password in <#" + message.channel.id + ">.\nMessage content: " + message.content);
+            discordUtil.sendChannel(findChannel(discordClient, config.channels["chessbot-warnings"]), "<@" + message.author.id + "> posted a lobby password in <#" + message.channel.id + ">.\nMessage content: " + message.content);
             discordUtil.deleteMessage(message);
             return 0;
         }
@@ -486,7 +490,7 @@ function handleMsg(message, discordClient, discordUtil) {
         // if we can see user roles (not a DM) and user is staff, continue
     } else if (message.channel.type !== "dm" && !leagueLobbies.includes(message.channel.name) && !botChannels.includes(message.channel.name)) {
         // otherwise if command was not typed in a whitelisted channel
-        discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> You cannot use bot commands in this channel. Try <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-commands"]).id + ">.");
+        discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> You cannot use bot commands in this channel. Try <#" + findChannel(discordClient, config.channels["chessbot-commands"]).id + ">.");
         discordUtil.deleteMessage(message);
         return 0;
     }
@@ -505,7 +509,7 @@ function handleMsg(message, discordClient, discordUtil) {
         let isLobbyCommand = null;
 
         if (user === null ||user.steam === null) {
-            const readme = discordClient.channels.find(c => c.name === config.channels['readme']).id;
+            const readme = findChannel(discordClient, config.channels['readme']).id;
             discordUtil.sendChannelAndMention(message.channel, message.author, `You need to complete verification to use bot commands. See <#${readme}> for more information.`);
             updateRoles(discordClient, discordUtil, message, user, false, false, true);
             return 0;
@@ -892,11 +896,11 @@ function handleMsg(message, discordClient, discordUtil) {
                                     discordUtil.sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** your @" + lobby["region"] + " region lobby in <#" + message.channel.id + ">. `(" + lobby.players.length + "/8)`");
                                     discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> Lobby password for <@" + hostUser.discord + "> " + lobby["region"] + " region: `" + lobby["password"] + "`\nPlease join this lobby in Dota 2 Custom Games. If you can not find the lobby, try refreshing in your Dota 2 client or whisper the host on Discord to create it <@" + hostUser.discord + ">.");
                                     if (lobby.players.length === 8) {
-                                        discordUtil.sendChannel(message.channel.id, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**");
+                                        discordUtil.sendChannel(message.channel, "**@" + lobby["region"] + " Lobby is full! <@" + hostUser.discord + "> can start the game with `!start`.**");
                                         discordUtil.sendDM(hostUser.discord, "**@" + lobby["region"] + " Lobby is full! You can start the game with `!start` in <#" + message.channel.id + ">.** \n(Only start the game if you have verified everyone in the game lobby. Use `!lobby` to see players.)");
                                     }
                                     if (Object.keys(lobbiesInLeagueChannel).length < 10) { // don't print joins if large number of lobbies
-                                        discordUtil.sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`");
+                                        discordUtil.sendChannel(message.channel, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" " + getRankString(rank.mmr_level) + " **joined** <@" + hostUser.discord + "> @" + lobby["region"] + " region lobby. `(" + lobby.players.length + "/8)`");
                                         discordUtil.deleteMessage(message);
                                     }
                                 });
@@ -935,7 +939,7 @@ function handleMsg(message, discordClient, discordUtil) {
 
                                     discordUtil.sendDM(hostUser.discord, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ your @" + playerLobbyLeave.region + " region lobby in <#" + message.channel.id + ">. `(" + numPlayersLeft + "/8)`");
                                     if (Object.keys(lobbiesInLeagueChannel).length < 10) { // don't reply to message if large number of users
-                                        discordUtil.sendChannel(message.channel.id, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ <@" + hostUser.discord + "> @" + playerLobbyLeave.region + " region lobby. `(" + numPlayersLeft + "/8)`");
+                                        discordUtil.sendChannel(message.channel, "<@" + message.author.id + "> \"" + personaNames[user.steam] + "\" _**left**_ <@" + hostUser.discord + "> @" + playerLobbyLeave.region + " region lobby. `(" + numPlayersLeft + "/8)`");
                                         discordUtil.deleteMessage(message);
                                     }
                                 });
@@ -1042,7 +1046,7 @@ function handleMsg(message, discordClient, discordUtil) {
 
                         listratelimit[leagueChannel] = Date.now();
 
-                        discordUtil.sendChannel(message.channel.id, "**__LOBBY LIST__ - Use `!lobby` to display players in your own lobby**");
+                        discordUtil.sendChannel(message.channel, "**__LOBBY LIST__ - Use `!lobby` to display players in your own lobby**");
 
                         for (let hostId in lobbiesInLeagueChannel) {
                             if (lobbiesInLeagueChannel.hasOwnProperty(hostId)) {
@@ -1068,7 +1072,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                             if (!dontPrint && lobby.hasOwnProperty("leaves") && lobby.leaves >= 10) {
                                                 lobbies.deleteLobby(leagueChannel, lobby.host);
                                                 dontPrint = true;
-                                                discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because too many players left it._");
+                                                discordUtil.sendChannel(message.channel, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because too many players left it._");
                                                 discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because too many players left it.**");
                                             }
 
@@ -1080,13 +1084,13 @@ function handleMsg(message, discordClient, discordUtil) {
                                                 if (!dontPrint && lastActivity > lobbyTimeout1 && !exemptLeagueRolePruning.includes(leagueRole)) {
                                                     lobbies.deleteLobby(leagueChannel, lobby.host);
                                                     dontPrint = true;
-                                                    discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because of no activity (joins/leaves) for more than " + lobbyTimeout1 + " minutes._");
+                                                    discordUtil.sendChannel(message.channel, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because of no activity (joins/leaves) for more than " + lobbyTimeout1 + " minutes._");
                                                     discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because of no activity (joins/leaves) for more than 15 minutes.**");
                                                 }
                                                 if (!dontPrint && lastActivity > 5 && lobby.players.length === 8 && !exemptLeagueRolePruning.includes(leagueRole)) {
                                                     lobbies.deleteLobby(leagueChannel, lobby.host);
                                                     dontPrint = true;
-                                                    discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because it is full and has had no activity (joins/leaves) for more than 5 minutes._");
+                                                    discordUtil.sendChannel(message.channel, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because it is full and has had no activity (joins/leaves) for more than 5 minutes._");
                                                     discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because it was full and had no activity (joins/leaves) for more than 5 minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**");
                                                 }
                                             }
@@ -1095,7 +1099,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                             if (!dontPrint && lobbyTime > lobbyTimeout2 && !exemptLeagueRolePruning.includes(leagueRole)) {
                                                 lobbies.deleteLobby(leagueChannel, lobby.host);
                                                 dontPrint = true;
-                                                discordUtil.sendChannel(message.channel.id, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because it has not started after " + lobbyTimeout2 + " minutes._");
+                                                discordUtil.sendChannel(message.channel, "_*** @" + lobby.region + " <@" + hostDiscordId + "> lobby has been removed because it has not started after " + lobbyTimeout2 + " minutes._");
                                                 discordUtil.sendDM(hostDiscordId, "**Your lobby in <#" + message.channel.id + "> was cancelled because it was not started after " + lobbyTimeout2 + " minutes. Please use `!start` if the game was loaded in the Dota 2 Client next time.**");
                                             }
 
@@ -1115,9 +1119,9 @@ function handleMsg(message, discordClient, discordUtil) {
 
                                             if (!dontPrint) {
                                                 if (printFullList === true) {
-                                                    discordUtil.sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr2);
+                                                    discordUtil.sendChannel(message.channel, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + " | " + playerDiscordIds.join(" | ") + ". (" + lobbyTime + "m)" + lastActivityStr + fullStr2);
                                                 } else {
-                                                    discordUtil.sendChannel(message.channel.id, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + joinStr + " (" + lobbyTime + "m)" + lastActivityStr + fullStr2);
+                                                    discordUtil.sendChannel(message.channel, fullStr + "=== **@" + lobby.region + "** [" + getRankString(lobby.rankRequirement) + "+] `(" + lobby.players.length + "/8)` " + hostDiscord + joinStr + " (" + lobbyTime + "m)" + lastActivityStr + fullStr2);
                                                 }
                                             }
                                         });
@@ -1220,7 +1224,7 @@ function handleMsg(message, discordClient, discordUtil) {
 
                         if (lobbies.isHostOfHostedLobby(leagueChannel, user.steam)) {
                             lobbies.deleteLobby(leagueChannel, user.steam);
-                            discordUtil.sendChannel(message.channel.id, "<@" + user.discord + "> @" + regionEnd + " region **lobby cancelled**.");
+                            discordUtil.sendChannel(message.channel, "<@" + user.discord + "> @" + regionEnd + " region **lobby cancelled**.");
                             return 0;
                         }
                     }());
@@ -1656,7 +1660,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             counter++;
                             let discordUser = message.guild.members.find(r => r.id === registration.discord);
                             if (discordUser !== null) {
-                                discordUtil.sendChannel(message.channel.id, "`(" + counter + ") " + "MMR " + registration.score + " " + registration.region + " ` " + registration.country + " ` " + new Date(parseInt(registration.date)).toUTCString() + " | " + discordUser.user.username + "#" + discordUser.user.discriminator + "`");
+                                discordUtil.sendChannel(message.channel, "`(" + counter + ") " + "MMR " + registration.score + " " + registration.region + " ` " + registration.country + " ` " + new Date(parseInt(registration.date)).toUTCString() + " | " + discordUser.user.username + "#" + discordUser.user.discriminator + "`");
                             }
                         });
                     });
@@ -1665,11 +1669,6 @@ function handleMsg(message, discordClient, discordUtil) {
             case "register":
                 (function () {
                     if (message.channel.name === "tournament-signups") {
-                        if (user.validated !== true) {
-                            discordUtil.sendChannelAndMention(message.channel, message.author, "You must have a verified account in order to register for tournaments. See <#" + discordClient.channels.find(c => c.name === config.channels['readme']).id + "> for instructions.");
-                            return 0;
-                        }
-
                         Tournament.findRegistration({fk_tournament: activeTournament, steam: user.steam}).then(result => {
                             if (result !== null) {
                                 discordUtil.sendChannelAndMention(message.channel, message.author, "That steam id has already been registered in this tournament. Information:\nDate: `" + new Date(parseInt(result.date)).toString() + "`\nDiscord: <@" + result.discord + ">\nSteam ID: `" + result.steam + "`\nRank: " + getRankString(result.rank) + "\nMMR: `" + result.score + "`\nPreferred Region: `" + result.region + "`\nCountry: " + result.country);
@@ -1842,7 +1841,7 @@ function handleMsg(message, discordClient, discordUtil) {
                                 });
                             });
                         } else {
-                            discordUtil.sendChannelAndMention(message.channel, message.author, `You have not linked a steam id. Follow instructions in <#${discordClient.channels.find(c => c.name === config.channels['readme']).id}> to verify.`);
+                            discordUtil.sendChannelAndMention(message.channel, message.author, `You have not linked a steam id. Follow instructions in <#${findChannel(discordClient, config.channels['readme']).id}> to verify.`);
                         }
                     }
                 })();
@@ -1883,7 +1882,7 @@ function handleMsg(message, discordClient, discordUtil) {
             case "role":
                 (function () {
                     if (message.channel.type === "dm") {
-                        discordUtil.sendChannelAndMention(message.channel, message.author, "I can not update roles in direct messages. Please try in <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-commands"]).id + ">.");
+                        discordUtil.sendChannelAndMention(message.channel, message.author, "I can not update roles in direct messages. Please try in <#" + findChannel(discordClient, config.channels["chessbot-commands"]).id + ">.");
                         return 0;
                     }
                     if (leagueLobbies.includes(message.channel.name)) {
@@ -1895,7 +1894,7 @@ function handleMsg(message, discordClient, discordUtil) {
                 break;
             case "help":
                 (function () {
-                    discordUtil.sendChannelAndMention(message.channel, message.author, "See <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-help"]).id + "> for more information.");
+                    discordUtil.sendChannelAndMention(message.channel, message.author, "See <#" + findChannel(discordClient, config.channels["chessbot-help"]).id + "> for more information.");
                 })();
                 break;
             case "staffhelp":
@@ -1961,7 +1960,7 @@ function handleMsg(message, discordClient, discordUtil) {
             }
             if (isLobbyCommand === false) {
                 logger.info("Unhandled bot message: " + message.content);
-                discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": I was not able to process this command. Please read <#" + discordClient.channels.find(c => c.name === config.channels["chessbot-help"]).id + "> for command list. Join <#" + discordClient.channels.find(c => c.name === config.channels["help-desk"]).id + "> for help from staff.");
+                discordUtil.sendDM(message.author.id, "<#" + message.channel.id + "> \"" + message.content + "\": I was not able to process this command. Please read <#" + findChannel(discordClient, config.channels["chessbot-help"]).id + "> for command list. Join <#" + findChannel(discordClient, config.channels["help-desk"]).id + "> for help from staff.");
                 discordUtil.deleteMessage(message);
                 return 0;
             }
