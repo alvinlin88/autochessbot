@@ -11,7 +11,7 @@ cache:
 install_dependencies:
   stage: build
   script:
-    - npm install
+    - npm clean-install
     - cp config-example.js config.js
   artifacts:
     paths:
