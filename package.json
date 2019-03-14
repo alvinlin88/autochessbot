@@ -17,6 +17,7 @@
     "express-handlebars": "^3.0.0",
     "express-session": "^1.15.6",
     "glob": "latest",
+    "googleapis": "^27.0.0",
     "long": "^4.0.0",
     "openid-client": "^2.4.5",
     "passport": "^0.4.0",
