@@ -650,7 +650,7 @@ function handleMsg(message, discordClient, discordUtil) {
                             }
                             discordUtil.sendChannelAndMention(message.channel.id, message.author.id, t.__("lobby started", {regionStr, userStr: user.discord, rankStr: getRankString(rank.mmr_level), rankrequireStr: getRankString(newLobby["rankRequirement"])}), false);
 
-                            discordUtil.sendDM(message.author.id, t.__("please start lobby", {channelidStr: message.channel.id, region, passwordStr: newLobby["password"]});
+                            discordUtil.sendDM(message.author.id, t.__("please start lobby", {channelidStr: message.channel.id, region, passwordStr: newLobby["password"]}));
                         });
                     })();
                     break;
