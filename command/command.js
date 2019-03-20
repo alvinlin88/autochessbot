@@ -136,6 +136,11 @@ module.exports = {
             validate: rank => rankUtil.parseRank(rank) !== null
         }),
 
+        REGION: new Arg({
+            name: 'region',
+            validate: region => config.validRegions.includes(region.toUpperCase())
+        }),
+
         TEXT(name, optional = false) {
             return new Arg({
                 name: name,

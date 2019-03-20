@@ -81,12 +81,28 @@ const models = {
         }
     }),
 
+    Registration: dbInstance.define('registration', {
+        steam: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+        },
+        steamName: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+        },
+        region: {
+            type: Sequelize.TEXT,
+            allowNull: false
+        }
+    }),
+
 };
 
 // Define foreign keys here BEFORE syncing all models
 
-// models.Tournament.hasMany(models.TournamentRegistration, {foreignKey: 'fk_tournament'});
-// models.TournamentRegistration.belongsTo(models.Tournament, {foreignKey: 'fk_tournament'});
+models.Tournament.hasMany(models.Registration);
+models.Registration.belongsTo(models.Tournament);
+models.Registration.belongsTo(models.User);
 
 models.User.hasMany(models.VerifiedSteam);
 models.VerifiedSteam.belongsTo(models.User);

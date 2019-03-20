@@ -1,5 +1,5 @@
 const Tournament = require('./models.js').Tournament;
-const TournamentRegistration = require('./models.js').TournamentRegistration;
+const Registration = require('./models.js').Registration;
 
 const tournamentUtil = {
     createTournament: function (name, rank) {
@@ -9,31 +9,18 @@ const tournamentUtil = {
         });
     },
 
-    getTournament: function (tournamentID) {
+    latest: function () {
         return Tournament.findOne({
-            where: {id: tournamentID}
+            order: [['createdAt', 'DESC']]
         });
     },
 
-    findRegistration: function (where) {
-        return TournamentRegistration.findOne({
-            where: where,
+    createRegistration: function (steam, region) {
+        return Registration.create({
+            steam: steam,
+            region: region
         });
     },
-
-    createRegistration: function (tournamentRegistrationObj) {
-        return TournamentRegistration.create(tournamentRegistrationObj);
-    },
-
-    findAllTopRegistrations: function (limit) {
-        return TournamentRegistration.findAll({
-            order: [
-                ['score', 'DESC'],
-                ['date', 'DESC'],
-            ],
-            limit: limit,
-        });
-    }
 };
 
 module.exports = tournamentUtil;
