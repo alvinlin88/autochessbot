@@ -13,6 +13,7 @@
  */
 
 const config = require('../config.js');
+const rankUtil = require('../rank-util.js');
 
 class Arg {
     constructor(options) {
@@ -123,11 +124,16 @@ module.exports = {
     Args: {
         STEAM: new Arg({
             name: 'steam',
-            validate: steam => parseInt(steam) && steam.length === 17,
+            validate: steam => parseInt(steam) && steam.length === 17
         }),
 
         DISCORD: new Arg({
             name: 'discord'
+        }),
+
+        RANK: new Arg({
+            name: 'rank',
+            validate: rank => rankUtil.parseRank(rank) !== null
         }),
 
         TEXT(name, optional = false) {

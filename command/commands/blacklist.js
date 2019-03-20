@@ -1,4 +1,4 @@
-const {Command, Arg, Args} = require('../command.js');
+const {Command, Args} = require('../command.js');
 const VerifiedSteam = require('../../schema/verified-steam.js');
 const User = require('../../schema/user.js');
 

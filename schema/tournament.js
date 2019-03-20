@@ -2,8 +2,11 @@ const Tournament = require('./models.js').Tournament;
 const TournamentRegistration = require('./models.js').TournamentRegistration;
 
 const tournamentUtil = {
-    createTournament: function (tournamentObj) {
-        return Tournament.create(tournamentObj);
+    createTournament: function (name, rank) {
+        return Tournament.create({
+            name: name,
+            minRank: rank
+        });
     },
 
     getTournament: function (tournamentID) {
