@@ -22,7 +22,7 @@
     "passport-openid": "^0.4.0",
     "passport-steam": "^1.0.10",
     "pg": "^7.8.0",
-    "pug": "^2.0.3",
+    "pug": "^3.0.1",
     "rand-token": "^0.4.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.2",
